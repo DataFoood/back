@@ -122,10 +122,3 @@ docker compose down -v         # apaga os volumes (zera o banco)
 
 `postman_collection.json` na raiz: importe no Postman, rode **"Login (salva
 tokens)"** e o token é injetado automaticamente nas demais requisições.
-
----
-
-## Manutenção
-
-Mantido e atualizado por **Estevão Santos**, com **Claude Opus** como
-co-autor.
