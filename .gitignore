@@ -1,0 +1,40 @@
+# Claude
+.claude
+
+# Ambiente / segredos  (.env.example FICA versionado)
+.venv
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Testes / cobertura / type-check
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# Django
+db.sqlite3
+*.log
+/staticfiles/
+/media/
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
