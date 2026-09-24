@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -71,6 +72,12 @@ class Restaurant(AbstractAudit):
     total_reviews = models.PositiveIntegerField(default=0)
     cover_image = models.URLField(blank=True)
     menu_url = models.URLField(blank=True)
+    # contador agregado e anônimo de visualizações (métrica do dono). Não é
+    # dado pessoal -> conta todo acesso, com ou sem login/consentimento.
+    view_count = models.PositiveIntegerField(default=0)
+
+    # endereço público do restaurante (Address é polimórfico)
+    addresses = GenericRelation("address.Address")
 
     # Taxonomias — todas M2M (pivo automatico)
     cuisines = models.ManyToManyField(Cuisine, blank=True, related_name="restaurants")

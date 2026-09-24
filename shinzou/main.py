@@ -76,8 +76,14 @@ def search(req: SearchRequest, user_id: int = Depends(get_user_id), conn=Depends
     )
 
     hydrated = db.hydrate(conn, [rid for rid, _ in ranked])
+    # similarity (0..1, cosseno) vai junto: o front mostra como "% match".
+    # score (z-score ponderado) só ordena — não é interpretável isolado.
     results = [
-        {"restaurant": hydrated.get(rid), "score": round(score, 4)}
+        {
+            "restaurant": hydrated.get(rid),
+            "score": round(score, 4),
+            "similarity": round(similarity[rid], 4),
+        }
         for rid, score in ranked
     ]
     return {"results": results}

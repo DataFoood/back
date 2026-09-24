@@ -15,7 +15,11 @@ class SearchHistorySerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
-class CuisineAffinitySerializer(serializers.ModelSerializer):
+class _ScoreMixin(serializers.Serializer):
+    score = serializers.FloatField(min_value=0.0, max_value=1.0)
+
+
+class CuisineAffinitySerializer(_ScoreMixin, serializers.ModelSerializer):
     name = serializers.CharField(source="cuisine.name", read_only=True)
 
     class Meta:
@@ -24,7 +28,7 @@ class CuisineAffinitySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "cuisine", "name", "is_manual"]
 
 
-class AmbientAffinitySerializer(serializers.ModelSerializer):
+class AmbientAffinitySerializer(_ScoreMixin, serializers.ModelSerializer):
     name = serializers.CharField(source="ambient.name", read_only=True)
 
     class Meta:
@@ -33,7 +37,7 @@ class AmbientAffinitySerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "ambient", "name", "is_manual"]
 
 
-class PriceAffinitySerializer(serializers.ModelSerializer):
+class PriceAffinitySerializer(_ScoreMixin, serializers.ModelSerializer):
     name = serializers.CharField(source="price_range.name", read_only=True)
 
     class Meta:

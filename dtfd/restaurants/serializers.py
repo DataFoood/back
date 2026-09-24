@@ -1,5 +1,11 @@
+import datetime
+
+from django.utils import timezone
 from django.utils.text import slugify
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+
+from address.models import Address
 
 from .models import (
     Ambient,
@@ -31,10 +37,16 @@ class RestaurantItemSerializer(serializers.ModelSerializer):
 
 
 class RestaurantFavoriteSerializer(serializers.ModelSerializer):
+    restaurant = serializers.SerializerMethodField()
+
     class Meta:
         model = RestaurantFavorite
         fields = ["id", "restaurant", "created_at"]
         read_only_fields = ["id", "restaurant", "created_at"]
+
+    @extend_schema_field(serializers.DictField())
+    def get_restaurant(self, obj):
+        return RestaurantCardSerializer(obj.restaurant, context=self.context).data
 
 
 class RestaurantImageSerializer(serializers.ModelSerializer):
@@ -45,10 +57,19 @@ class RestaurantImageSerializer(serializers.ModelSerializer):
 
 
 class RestaurantReviewSerializer(serializers.ModelSerializer):
+    author_name = serializers.SerializerMethodField()
+
     class Meta:
         model = RestaurantReview
-        fields = ["id", "restaurant", "author", "title", "description", "rating", "created_at"]
-        read_only_fields = ["id", "restaurant", "author", "created_at"]
+        fields = ["id", "restaurant", "author", "author_name", "title",
+                  "description", "rating", "created_at"]
+        read_only_fields = ["id", "restaurant", "author", "author_name", "created_at"]
+
+    def get_author_name(self, obj) -> str:
+        # só o primeiro nome: review é pública, nome completo é dado pessoal
+        if obj.author is None:
+            return "anônimo"
+        return (obj.author.name or "").split(" ")[0] or "anônimo"
 
 
 class BusinessHourSerializer(serializers.ModelSerializer):
@@ -82,6 +103,40 @@ def _is_time(value):
         return False
 
 
+class RestaurantAddressSerializer(serializers.ModelSerializer):
+    """Endereço do restaurante — público (diferente do endereço de usuário)."""
+
+    class Meta:
+        model = Address
+        fields = ["id", "street", "number", "complement", "neighborhood", "city",
+                  "state", "zipcode", "latitude", "longitude"]
+        read_only_fields = fields
+
+
+def primary_address(restaurant):
+    """Endereço default do restaurante (ou o primeiro). Usa o prefetch."""
+    addresses = list(restaurant.addresses.all())
+    if not addresses:
+        return None
+    return next((a for a in addresses if a.is_default), addresses[0])
+
+
+def is_open_now(restaurant, now=None) -> bool | None:
+    """True/False conforme os horários cadastrados; None se não há horários."""
+    hours = list(restaurant.business_hours.all())
+    if not hours:
+        return None
+    now = timezone.localtime(now)
+    today = next((h for h in hours if h.day_week == now.weekday()), None)
+    if today is None or today.is_closed:
+        return False
+    current = now.time().replace(microsecond=0)
+    for start, end in (today.meta_interval or {}).values():
+        if datetime.time.fromisoformat(start) <= current < datetime.time.fromisoformat(end):
+            return True
+    return False
+
+
 SALES_CHANNEL_FIELDS = [
     "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",
     "has_reservation", "accepts_vale_refeicao", "accepts_online_order",
@@ -92,7 +147,51 @@ TAXONOMY_FIELDS = [
 ]
 
 
-class RestaurantReadSerializer(serializers.ModelSerializer):
+class _RestaurantComputedMixin(serializers.Serializer):
+    address = serializers.SerializerMethodField()
+    is_open_now = serializers.SerializerMethodField()
+    is_favorited = serializers.SerializerMethodField()
+
+    @extend_schema_field(RestaurantAddressSerializer(allow_null=True))
+    def get_address(self, obj):
+        address = primary_address(obj)
+        return RestaurantAddressSerializer(address).data if address else None
+
+    def get_is_open_now(self, obj) -> bool | None:
+        return is_open_now(obj)
+
+    def get_is_favorited(self, obj) -> bool:
+        # conjunto pré-calculado pela view (evita N+1); senão consulta direto
+        favorited = self.context.get("favorited_ids")
+        if favorited is not None:
+            return obj.pk in favorited
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return RestaurantFavorite.objects.filter(user=request.user, restaurant=obj).exists()
+
+
+class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
+    """Versão enxuta pra listas, busca e favoritos."""
+    cuisines = LookupSerializer(many=True, read_only=True)
+    ambients = LookupSerializer(many=True, read_only=True)
+    price_ranges = LookupSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Restaurant
+        fields = [
+            "id", "name", "slug", "description", "cover_image",
+            "average_rating", "total_reviews", "cuisines", "ambients",
+            "price_ranges", "address", "is_open_now", "is_favorited",
+            "has_delivery", "has_reservation",
+        ]
+        read_only_fields = fields
+
+
+CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours"]
+
+
+class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
     images = RestaurantImageSerializer(many=True, read_only=True)
     reviews = RestaurantReviewSerializer(many=True, read_only=True)
     business_hours = BusinessHourSerializer(many=True, read_only=True)
@@ -114,6 +213,7 @@ class RestaurantReadSerializer(serializers.ModelSerializer):
             "cover_image", "menu_url", "created_at", "updated_at",
             "images", "reviews", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
+            "address", "is_open_now", "is_favorited",
         ]
 
 
