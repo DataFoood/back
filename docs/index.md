@@ -10,6 +10,7 @@ com busca semântica (RAG).
 - [[search-rag]] — pipeline de busca semântica fim-a-fim.
 - [[security]] — JWT, permissões, CORS, throttle, LGPD.
 - [[infrastructure]] — Docker, serviços, portas, env.
+- [[deploy]] — colocar em produção (compose prod + Caddy/HTTPS).
 
 ## Contrato da API
 - [../API_MAP.md](../API_MAP.md) — mapa narrativo de rotas + acesso.

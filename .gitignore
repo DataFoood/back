@@ -6,6 +6,7 @@
 .env
 .env.*
 !.env.example
+!.env.prod.example
 
 # Python
 __pycache__/
@@ -23,7 +24,7 @@ htmlcov/
 # Django
 db.sqlite3
 *.log
-/staticfiles/
+staticfiles/
 /media/
 
 # Celery
@@ -38,3 +39,4 @@ celerybeat.pid
 # OS
 .DS_Store
 Thumbs.db
+dump.rdb

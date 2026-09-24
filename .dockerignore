@@ -1,0 +1,10 @@
+.git
+.venv
+.env
+.env.*
+**/__pycache__
+**/*.pyc
+**/staticfiles
+docs
+assets
+postman_collection.json

@@ -1,12 +1,28 @@
 import os
+from datetime import timedelta
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-local-only")
-DEBUG = os.environ.get("DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "").split(";")
+def env_list(name, default=""):
+    """Lista separada por ';' (ou ',') vinda do env, sem itens vazios."""
+    raw = os.environ.get(name, default).replace(",", ";")
+    return [item.strip() for item in raw.split(";") if item.strip()]
+
+
+# Seguro por padrão: sem DEBUG explícito, roda em modo produção.
+DEBUG = os.environ.get("DEBUG", "False") == "True"
+
+SECRET_KEY = os.environ.get("SECRET_KEY", "")
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured("SECRET_KEY é obrigatório com DEBUG=False.")
+    SECRET_KEY = "django-insecure-local-only"
+
+ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost;127.0.0.1" if DEBUG else "")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -18,6 +34,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "users",
     "address",
@@ -28,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -85,12 +103,15 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# CORS — só localhost em dev, portas comuns de frontend.
-CORS_ALLOWED_ORIGINS = [
+# CORS — em dev, localhost nas portas comuns de frontend. Em produção, as
+# origens reais vêm de CORS_ALLOWED_ORIGINS (ex: https://app.datafood.com.br).
+_DEV_ORIGINS = [
     f"http://{host}:{port}"
     for host in ("localhost", "127.0.0.1")
     for port in (3000, 3001, 3002, 5000, 5001, 5002)
 ]
+CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS") or (_DEV_ORIGINS if DEBUG else [])
+CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -104,9 +125,24 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "register": "10/hour",
+        # busca é cara (embedding + kNN): limita por usuário
+        "search": os.environ.get("SEARCH_RATE", "30/min"),
     },
     # OpenAPI/Swagger (handoff frontend)
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(
+        minutes=int(os.environ.get("JWT_ACCESS_MINUTES", "15"))
+    ),
+    "REFRESH_TOKEN_LIFETIME": timedelta(
+        days=int(os.environ.get("JWT_REFRESH_DAYS", "7"))
+    ),
+    # refresh rotaciona a cada uso e o antigo vai pra blacklist
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "UPDATE_LAST_LOGIN": True,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -124,6 +160,26 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {
+        "BACKEND": (
+            "django.contrib.staticfiles.storage.StaticFilesStorage"
+            if DEBUG
+            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+        )
+    },
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
+    # httpx loga toda request em INFO (embeddings/shinzou) — ruído
+    "loggers": {"httpx": {"level": "WARNING"}},
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -135,6 +191,8 @@ EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))
 # --- Ponte B2B com o shinzou (busca semântica) -----------------------------
 SHINZOU_URL = os.environ.get("SHINZOU_URL", "http://shinzou:8001")
 SHINZOU_SERVICE_TOKEN = os.environ.get("SHINZOU_SERVICE_TOKEN", "dev-service-token")
+if not DEBUG and SHINZOU_SERVICE_TOKEN in ("", "dev-service-token"):
+    raise ImproperlyConfigured("Defina SHINZOU_SERVICE_TOKEN em produção.")
 
 # --- Celery (indexação assíncrona; reusa o Redis) --------------------------
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")
@@ -159,7 +217,10 @@ CELERY_BEAT_SCHEDULE = {
 # ativa cookies seguros, redirect HTTPS e HSTS. Atras de proxy/nginx,
 # SECURE_PROXY_SSL_HEADER faz o Django confiar no X-Forwarded-Proto.
 if not DEBUG:
-    SECURE_SSL_REDIRECT = True
+    # SECURE_SSL_REDIRECT=False quando o TLS termina num proxy que já redireciona
+    SECURE_SSL_REDIRECT = os.environ.get("SECURE_SSL_REDIRECT", "True") == "True"
+    # healthcheck interno (http) não pode tomar redirect
+    SECURE_REDIRECT_EXEMPT = [r"^api/health/$"]
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = int(os.environ.get("SECURE_HSTS_SECONDS", "31536000"))

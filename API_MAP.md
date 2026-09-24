@@ -19,12 +19,17 @@ vence.
 Login por **email** (não tem username). Fluxo:
 
 1. `POST /api/users/register/` — cadastro aberto (rate limit 10/hora por IP).
-2. `POST /api/users/login/` — `{email, password}` → `{access, refresh}` (rate
-   limit 5/min, anti brute-force).
+   Body: `name, email, password, confirm_password` + opcionais `cpf, phone,
+   account_type ("customer"|"owner"), allow_info`. **Já autentica**: responde
+   `{access, refresh, user}` (201).
+2. `POST /api/users/login/` — `{email, password}` → `{access, refresh, user}`
+   (rate limit 5/min, anti brute-force).
 3. Mandar o access em todo request protegido:
-   `Authorization: Bearer <access>`
-4. `POST /api/users/login/refresh/` — `{refresh}` → novo `{access}` quando o
-   access expira.
+   `Authorization: Bearer <access>` (vida: 15 min).
+4. `POST /api/users/login/refresh/` — `{refresh}` → `{access, refresh}`. O
+   refresh **rotaciona**: guarde o novo; o antigo é invalidado.
+5. `POST /api/users/logout/` — `{refresh}` → 204 (refresh vai pra blacklist).
+6. `GET /api/users/me/` — usuário logado (restaurar sessão).
 
 **Segurança:** o backend distingue access de refresh (claim `token_type`). Um
 refresh token **não** é aceito como credencial em rotas protegidas → 401. Não
@@ -70,10 +75,12 @@ preferences; searches) **não** paginam — retornam array direto.
 |---|---|---|---|
 | POST | `register/` | 🌐 | rate limit 10/h |
 | POST | `login/` | 🌐 | rate limit 5/min; retorna access+refresh |
-| POST | `login/refresh/` | 🌐 | renova access |
+| POST | `login/refresh/` | 🌐 | renova access (rotaciona refresh) |
+| POST | `logout/` | 🌐 | invalida o refresh |
+| GET/PATCH | `me/` | 🔑 | perfil do logado |
 | GET | `` (lista) | 🛡️ | paginado |
 | GET | `removed/` | 🛡️ | soft-deleted, paginado |
-| GET | `<id>/` | 🔑 | detalhe |
+| GET | `<id>/` | 🔑 | completo p/ dono/admin; terceiros veem só `id, name, avatar_url, banner_url, created_at` |
 | PATCH | `<id>/` | 👤 | edita perfil |
 | PATCH | `consent/` | 🔑 | **LGPD** — liga/desliga `allow_info` do próprio user |
 | POST | `<id>/change-password/` | 🔑 (só o próprio) | exige senha atual |
@@ -82,15 +89,19 @@ preferences; searches) **não** paginam — retornam array direto.
 ### Restaurants — `/api/restaurants/`
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
-| GET | `` | 🌐 | lista paginada |
-| POST | `` | 🔑 | cria (vira owner) |
-| GET | `<id>/` | 🌐 | detalhe; registra view se logado |
+| GET | `` | 🌐 | lista paginada de **cards**; filtros `q`, `cuisine`, `ambient`, `price_range`, `service_model`, `target_audience` (ids, vírgula), `city`, `delivery=true`, `ordering=recent\|rating\|name` |
+| POST | `` | 🔑 | cria (vira owner; customer → role owner) |
+| GET | `mine/` | 🔑 | meus restaurantes (cards, sem paginação) |
+| GET | `taxonomies/` | 🌐 | as 7 taxonomias `{cuisines: [{id,name}], ...}` |
+| GET | `by-slug/<slug>/` | 🌐 | detalhe pelo slug (mesmo payload do `<id>/`) |
+| GET | `<id>/` | 🌐 | detalhe; soma `view_count`; view por usuário só com consentimento |
+| GET | `<id>/stats/` | 👤 (owner) | métricas agregadas: views, favoritos, reviews, série 30 dias, distribuição de notas |
 | PATCH/DELETE | `<id>/` | 👤 (owner) | DELETE = soft |
 | POST/DELETE | `<id>/favorite/` | 🔑 | favoritar (idempotente) / desfavoritar |
-| GET | `favorites/` | 🔑 | meus favoritos |
+| GET | `favorites/` | 🔑 | meus favoritos `[{id, restaurant: <card>, created_at}]` |
 | GET/POST | `<id>/items/` | 🌐 ler / 👤 escrever | **máx 6 itens** |
 | ../PATCH/DELETE | `<id>/items/<id>/` | 👤 | |
-| GET/POST | `<id>/reviews/` | 🌐 ler / 🔑 escrever | autor fica dono |
+| GET/POST | `<id>/reviews/` | 🌐 ler / 🔑 escrever | autor fica dono; 1 por usuário; dono não avalia o próprio (400) |
 | ../PATCH/DELETE | `<id>/reviews/<id>/` | 👤 (autor) | |
 | GET/POST | `<id>/images/` | 🌐 ler / 👤 escrever | |
 | GET/POST | `<id>/hours/` | 🌐 ler / 👤 escrever | `meta_interval` JSON |
@@ -99,6 +110,13 @@ Restaurante carrega 7 taxonomias M2M (cuisines, ambients, service_models,
 target_audiences, price_ranges, business_models, physical_formats) + 7 flags de
 canal de venda (`has_dine_in`, `has_delivery`, ...). `average_rating`/
 `total_reviews` são cache denormalizado (recalculados das reviews; read-only).
+
+**Card** (listas, busca, favoritos): `id, name, slug, description, cover_image,
+average_rating, total_reviews, cuisines, ambients, price_ranges, address,
+is_open_now, is_favorited, has_delivery, has_reservation`. O detalhe tem tudo
+isso + items, reviews (com `author_name`), images, business_hours e demais
+taxonomias/canais. `address` é o endereço **público** do restaurante (ou
+`null`); `is_open_now` é `null` se não há horários cadastrados.
 
 ### Addresses — `/api/addresses/`
 GenericForeignKey: um endereço aponta pra um **restaurant** ou **user**.
@@ -136,7 +154,13 @@ recompute automático **para de sobrescrever** aquela linha.
 { "query": "lugar tranquilo pra comer feijoada", "limit": 15 }
 ```
 Body: `query` obrigatório; `limit` opcional (default 15, **máx 50**).
-Resposta = lista rankeada de restaurantes (vinda do serviço de busca).
+Rate limit: 30/min por usuário (`SEARCH_RATE`).
+```json
+// response
+{ "results": [ { "restaurant": { /* card */ }, "score": 1.42, "match": 87 } ] }
+```
+`match` = similaridade semântica (0-100) — é o "% match" da UI. `score` só
+ordena.
 
 ---
 
@@ -151,8 +175,9 @@ Pipeline: query → embedding (Ollama) → kNN no pgvector → reranking pondera
 (semântico + preferências do usuário + reviews) → top N.
 
 Erros que o front deve tratar:
-- **503** — serviço de busca indisponível (shinzou fora / Ollama fora). Mostrar
-  fallback amigável; o restante do app continua funcionando.
+- **503** — serviço de busca indisponível (shinzou/Ollama fora ou erro
+  interno). Mostrar fallback amigável; o restante do app continua funcionando.
+- **429** — muitas buscas seguidas.
 - **400** — `query` vazio.
 
 ---
@@ -176,8 +201,9 @@ write no update) no perfil.
   somem das listagens normais. Usuário deletado não consegue mais logar.
 - **Datas:** ISO 8601, timezone `America/Sao_Paulo`.
 - **Erros de validação:** DRF padrão → `{ "campo": ["mensagem"] }` (400).
-- **CORS (dev):** liberado só pra `localhost`/`127.0.0.1` nas portas
-  3000-3002 e 5000-5002.
+- **CORS:** dev libera `localhost`/`127.0.0.1` nas portas 3000-3002 e
+  5000-5002; produção usa `CORS_ALLOWED_ORIGINS`.
+- **Health:** `GET /api/health/` → `{"status": "ok", "db": true}`.
 - **Idempotência:** favoritar duas vezes não duplica (201 na 1ª, 200 depois).
 - **202 Accepted:** rotas admin de recompute/reindex são assíncronas — retornam
   `task_id`; o trabalho roda no worker Celery em background.

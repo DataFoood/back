@@ -51,7 +51,7 @@ services:
 
   web:
     build: .
-    command: uv run python manage.py runserver 0.0.0.0:8000
+    command: sh -c "uv run python manage.py migrate --noinput && uv run python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./dtfd:/app/dtfd
     ports:
