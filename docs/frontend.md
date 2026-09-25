@@ -1,5 +1,8 @@
 # Frontend — estrutura de páginas
 
+> **Status (2026-09):** implementado no repo `front-end` (Next.js 16). Rotas e
+> contratos atuais em [../API_MAP.md](../API_MAP.md).
+
 Sugestão de telas, features por tela, rotas consumidas e nível de acesso.
 Contrato exato das rotas: [../API_MAP.md](../API_MAP.md) + Swagger
 (`/api/docs/`). Acesso: 🌐 público · 🔑 logado · 👤 dono · 🛡️ admin.

@@ -100,6 +100,17 @@ minutos. As subidas seguintes são rápidas.
 | Swagger (docs) | http://localhost:8000/api/docs/ |
 | Django Admin | http://localhost:8000/admin/ |
 
+Para ter dados de exemplo (9 restaurantes de Marília/SP + contas
+`cliente@datafood.demo` / `dono@datafood.demo`, senha `Demo@12345`):
+
+```bash
+docker compose exec -w /app/dtfd web uv run python manage.py seed_demo --demo-users
+docker compose exec -w /app/dtfd web uv run python manage.py reindex_restaurants
+```
+
+O frontend (repo `front-end`) roda em http://localhost:3000 com
+`NEXT_PUBLIC_API_URL=http://localhost:8000`.
+
 Para criar um usuário admin:
 
 ```bash
@@ -117,6 +128,19 @@ docker compose down -v         # apaga os volumes (zera o banco)
 > terminal WSL — todos funcionam.
 
 ---
+
+## Produção
+
+`docker-compose.prod.yml` sobe tudo (API com gunicorn, shinzou, workers,
+Postgres, Redis, Ollama, frontend) atrás do Caddy com HTTPS automático.
+Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
+
+## Testes
+
+```bash
+cd dtfd && uv run python manage.py test      # precisa de Postgres + Redis
+uv run pytest shinzou/tests
+```
 
 ## Coleção de testes (API)
 

@@ -27,6 +27,8 @@ class ComputePreferencesTest(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = make_user()
+        cls.user.allow_info = True  # recompute só com consentimento LGPD
+        cls.user.save(update_fields=["allow_info"])
         cls.italiana = Cuisine.objects.get(name="Italiana")
         cls.japonesa = Cuisine.objects.get(name="Japonesa")
         cls.r_view = make_restaurant("Trattoria", [cls.italiana])
@@ -42,6 +44,13 @@ class ComputePreferencesTest(APITestCase):
         ita = UserCuisineAffinity.objects.get(user=self.user, cuisine=self.italiana)
         self.assertEqual(1.0, jap.score, "top affinity normaliza pra 1.0")
         self.assertEqual(0.4, ita.score, "2/5 = 0.4")
+
+    def test_without_consent_nothing_is_derived(self):
+        self.user.allow_info = False
+        self.user.save(update_fields=["allow_info"])
+        RestaurantFavorite.objects.create(user=self.user, restaurant=self.r_fav)
+        compute_user_preferences(self.user)
+        self.assertFalse(UserCuisineAffinity.objects.filter(user=self.user).exists())
 
     def test_no_interactions_no_affinity(self):
         compute_user_preferences(self.user)
@@ -81,6 +90,13 @@ class PreferencesEndpointTest(APITestCase):
     def test_get_unauthenticated(self):
         response = self.client.get("/api/preferences/")
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+    def test_edit_score_out_of_range_rejected(self):
+        self.client.force_authenticate(self.user)
+        url = f"/api/preferences/cuisines/{self.affinity.pk}/"
+        response = self.client.patch(url, data={"score": 7}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertIn("score", response.json())
 
     def test_edit_sets_manual(self):
         self.client.force_authenticate(self.user)

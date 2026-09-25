@@ -3,6 +3,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     LoginView,
+    LogoutView,
+    MeView,
     UserChangePasswordView,
     UserConsentView,
     UserCreateView,
@@ -17,6 +19,8 @@ urlpatterns = [
     path("register/", UserCreateView.as_view(), name="user-register"),
     path("login/", LoginView.as_view(), name="user-login"),
     path("login/refresh/", TokenRefreshView.as_view(), name="user-login-refresh"),
+    path("logout/", LogoutView.as_view(), name="user-logout"),
+    path("me/", MeView.as_view(), name="user-me"),
     path("removed/", UserRemovedListView.as_view(), name="user-removed"),
     path("consent/", UserConsentView.as_view(), name="user-consent"),
     path("<int:pk>/", UserDetailView.as_view(), name="user-detail"),

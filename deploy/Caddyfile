@@ -1,0 +1,10 @@
+# HTTPS automático (Let's Encrypt) para os dois domínios.
+{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy frontend:3000
+}
+
+{$API_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy web:8000
+}

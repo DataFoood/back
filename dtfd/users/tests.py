@@ -42,10 +42,32 @@ class UserRegisterTest(APITestCase):
             self.assertEqual(status.HTTP_201_CREATED, response.status_code)
 
         returned = response.json()
-        expected_fields = {"id", "name", "email", "cpf", "phone"}
-        self.assertSetEqual(expected_fields, set(returned.keys()),
-                            "Register deve retornar id/name/email/cpf/phone e nunca a senha")
-        self.assertNotIn("password", returned)
+        self.assertSetEqual({"access", "refresh", "user"}, set(returned.keys()),
+                            "Register já autentica: tokens + usuário")
+        self.assertEqual("lucira@dtfd.com", returned["user"]["email"])
+        self.assertEqual("customer", returned["user"]["role"])
+        self.assertNotIn("password", returned["user"])
+
+    def test_register_as_owner_with_consent(self):
+        data = {**self.valid, "account_type": "owner", "allow_info": True}
+        response = self.client.post(self.URL, data=data, format="json")
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        user = User.objects.get(email="lucira@dtfd.com")
+        self.assertEqual("owner", user.role)
+        self.assertTrue(user.allow_info)
+
+    def test_register_cannot_choose_admin_account_type(self):
+        data = {**self.valid, "account_type": "admin"}
+        response = self.client.post(self.URL, data=data, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertIn("account_type", response.json())
+
+    def test_register_tokens_are_usable(self):
+        response = self.client.post(self.URL, data=self.valid, format="json")
+        access = response.json()["access"]
+        me = self.client.get("/api/users/me/", HTTP_AUTHORIZATION=f"Bearer {access}")
+        self.assertEqual(status.HTTP_200_OK, me.status_code)
+        self.assertEqual("lucira@dtfd.com", me.json()["email"])
 
     def test_register_persists_and_hashes_password(self):
         self.client.post(self.URL, data=self.valid, format="json")
@@ -118,8 +140,10 @@ class UserLoginTest(APITestCase):
         with self.subTest():
             self.assertEqual(status.HTTP_200_OK, response.status_code)
 
-        self.assertSetEqual({"access", "refresh"}, set(response.json().keys()),
-                            "Login deve retornar access e refresh")
+        body = response.json()
+        self.assertSetEqual({"access", "refresh", "user"}, set(body.keys()),
+                            "Login deve retornar access, refresh e o usuário")
+        self.assertEqual("lucira@dtfd.com", body["user"]["email"])
 
     # --- unhappy ---
     def test_login_without_required_fields(self):
@@ -166,10 +190,14 @@ class UserDetailTest(APITestCase):
         self.assertSetEqual(expected, set(response.json().keys()))
 
     def test_detail_another_user_readable(self):
-        # leitura de outro usuario e permitida (SAFE method)
+        # leitura de outro usuario e permitida (SAFE method), mas só o
+        # perfil público — CPF/email/telefone nunca vazam (LGPD)
         self.client.force_authenticate(self.other)
         response = self.client.get(self.URL)
-        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        with self.subTest():
+            self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertSetEqual({"id", "name", "avatar_url", "banner_url", "created_at"},
+                            set(response.json().keys()))
 
     # --- unhappy ---
     def test_detail_unauthenticated(self):
@@ -465,3 +493,81 @@ class LoginThrottleTest(APITestCase):
             self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
         blocked = self.client.post(self.URL, data=data, format="json")
         self.assertEqual(status.HTTP_429_TOO_MANY_REQUESTS, blocked.status_code)
+
+
+# ---------------------------------------------------------------------------
+# ME / LOGOUT
+# ---------------------------------------------------------------------------
+class UserMeTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = make_user(email="me@dtfd.com")
+        cls.URL = "/api/users/me/"
+
+    def test_me_returns_full_profile(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.get(self.URL)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual("me@dtfd.com", response.json()["email"])
+        self.assertIn("allow_info", response.json())
+
+    def test_me_patch_updates_and_returns_profile(self):
+        self.client.force_authenticate(self.user)
+        response = self.client.patch(self.URL, data={"name": "Novo Nome"}, format="json")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual("Novo Nome", response.json()["name"])
+        self.assertIn("role", response.json())
+
+    def test_me_cannot_escalate(self):
+        self.client.force_authenticate(self.user)
+        self.client.patch(self.URL, data={"role": "admin", "is_staff": True}, format="json")
+        self.user.refresh_from_db()
+        self.assertEqual("customer", self.user.role)
+        self.assertFalse(self.user.is_staff)
+
+    def test_me_unauthenticated(self):
+        response = self.client.get(self.URL)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+
+class UserLogoutTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = make_user(email="out@dtfd.com")
+
+    def setUp(self):
+        cache.clear()
+
+    def test_logout_blacklists_refresh(self):
+        login = self.client.post(
+            "/api/users/login/",
+            data={"email": "out@dtfd.com", "password": "SenhaForte123"},
+            format="json",
+        ).json()
+        response = self.client.post("/api/users/logout/", data={"refresh": login["refresh"]}, format="json")
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+        refresh = self.client.post(
+            "/api/users/login/refresh/", data={"refresh": login["refresh"]}, format="json"
+        )
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, refresh.status_code,
+                         "refresh na blacklist não renova mais")
+
+    def test_refresh_rotates(self):
+        login = self.client.post(
+            "/api/users/login/",
+            data={"email": "out@dtfd.com", "password": "SenhaForte123"},
+            format="json",
+        ).json()
+        response = self.client.post(
+            "/api/users/login/refresh/", data={"refresh": login["refresh"]}, format="json"
+        )
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertIn("refresh", response.json(), "rotação devolve novo refresh")
+
+    def test_logout_invalid_token_is_idempotent(self):
+        response = self.client.post("/api/users/logout/", data={"refresh": "lixo"}, format="json")
+        self.assertEqual(status.HTTP_204_NO_CONTENT, response.status_code)
+
+    def test_logout_requires_refresh(self):
+        response = self.client.post("/api/users/logout/", data={}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)

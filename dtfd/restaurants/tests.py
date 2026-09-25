@@ -112,6 +112,7 @@ class RestaurantReadTest(APITestCase):
             "price_ranges", "business_models", "physical_formats",
             "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",
             "has_reservation", "accepts_vale_refeicao", "accepts_online_order",
+            "address", "is_open_now", "is_favorited",
         }
         self.assertSetEqual(expected, set(response.json().keys()))
 
@@ -225,6 +226,20 @@ class ReviewTest(APITestCase):
         self.assertEqual(1, self.restaurant.total_reviews)
 
     # --- unhappy ---
+    def test_owner_cannot_review_own_restaurant(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.post(self.URL, data={"rating": 5}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual(0, RestaurantReview.objects.filter(restaurant=self.restaurant).count())
+
+    def test_one_review_per_user(self):
+        self.client.force_authenticate(self.critic)
+        self.client.post(self.URL, data={"rating": 5}, format="json")
+        response = self.client.post(self.URL, data={"rating": 1}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.restaurant.refresh_from_db()
+        self.assertEqual(1, self.restaurant.total_reviews)
+
     def test_create_review_unauthenticated(self):
         response = self.client.post(self.URL, data={"rating": 4}, format="json")
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
@@ -508,6 +523,8 @@ class ViewTrackingTest(APITestCase):
 
     def test_view_increments_count(self):
         from .models import RestaurantView
+        self.user.allow_info = True
+        self.user.save(update_fields=["allow_info"])
         self.client.force_authenticate(self.user)
         self.client.get(self.URL)
         self.client.get(self.URL)
@@ -519,6 +536,20 @@ class ViewTrackingTest(APITestCase):
         from .models import RestaurantView
         self.client.get(self.URL)
         self.assertFalse(RestaurantView.objects.filter(restaurant=self.restaurant).exists())
+
+    def test_view_without_consent_not_tracked_per_user(self):
+        from .models import RestaurantView
+        self.client.force_authenticate(self.user)  # allow_info=False (default)
+        self.client.get(self.URL)
+        self.assertFalse(RestaurantView.objects.filter(user=self.user).exists(),
+                         "LGPD: sem consentimento não guarda sinal por usuário")
+
+    def test_aggregate_view_count_always_increments(self):
+        self.client.get(self.URL)
+        self.client.force_authenticate(self.user)
+        self.client.get(self.URL)
+        self.restaurant.refresh_from_db()
+        self.assertEqual(2, self.restaurant.view_count)
 
 
 # ---------------------------------------------------------------------------
@@ -547,8 +578,14 @@ class SearchBridgeTest(APITestCase):
 
     @patch("restaurants.views.httpx.post")
     def test_proxies_to_shinzou(self, mock_post):
+        r1 = make_restaurant(self.user, name="Feijoada da Vila", slug="feijoada-da-vila")
+        r2 = make_restaurant(self.user, name="Bistro", slug="bistro")
         fake = MagicMock()
-        fake.json.return_value = {"results": [{"restaurant": {"id": 1}, "score": 1.2}]}
+        fake.json.return_value = {"results": [
+            {"restaurant": {"id": r2.pk}, "score": 1.2, "similarity": 0.873},
+            {"restaurant": {"id": r1.pk}, "score": 0.4, "similarity": 0.61},
+            {"restaurant": {"id": 999999}, "score": 0.1, "similarity": 0.2},
+        ]}
         fake.status_code = 200
         mock_post.return_value = fake
 
@@ -557,11 +594,26 @@ class SearchBridgeTest(APITestCase):
 
         with self.subTest():
             self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual({"results": [{"restaurant": {"id": 1}, "score": 1.2}]}, response.json())
+        results = response.json()["results"]
+        self.assertEqual([r2.pk, r1.pk], [row["restaurant"]["id"] for row in results],
+                         "mantém a ordem do ranking e descarta ids inexistentes")
+        self.assertEqual(87, results[0]["match"])
+        self.assertEqual("bistro", results[0]["restaurant"]["slug"])
+        self.assertIn("cuisines", results[0]["restaurant"])
         # passou o service token pro shinzou
         _, kwargs = mock_post.call_args
         self.assertIn("X-Service-Token", kwargs["headers"])
         self.assertEqual("feijoada", kwargs["json"]["query"])
+
+    @patch("restaurants.views.httpx.post")
+    def test_shinzou_error_becomes_503(self, mock_post):
+        fake = MagicMock()
+        fake.status_code = 500
+        fake.json.side_effect = ValueError("not json")
+        mock_post.return_value = fake
+        self.client.force_authenticate(self.user)
+        response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
+        self.assertEqual(status.HTTP_503_SERVICE_UNAVAILABLE, response.status_code)
 
     @patch("restaurants.views.httpx.post", side_effect=httpx.RequestError("down"))
     def test_shinzou_unavailable(self, _mock):
@@ -605,3 +657,221 @@ class SearchBridgeTest(APITestCase):
         self.client.force_authenticate(self.user)
         self.client.post(self.URL, data={"query": "nao loga"}, format="json")
         self.assertFalse(SearchHistory.objects.filter(query="nao loga").exists())
+
+
+# ---------------------------------------------------------------------------
+# ROTAS PRO FRONT — filtros, mine, slug, taxonomias, stats, cards
+# ---------------------------------------------------------------------------
+class RestaurantListFiltersTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from address.models import Address
+        from django.contrib.contenttypes.models import ContentType
+
+        cls.owner = make_user()
+        cls.italiana = Cuisine.objects.get(name="Italiana")
+        cls.japonesa = Cuisine.objects.get(name="Japonesa")
+        cls.cantina = make_restaurant(cls.owner, name="Cantina", description="massas frescas")
+        cls.cantina.cuisines.set([cls.italiana])
+        cls.sushi = make_restaurant(cls.owner, name="Sushi Bar", slug="sushi-bar", has_delivery=True)
+        cls.sushi.cuisines.set([cls.japonesa])
+        cls.sushi.average_rating = Decimal("4.80")
+        cls.sushi.save(update_fields=["average_rating"])
+        Address.objects.create(
+            content_type=ContentType.objects.get_for_model(Restaurant),
+            object_id=cls.sushi.pk, street="Rua A", city="Marília", state="SP",
+            zipcode="17500000", neighborhood="Centro", is_default=True,
+        )
+
+    def _names(self, query=""):
+        response = self.client.get(f"/api/restaurants/{query}")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        return [r["name"] for r in response.json()["results"]]
+
+    def test_list_returns_cards(self):
+        response = self.client.get("/api/restaurants/")
+        card = response.json()["results"][0]
+        self.assertIn("cuisines", card)
+        self.assertIn("address", card)
+        self.assertNotIn("reviews", card, "lista usa card enxuto")
+
+    def test_filter_by_text(self):
+        self.assertEqual(["Cantina"], self._names("?q=massas"))
+
+    def test_filter_by_cuisine(self):
+        self.assertEqual(["Sushi Bar"], self._names(f"?cuisine={self.japonesa.pk}"))
+
+    def test_filter_by_city_case_insensitive(self):
+        self.assertEqual(["Sushi Bar"], self._names("?city=marília"))
+
+    def test_filter_delivery(self):
+        self.assertEqual(["Sushi Bar"], self._names("?delivery=true"))
+
+    def test_ordering_by_rating(self):
+        self.assertEqual("Sushi Bar", self._names("?ordering=rating")[0])
+
+    def test_card_exposes_public_address(self):
+        response = self.client.get("/api/restaurants/?city=Marília")
+        address = response.json()["results"][0]["address"]
+        self.assertEqual("Centro", address["neighborhood"])
+
+    def test_is_favorited_for_logged_user(self):
+        from .models import RestaurantFavorite
+        RestaurantFavorite.objects.create(user=self.owner, restaurant=self.sushi)
+        self.client.force_authenticate(self.owner)
+        results = self.client.get("/api/restaurants/?ordering=name").json()["results"]
+        flags = {r["name"]: r["is_favorited"] for r in results}
+        self.assertEqual({"Cantina": False, "Sushi Bar": True}, flags)
+
+
+class RestaurantExtraRoutesTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = make_user()
+        cls.other = make_user(email="other@dtfd.com")
+        cls.restaurant = make_restaurant(cls.owner, name="Cantina", slug="cantina")
+        make_restaurant(cls.other, name="Outro", slug="outro")
+
+    def test_by_slug(self):
+        response = self.client.get("/api/restaurants/by-slug/cantina/")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(self.restaurant.pk, response.json()["id"])
+
+    def test_by_slug_not_found(self):
+        response = self.client.get("/api/restaurants/by-slug/nao-existe/")
+        self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
+
+    def test_mine_only_own(self):
+        self.client.force_authenticate(self.owner)
+        response = self.client.get("/api/restaurants/mine/")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(["Cantina"], [r["name"] for r in response.json()])
+
+    def test_mine_unauthenticated(self):
+        response = self.client.get("/api/restaurants/mine/")
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+    def test_taxonomies_public(self):
+        response = self.client.get("/api/restaurants/taxonomies/")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        body = response.json()
+        self.assertEqual(
+            {"cuisines", "ambients", "service_models", "target_audiences",
+             "price_ranges", "business_models", "physical_formats"},
+            set(body.keys()),
+        )
+        self.assertTrue(any(c["name"] == "Italiana" for c in body["cuisines"]))
+
+    def test_create_promotes_customer_to_owner(self):
+        customer = make_user(email="cliente@dtfd.com")
+        self.client.force_authenticate(customer)
+        response = self.client.post("/api/restaurants/", data={"name": "Novo"}, format="json")
+        self.assertEqual(status.HTTP_201_CREATED, response.status_code)
+        customer.refresh_from_db()
+        self.assertEqual("owner", customer.role)
+
+    def test_patch_returns_read_representation(self):
+        self.client.force_authenticate(self.owner)
+        cuisine = Cuisine.objects.get(name="Italiana")
+        response = self.client.patch(
+            f"/api/restaurants/{self.restaurant.pk}/",
+            data={"cuisines": [cuisine.pk]}, format="json",
+        )
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual([{"id": cuisine.pk, "name": "Italiana"}], response.json()["cuisines"])
+
+    def test_review_exposes_first_name_only(self):
+        self.other.name = "Maria Silva"
+        self.other.save(update_fields=["name"])
+        RestaurantReview.objects.create(restaurant=self.restaurant, author=self.other, rating=5)
+        response = self.client.get(f"/api/restaurants/{self.restaurant.pk}/reviews/")
+        self.assertEqual("Maria", response.json()[0]["author_name"])
+
+
+class OpenNowTest(APITestCase):
+    def test_open_now_logic(self):
+        import datetime as dt
+
+        from django.utils import timezone
+
+        from .serializers import is_open_now
+
+        owner = make_user()
+        r = make_restaurant(owner)
+        self.assertIsNone(is_open_now(r), "sem horários -> desconhecido")
+
+        tz = timezone.get_current_timezone()
+        monday_noon = dt.datetime(2026, 9, 21, 12, 0, tzinfo=tz)  # segunda
+        BusinessHour.objects.create(
+            restaurant=r, day_week=0, meta_interval={"almoco": ["11:00:00", "15:00:00"]}
+        )
+        self.assertTrue(is_open_now(r, monday_noon))
+        self.assertFalse(is_open_now(r, monday_noon.replace(hour=16)))
+        self.assertFalse(is_open_now(r, monday_noon + dt.timedelta(days=1)), "terça sem horário")
+
+
+class RestaurantStatsTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        from .models import RestaurantFavorite
+
+        cls.owner = make_user()
+        cls.other = make_user(email="other@dtfd.com")
+        cls.restaurant = make_restaurant(cls.owner)
+        RestaurantFavorite.objects.create(user=cls.other, restaurant=cls.restaurant)
+        RestaurantReview.objects.create(restaurant=cls.restaurant, author=cls.other, rating=4)
+        cls.restaurant.recalc_rating()
+        cls.URL = f"/api/restaurants/{cls.restaurant.pk}/stats/"
+
+    def test_owner_sees_stats(self):
+        self.client.get(f"/api/restaurants/{self.restaurant.pk}/")  # 1 view anônima
+        self.client.force_authenticate(self.owner)
+        response = self.client.get(self.URL)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        body = response.json()
+        self.assertEqual(1, body["view_count"])
+        self.assertEqual(1, body["favorites_total"])
+        self.assertEqual(1, body["favorites_window"])
+        self.assertEqual(1, body["reviews_total"])
+        self.assertEqual(1, body["rating_distribution"]["4"])
+        self.assertEqual(30, len(body["series"]))
+        self.assertEqual(1, sum(day["favorites"] for day in body["series"]))
+
+    def test_non_owner_forbidden(self):
+        self.client.force_authenticate(self.other)
+        response = self.client.get(self.URL)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    def test_unauthenticated(self):
+        response = self.client.get(self.URL)
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+
+class FavoriteListShapeTest(APITestCase):
+    def test_favorites_include_restaurant_card(self):
+        from .models import RestaurantFavorite
+        user = make_user()
+        restaurant = make_restaurant(user, name="Cantina")
+        RestaurantFavorite.objects.create(user=user, restaurant=restaurant)
+        self.client.force_authenticate(user)
+        response = self.client.get("/api/restaurants/favorites/")
+        card = response.json()[0]["restaurant"]
+        self.assertEqual("Cantina", card["name"])
+        self.assertTrue(card["is_favorited"])
+
+
+class SeedDemoTest(APITestCase):
+    def test_seed_is_idempotent_and_complete(self):
+        from django.core.management import call_command
+
+        from .models import RestaurantItem
+
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        call_command("seed_demo", stdout=open("/dev/null", "w"))
+        self.assertEqual(9, Restaurant.objects.count())
+        self.assertEqual(27, RestaurantItem.objects.count())
+        response = self.client.get("/api/restaurants/by-slug/dallas-restaurante/")
+        body = response.json()
+        self.assertEqual("Centro", body["address"]["neighborhood"])
+        self.assertEqual(7, len(body["business_hours"]))
+        self.assertTrue(body["price_ranges"])

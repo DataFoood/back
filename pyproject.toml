@@ -16,6 +16,8 @@ dependencies = [
     "psycopg2-binary>=2.9",
     "redis>=8.0.1",
     "uvicorn>=0.49.0",
+    "gunicorn>=26.2.0",
+    "whitenoise>=6.12.0",
 ]
 
 [dependency-groups]

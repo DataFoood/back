@@ -25,9 +25,13 @@ Segurança é requisito não-negociável do projeto. Resumo dos controles.
 `ScopedRateThrottle` nas rotas sensíveis: **login 5/min**, **register 10/h** por
 IP. Contador no Redis (compartilhado entre workers).
 
-## CORS (dev)
-Liberado só pra `localhost`/`127.0.0.1` nas portas 3000-3002 e 5000-5002.
-Produção endurece (origens reais).
+## Sessão (JWT)
+Access de 15 min, refresh de 7 dias com **rotação** (cada refresh gera outro e
+o antigo vai pra blacklist). `POST /api/users/logout/` invalida o refresh.
+
+## CORS / CSRF
+Dev (`DEBUG=True`, env vazio): `localhost`/`127.0.0.1` nas portas 3000-3002 e
+5000-5002. Produção: `CORS_ALLOWED_ORIGINS` e `CSRF_TRUSTED_ORIGINS` por env.
 
 ## Soft delete e bloqueio de login
 DELETE de usuário seta `deleted_at` **e** `is_active=False` → login barrado na
@@ -42,10 +46,16 @@ Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
 
 ## LGPD — consentimento (`allow_info`)
 - Campo booleano no usuário, **default false**.
-- SearchHistory e sinais de preferência só são gravados com `allow_info=true`.
+- SearchHistory, `RestaurantView` por usuário e o recompute de afinidades só
+  acontecem com `allow_info=true`. O dono vê apenas `view_count` (contador
+  anônimo) e agregados.
+- Perfil de terceiros (`GET /users/<id>/`) só expõe nome/avatar/banner.
+- Reviews públicas mostram só o primeiro nome do autor.
 - Sem consentimento: a busca funciona, mas nada é persistido sobre ela.
 - Toggle: `PATCH /api/users/consent/` `{allow_info: bool}` (só o próprio user).
 
 ## Endurecimento de produção
-Bloco gated em `if not DEBUG` no `settings.py` (HTTPS redirect, cookies
-seguros, HSTS, etc.). `DEBUG=False` em produção é obrigatório.
+`DEBUG` é **False por padrão**. Sem `DEBUG=True`, a aplicação se recusa a
+subir sem `SECRET_KEY` e `SHINZOU_SERVICE_TOKEN`. Bloco `if not DEBUG` no
+`settings.py`: HTTPS redirect (exceto `/api/health/`), cookies seguros, HSTS,
+`SECURE_PROXY_SSL_HEADER`. `manage.py check --deploy` passa sem avisos.

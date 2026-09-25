@@ -28,7 +28,10 @@ def _interaction_weights(user) -> dict[int, float]:
 
 def compute_user_preferences(user) -> None:
     """Recalcula as afinidades do usuário a partir das interações.
-    Linhas com is_manual=True são preservadas (controle do usuário)."""
+    Linhas com is_manual=True são preservadas (controle do usuário).
+    Sem consentimento LGPD (allow_info) nada é derivado do comportamento."""
+    if not user.allow_info:
+        return
     weights = _interaction_weights(user)
     if not weights:
         return

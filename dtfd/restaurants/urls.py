@@ -9,6 +9,9 @@ from .views import (
     ImageListCreateView,
     ItemDetailView,
     ItemListCreateView,
+    MyRestaurantsView,
+    RestaurantStatsView,
+    TaxonomiesView,
     RestaurantDetailView,
     RestaurantListCreateView,
     ReviewDetailView,
@@ -18,7 +21,11 @@ from .views import (
 urlpatterns = [
     path("", RestaurantListCreateView.as_view(), name="restaurant-list-create"),
     path("favorites/", FavoriteListView.as_view(), name="favorite-list"),
+    path("mine/", MyRestaurantsView.as_view(), name="restaurant-mine"),
+    path("taxonomies/", TaxonomiesView.as_view(), name="restaurant-taxonomies"),
+    path("by-slug/<slug:slug>/", RestaurantDetailView.as_view(), name="restaurant-by-slug"),
     path("<int:pk>/", RestaurantDetailView.as_view(), name="restaurant-detail"),
+    path("<int:pk>/stats/", RestaurantStatsView.as_view(), name="restaurant-stats"),
     path("<int:pk>/favorite/", FavoriteToggleView.as_view(), name="restaurant-favorite"),
 
     path("<int:restaurant_pk>/items/",

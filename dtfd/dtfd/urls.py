@@ -15,6 +15,8 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.db import connection
+from django.http import JsonResponse
 from django.urls import path, include
 from drf_spectacular.views import (
     SpectacularAPIView,
@@ -23,7 +25,18 @@ from drf_spectacular.views import (
 
 from restaurants.views import SearchView
 
+def health(request):
+    """GET /api/health/ — liveness + banco (usado pelo healthcheck do compose)."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:
+        return JsonResponse({"status": "error", "db": False}, status=503)
+    return JsonResponse({"status": "ok", "db": True})
+
+
 urlpatterns = [
+    path("api/health/", health, name="health"),
     path("admin/", admin.site.urls),
     # OpenAPI schema + Swagger UI (handoff frontend)
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
