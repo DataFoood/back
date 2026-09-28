@@ -89,8 +89,14 @@ class RecomputeView(APIView):
     )
     def post(self, request):
         user_id = request.data.get("user_id")
-        if user_id:
-            task = recompute_one.delay(int(user_id))
+        if user_id is not None:
+            try:
+                user_id = int(user_id)
+            except (TypeError, ValueError):
+                return Response(
+                    {"user_id": "Deve ser um inteiro."}, status=status.HTTP_400_BAD_REQUEST
+                )
+            task = recompute_one.delay(user_id)
         else:
             task = recompute_all.delay()
         return Response(

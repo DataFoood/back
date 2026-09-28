@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from typing import cast
 
 import httpx
 from django.conf import settings
@@ -25,6 +26,7 @@ from rest_framework.serializers import ValidationError
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from users.models import User
 from utils.pagination import DefaultPagination
 
 from .models import (
@@ -213,8 +215,12 @@ class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()  # uma vez só
-        # métrica agregada/anônima do dono: todo acesso conta
-        Restaurant.objects.filter(pk=instance.pk).update(view_count=F("view_count") + 1)
+        # métrica agregada/anônima do dono: todo acesso conta, menos o do
+        # próprio dono/admin (o painel recarrega o detalhe a cada edição)
+        user = cast(User, request.user)
+        is_manager = user.is_authenticated and (instance.owner_id == user.pk or user.is_staff)
+        if not is_manager:
+            Restaurant.objects.filter(pk=instance.pk).update(view_count=F("view_count") + 1)
         # sinal de preferência por usuário: só com consentimento LGPD
         if request.user.is_authenticated and request.user.allow_info:
             view, created = RestaurantView.objects.get_or_create(
@@ -392,6 +398,15 @@ class BusinessHourListCreateView(ListCreateAPIView):
         day = serializer.validated_data["day_week"]
         if BusinessHour.objects.filter(restaurant=restaurant, day_week=day).exists():
             raise ValidationError({"day_week": "Já existe horário para este dia."})
+        # a UniqueConstraint (restaurant, day_week) inclui linhas soft-deleted:
+        # recriar um dia removido reaproveita a linha em vez de dar IntegrityError
+        removed = BusinessHour.all_objects.filter(
+            restaurant=restaurant, day_week=day, deleted_at__isnull=False
+        ).first()
+        if removed is not None:
+            serializer.instance = removed
+            serializer.save(restaurant=restaurant, deleted_at=None)
+            return
         serializer.save(restaurant=restaurant)
 
 
@@ -510,6 +525,9 @@ class SearchView(APIView):
 
     # quantas buscas manter por usuário (retenção)
     HISTORY_KEEP = 50
+    # entrada: query vira embedding (custo) -> tamanho limitado; limit 1..50
+    MAX_QUERY_LENGTH = 500
+    MAX_LIMIT = 50
 
     @extend_schema(
         request=inline_serializer(
@@ -538,11 +556,25 @@ class SearchView(APIView):
         "similaridade semântica).",
     )
     def post(self, request):
-        query = (request.data.get("query") or "").strip()
-        if not query:
-            return Response({"query": "Campo obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
+        query = request.data.get("query")
+        if not isinstance(query, str) or not query.strip():
+            return Response({"query": "Campo obrigatório (texto)."}, status=status.HTTP_400_BAD_REQUEST)
+        query = query.strip()
+        if len(query) > self.MAX_QUERY_LENGTH:
+            return Response(
+                {"query": f"Máximo de {self.MAX_QUERY_LENGTH} caracteres."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        limit = request.data.get("limit")
+        if limit is not None and (
+            isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= self.MAX_LIMIT
+        ):
+            return Response(
+                {"limit": f"Inteiro entre 1 e {self.MAX_LIMIT}."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        payload = {"query": query, "limit": request.data.get("limit")}
+        payload = {"query": query, "limit": limit}
         headers = {
             "X-Service-Token": settings.SHINZOU_SERVICE_TOKEN,
             "Authorization": request.headers.get("Authorization", ""),

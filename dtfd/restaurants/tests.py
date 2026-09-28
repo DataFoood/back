@@ -545,8 +545,9 @@ class ViewTrackingTest(APITestCase):
                          "LGPD: sem consentimento não guarda sinal por usuário")
 
     def test_aggregate_view_count_always_increments(self):
+        visitor = make_user(email="visitor@dtfd.com", name="Visitor")
         self.client.get(self.URL)
-        self.client.force_authenticate(self.user)
+        self.client.force_authenticate(visitor)
         self.client.get(self.URL)
         self.restaurant.refresh_from_db()
         self.assertEqual(2, self.restaurant.view_count)
