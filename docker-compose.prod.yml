@@ -58,6 +58,9 @@ services:
 
   web:
     <<: *app
+    environment:
+      # 1 proxy confiável (Caddy) -> throttle usa o IP real do cliente
+      NUM_PROXIES: ${NUM_PROXIES:-1}
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&

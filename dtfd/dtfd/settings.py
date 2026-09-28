@@ -121,6 +121,11 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # Quantos proxies confiáveis ficam na frente da API. O throttle identifica
+    # o cliente pelo IP: sem isso o DRF usa o X-Forwarded-For inteiro (que o
+    # cliente forja) e o limite de login vira bypassável. 0 = sem proxy (usa
+    # REMOTE_ADDR); 1 = atrás do Caddy (docker-compose.prod.yml).
+    "NUM_PROXIES": int(os.environ.get("NUM_PROXIES", "0")),
     # rates por escopo, aplicados via ScopedRateThrottle nas views sensiveis
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
