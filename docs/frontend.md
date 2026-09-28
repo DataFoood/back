@@ -1,7 +1,10 @@
 # Frontend — estrutura de páginas
 
 > **Status (2026-09):** implementado no repo `front-end` (Next.js 16). Rotas e
-> contratos atuais em [../API_MAP.md](../API_MAP.md).
+> contratos atuais em [../API_MAP.md](../API_MAP.md). Padrões do front
+> (estilização por tokens, estado global por contexts, sessão JWT, decisões)
+> ficam no próprio repo: `front-end/docs/`. Navegação E2E que exercita esta
+> API: `front-end/final-tests/`.
 
 Sugestão de telas, features por tela, rotas consumidas e nível de acesso.
 Contrato exato das rotas: [../API_MAP.md](../API_MAP.md) + Swagger

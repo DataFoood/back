@@ -19,6 +19,11 @@ com busca semântica (RAG).
 
 ## Frontend
 - [[frontend]] — páginas recomendadas, features, rotas, acesso.
+  Padrões do front em `front-end/docs/`.
+
+## Testes finais
+- `../final-tests/README.md` — como rodar o stack sem Docker, regressões de
+  segurança, smoke contra a API e os achados da rodada de 2026-09-28.
 
 ## Planejamento
 - [[backlog]] — próximos passos.

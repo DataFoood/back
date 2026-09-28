@@ -139,8 +139,13 @@ Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 
 ```bash
 cd dtfd && uv run python manage.py test      # precisa de Postgres + Redis
-uv run pytest shinzou/tests
+uv run python manage.py test ../final-tests  # regressões de segurança (rodada final)
+cd .. && uv run pytest shinzou/tests
+uv run python final-tests/api_smoke.py       # smoke contra a API rodando
 ```
+
+Como subir tudo sem Docker (Ollama falso incluído), os achados da rodada de
+testes finais e o passo a passo: [`final-tests/README.md`](final-tests/README.md).
 
 ## Coleção de testes (API)
 

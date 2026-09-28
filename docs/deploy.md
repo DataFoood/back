@@ -37,6 +37,8 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec web python m
 - [ ] `ALLOWED_HOSTS` = domínio da API (+ `web`, usado internamente).
 - [ ] `CORS_ALLOWED_ORIGINS` = `https://<APP_DOMAIN>`; `CSRF_TRUSTED_ORIGINS` = `https://<API_DOMAIN>`.
 - [ ] `DB_PASS` forte; backups do volume `postgres_data` (ex.: `pg_dump` diário).
+- [ ] `NUM_PROXIES=1` (o compose já define para o `web`): sem isso o rate
+      limit de login usa um header forjável ou junta todo mundo num IP só.
 - [ ] `https://<API_DOMAIN>/api/health/` responde `{"status": "ok"}`.
 - [ ] O frontend é buildado com `NEXT_PUBLIC_API_URL=https://<API_DOMAIN>`
       (o compose já passa isso); mudou o domínio → rebuild do `frontend`.
@@ -49,4 +51,6 @@ git pull && docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ## Sem Caddy (proxy/TLS próprio)
 Remova o serviço `caddy`, publique `web:8000` e `frontend:3000` para o seu
 proxy e mantenha o cabeçalho `X-Forwarded-Proto: https`. Se o proxy já
-redireciona http→https, `SECURE_SSL_REDIRECT=False`.
+redireciona http→https, `SECURE_SSL_REDIRECT=False`. Ajuste `NUM_PROXIES`
+para o número de proxies confiáveis entre o cliente e o Django, e garanta
+que o proxy **sobrescreve** (não repassa) o `X-Forwarded-For` recebido.

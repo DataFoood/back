@@ -47,8 +47,33 @@ máquina. Detalhe dos papéis em [[architecture]].
 | `SHINZOU_SERVICE_TOKEN` | (segredo) | auth de serviço |
 | `SECRET_KEY` | (segredo) | compartilhada Django↔shinzou (JWT) |
 | `ALLOWED_HOSTS` | separado por `;` | parsing custom no settings |
+| `NUM_PROXIES` | 0 (dev) / 1 (prod, Caddy) | quantos proxies confiáveis ficam na frente — define o IP usado no rate limit ([[security]]) |
+| `SEARCH_RATE` | 30/min | throttle da busca por usuário |
 
 `.env.example` lista o conjunto. Segredos reais ficam fora do git.
+
+## Rodar sem Docker (testes locais)
+Útil em máquina/CI sem Docker. Precisa de Postgres 16 com a extensão
+`vector` (pacote `postgresql-16-pgvector`) e Redis.
+
+```bash
+# banco
+sudo -u postgres psql -c "CREATE USER dtfd WITH PASSWORD 'dtfd' SUPERUSER;"
+sudo -u postgres createdb -O dtfd dtfd
+# env apontando para localhost
+export DEBUG=True DB_HOST=localhost REDIS_URL=redis://localhost:6379/1 \
+  CELERY_BROKER_URL=redis://localhost:6379/0 CELERY_RESULT_BACKEND=redis://localhost:6379/2 \
+  OLLAMA_URL=http://localhost:11434 SHINZOU_URL=http://localhost:8001 CELERY_TASK_ALWAYS_EAGER=True
+uv sync
+uv run python final-tests/fake_ollama.py &          # embeddings determinísticos, sem GPU
+uv run uvicorn shinzou.main:app --port 8001 &
+cd dtfd && uv run python manage.py migrate && uv run python manage.py seed_demo --demo-users \
+  && uv run python manage.py reindex_restaurants && uv run python manage.py runserver
+```
+
+O `fake_ollama.py` responde `POST /api/embeddings` com bag-of-words hasheado
+(768 dims): não é semântico, mas exercita o pipeline inteiro (reindex →
+pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 
 ## Cron (Celery beat)
 | Task | Agenda |
@@ -58,6 +83,10 @@ máquina. Detalhe dos papéis em [[architecture]].
 
 ## Qualidade
 - Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (138 Django) + `shinzou/tests` (6).
-- Tipos: `pyright` (config em `pyrightconfig.json`) — 0 erros.
-- Schema: `manage.py spectacular --validate` — 0 erros.
+  (178 Django) + `shinzou/tests` (6).
+- Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
+- Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (67 checagens).
+- Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**
+  de stubs (`request.user` tipado como `_User`/`AnonymousUser`, mixins sem
+  base tipada); nenhum novo. Zerar é item do [[backlog]].
+- Schema: `manage.py spectacular --validate --fail-on-warn` — 0 erros.

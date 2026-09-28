@@ -25,6 +25,16 @@ Considerações ao construir:
 - Performance: evitar N+1; agregar no banco; cachear o que for caro.
 
 ## Pendências técnicas conhecidas (deferidas)
+- **Pyright:** 20 erros pré-existentes de tipagem (`request.user` como
+  `_User`, mixins de view sem base tipada). Resolver com `cast(User, ...)`
+  ou um `Request` tipado do projeto.
+- **`view_count` anônimo é inflável:** qualquer GET soma. Se virar métrica
+  de negócio, deduplicar por janela (ex.: IP+restaurante por hora no Redis).
+- **Access token após revogação:** troca de senha/encerrar conta derrubam os
+  refresh, mas um access já emitido vale até 15 min. Se precisar corte
+  imediato, checar `password_changed_at` vs `iat` no `JWTAuthentication`.
+- **Nested routes de restaurante removido:** `GET .../<id>/items|reviews/`
+  ainda lista filhos de restaurante soft-deleted (escrita já dá 404).
 - **Overture Maps:** pipeline de import (campo `confidence`, choice de origin
   "overture", import DuckDB/GeoParquet, mapeamento de categorias, cron mensal,
   confidence → peso de ranking). Groundwork já existe (`origin`/`external_id`).

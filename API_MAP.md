@@ -27,13 +27,18 @@ Login por **email** (não tem username). Fluxo:
 3. Mandar o access em todo request protegido:
    `Authorization: Bearer <access>` (vida: 15 min).
 4. `POST /api/users/login/refresh/` — `{refresh}` → `{access, refresh}`. O
-   refresh **rotaciona**: guarde o novo; o antigo é invalidado.
+   refresh **rotaciona**: guarde o novo; o antigo é invalidado. Conta
+   removida/inativa → 401.
 5. `POST /api/users/logout/` — `{refresh}` → 204 (refresh vai pra blacklist).
 6. `GET /api/users/me/` — usuário logado (restaurar sessão).
 
 **Segurança:** o backend distingue access de refresh (claim `token_type`). Um
 refresh token **não** é aceito como credencial em rotas protegidas → 401. Não
 tente reusar refresh como access.
+
+**Revogação:** trocar a senha ou encerrar a conta invalida **todos** os
+refresh tokens do usuário (todas as sessões). A troca de senha responde com
+um par novo — guarde-o, senão a sessão atual cai no próximo refresh.
 
 No Postman, rode **"Login (salva tokens)"** primeiro: um script guarda
 `access_token`/`refresh_token` nas variáveis da coleção automaticamente.
@@ -83,7 +88,7 @@ preferences; searches) **não** paginam — retornam array direto.
 | GET | `<id>/` | 🔑 | completo p/ dono/admin; terceiros veem só `id, name, avatar_url, banner_url, created_at` |
 | PATCH | `<id>/` | 👤 | edita perfil |
 | PATCH | `consent/` | 🔑 | **LGPD** — liga/desliga `allow_info` do próprio user |
-| POST | `<id>/change-password/` | 🔑 (só o próprio) | exige senha atual |
+| POST | `<id>/change-password/` | 🔑 (só o próprio) | exige senha atual; revoga todas as sessões e responde `{detail, access, refresh}` |
 | DELETE | `<id>/delete/` | 👤 | soft delete (bloqueia login na hora) |
 
 ### Restaurants — `/api/restaurants/`
@@ -153,7 +158,8 @@ recompute automático **para de sobrescrever** aquela linha.
 // request
 { "query": "lugar tranquilo pra comer feijoada", "limit": 15 }
 ```
-Body: `query` obrigatório; `limit` opcional (default 15, **máx 50**).
+Body: `query` obrigatório (texto, **máx 500 caracteres**); `limit` opcional
+(inteiro 1..50, default 15). Fora disso → 400.
 Rate limit: 30/min por usuário (`SEARCH_RATE`).
 ```json
 // response
@@ -178,7 +184,7 @@ Erros que o front deve tratar:
 - **503** — serviço de busca indisponível (shinzou/Ollama fora ou erro
   interno). Mostrar fallback amigável; o restante do app continua funcionando.
 - **429** — muitas buscas seguidas.
-- **400** — `query` vazio.
+- **400** — `query` vazio/não-texto/> 500 caracteres ou `limit` inválido.
 
 ---
 

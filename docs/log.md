@@ -2,6 +2,25 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-09-28 — testes finais de integração e segurança
+- Stack inteiro testado sem Docker (Postgres+pgvector, Redis, shinzou e um
+  Ollama falso determinístico) com o front em navegação E2E. Ver
+  `final-tests/README.md`.
+- Corrigido: troca de senha e encerrar conta agora **revogam todos os
+  refresh tokens** (troca de senha devolve par novo); refresh de conta
+  removida dava **500** → 401; **rate limit de login burlável** trocando o
+  `X-Forwarded-For` → `NUM_PROXIES` (0 dev / 1 prod); busca com `query`
+  não-texto dava 500 e `limit` inválido dava 503 → 400 (query ≤ 500
+  caracteres, limit 1..50); recriar horário de dia removido dava 500
+  (UniqueConstraint com linha soft-deleted) → reaproveita a linha; dono
+  abrindo o próprio restaurante inflava `view_count` → não conta mais;
+  recompute com `user_id` não numérico → 400.
+- Contrato alterado: `POST /users/<id>/change-password/` responde
+  `{detail, access, refresh}`.
+- `final-tests/`: 16 testes de regressão (falham no código antigo, passam
+  no novo), smoke de 67 checagens contra a API rodando, `fake_ollama.py`.
+- 178 testes Django + 16 regressões + 6 do shinzou verdes.
+
 ## 2026-09-24
 - Integração com o frontend (repo `front-end`, Next.js 16): mocks removidos,
   todas as telas falando com esta API.
