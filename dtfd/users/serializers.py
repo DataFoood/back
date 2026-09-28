@@ -1,6 +1,14 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import (
+    TokenObtainPairSerializer,
+    TokenRefreshSerializer,
+)
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import User
@@ -10,6 +18,19 @@ def tokens_for(user):
     """Par access/refresh pro usuário (mesmo formato do login)."""
     refresh = RefreshToken.for_user(user)
     return {"access": str(refresh.access_token), "refresh": str(refresh)}
+
+
+def revoke_refresh_tokens(user):
+    """Blacklista todos os refresh tokens emitidos pro usuário (encerra as
+    sessões em todos os dispositivos). Access tokens já emitidos expiram
+    sozinhos (vida curta)."""
+    outstanding = OutstandingToken.objects.filter(user=user).exclude(
+        blacklistedtoken__isnull=False
+    )
+    BlacklistedToken.objects.bulk_create(
+        [BlacklistedToken(token=token) for token in outstanding],
+        ignore_conflicts=True,
+    )
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
@@ -71,6 +92,20 @@ class LoginSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         data["user"] = UserDetailSerializer(self.user).data
         return data
+
+
+class RefreshSerializer(TokenRefreshSerializer):
+    """Refresh que trata conta removida como credencial inválida (401).
+    O serializer do simplejwt usa User.objects.get(): como o manager filtra
+    soft-deleted, a conta removida estourava DoesNotExist -> 500."""
+
+    def validate(self, attrs):
+        try:
+            return super().validate(attrs)
+        except User.DoesNotExist:
+            raise AuthenticationFailed(
+                "Conta inexistente ou removida.", code="no_active_account"
+            )
 
 
 class UserChangePasswordSerializer(serializers.Serializer):

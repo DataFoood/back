@@ -13,18 +13,20 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from utils.pagination import DefaultPagination
 
 from .models import User
 from .permissions import IsOwnerOrAdmin
 from .serializers import (
     LoginSerializer,
+    RefreshSerializer,
     UserChangePasswordSerializer,
     UserCreateSerializer,
     UserDetailSerializer,
     UserPublicSerializer,
     UserUpdateSerializer,
+    revoke_refresh_tokens,
     tokens_for,
 )
 
@@ -48,6 +50,12 @@ class LoginView(TokenObtainPairView):
     @extend_schema(responses=AuthResponse)
     def post(self, request, *args, **kwargs):
         return super().post(request, *args, **kwargs)
+
+
+class RefreshView(TokenRefreshView):
+    """POST /api/users/login/refresh/ — {refresh} -> {access, refresh}.
+    Rotaciona o refresh; conta removida/inativa -> 401."""
+    serializer_class = RefreshSerializer
 
 
 class LogoutView(APIView):
@@ -145,6 +153,8 @@ class UserDeleteView(DestroyAPIView):
         instance.deleted_at = timezone.now()
         instance.is_active = False  # bloqueia login imediatamente
         instance.save(update_fields=["deleted_at", "is_active"])
+        # derruba as sessões abertas em outros dispositivos
+        revoke_refresh_tokens(instance)
 
 
 class UserRemovedListView(ListAPIView):
@@ -183,13 +193,20 @@ class UserConsentView(APIView):
 
 
 class UserChangePasswordView(APIView):
-    """POST /users/<pk>/change-password/ — só o próprio usuário"""
+    """POST /users/<pk>/change-password/ — só o próprio usuário.
+    Trocar a senha encerra todas as sessões (refresh tokens antigos vão pra
+    blacklist) e devolve um par novo pra sessão atual continuar."""
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
         request=UserChangePasswordSerializer,
         responses=inline_serializer(
-            "ChangePasswordResponse", {"detail": serializers.CharField()}
+            "ChangePasswordResponse",
+            {
+                "detail": serializers.CharField(),
+                "access": serializers.CharField(),
+                "refresh": serializers.CharField(),
+            },
         ),
     )
     def post(self, request, pk):
@@ -198,5 +215,6 @@ class UserChangePasswordView(APIView):
 
         serializer = UserChangePasswordSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"detail": "Senha alterada com sucesso."})
+        user = serializer.save()
+        revoke_refresh_tokens(user)
+        return Response({"detail": "Senha alterada com sucesso.", **tokens_for(user)})
