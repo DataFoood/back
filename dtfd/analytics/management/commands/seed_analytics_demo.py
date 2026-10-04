@@ -42,9 +42,15 @@ class Command(BaseCommand):
         if not places:
             raise CommandError("Nenhum restaurante geocodificado. Rode geocode_addresses antes.")
 
+        def nearest_hood(lat, lon):
+            """Bairro do restaurante geocodificado mais perto da célula."""
+            _, _, _, hood, city = min(places, key=lambda p: (p[1] - lat) ** 2 + (p[2] - lon) ** 2)
+            return f"{hood}, {city}"
+
         today = timezone.localdate()
+        cells: dict[tuple, GeoCell] = {}
         rows: dict[tuple, int] = {}
-        for rid, lat, lon, hood, city in places:
+        for rid, lat, lon, _hood, _city in places:
             popularity = rnd.uniform(0.6, 1.6)
             for d in range(days):
                 day = today - timedelta(days=d)
@@ -56,7 +62,13 @@ class Command(BaseCommand):
                         spread = 0.04 if rnd.random() < 0.85 else 0.12
                         clat = (lat + Decimal(str(rnd.gauss(0, spread / 2)))).quantize(CELL)
                         clon = (lon + Decimal(str(rnd.gauss(0, spread / 2)))).quantize(CELL)
-                        cell, _ = GeoCell.objects.get_or_create(lat=clat, lon=clon, defaults={"label": f"{hood}, {city}"})
+                        cell = cells.get((clat, clon))
+                        if cell is None:
+                            cell, _ = GeoCell.objects.get_or_create(lat=clat, lon=clon)
+                            if not cell.label:  # nome real (reverse geocoding) não é sobrescrito
+                                cell.label = nearest_hood(clat, clon)
+                                cell.save(update_fields=["label"])
+                            cells[(clat, clon)] = cell
                         located = rnd.random() < 0.7
                         age = rnd.choices(list(AGE_WEIGHT), weights=list(AGE_WEIGHT.values()))[0]
                         events = [AccessStat.Event.IMPRESSION] * 3
