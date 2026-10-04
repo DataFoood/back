@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "restaurants",
     "preferences",
     "embeddings",
+    "analytics",
 ]
 
 MIDDLEWARE = [
@@ -182,7 +183,7 @@ LOGGING = {
     "disable_existing_loggers": False,
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
-    # httpx loga toda request em INFO (embeddings/shinzou) — ruído
+    # httpx loga toda request em INFO (embeddings) — ruído
     "loggers": {"httpx": {"level": "WARNING"}},
 }
 
@@ -193,11 +194,11 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))
 
-# --- Ponte B2B com o shinzou (busca semântica) -----------------------------
-SHINZOU_URL = os.environ.get("SHINZOU_URL", "http://shinzou:8001")
-SHINZOU_SERVICE_TOKEN = os.environ.get("SHINZOU_SERVICE_TOKEN", "dev-service-token")
-if not DEBUG and SHINZOU_SERVICE_TOKEN in ("", "dev-service-token"):
-    raise ImproperlyConfigured("Defina SHINZOU_SERVICE_TOKEN em produção.")
+# --- Geocoding (Nominatim / OpenStreetMap) ----------------------------------
+# Política de uso: máx 1 req/s e User-Agent identificando a aplicação.
+# https://operations.osmfoundation.org/policies/nominatim/
+NOMINATIM_URL = os.environ.get("NOMINATIM_URL", "https://nominatim.openstreetmap.org")
+NOMINATIM_USER_AGENT = os.environ.get("NOMINATIM_USER_AGENT", "DataFood/0.1 (projeto academico)")
 
 # --- Celery (indexação assíncrona; reusa o Redis) --------------------------
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/0")

@@ -47,10 +47,6 @@ class PhysicalFormat(BaseLookup):
 
 
 class Restaurant(AbstractAudit):
-    class Origin(models.TextChoices):
-        MANUAL = "manual", "Manual (site)"
-        GOOGLE = "google", "Google Places"
-
     # owner: adicionado (não estava na lista). Nullable pra não travar criação.
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -87,11 +83,6 @@ class Restaurant(AbstractAudit):
     price_ranges = models.ManyToManyField(PriceRange, blank=True, related_name="restaurants")
     business_models = models.ManyToManyField(BusinessModel, blank=True, related_name="restaurants")
     physical_formats = models.ManyToManyField(PhysicalFormat, blank=True, related_name="restaurants")
-
-    # Fonte do cadastro (manual no site, importado do Google, etc).
-    origin = models.CharField(max_length=20, choices=Origin.choices, default=Origin.MANUAL)
-    # id externo (ex: place_id do Google) pra evitar duplicata em reimportacao.
-    external_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     # Reindexacao: True = precisa (re)gerar embedding. Marcado por signal
     # quando dado relevante muda; ingestao processa os stale e reseta.

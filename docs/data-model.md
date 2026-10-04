@@ -29,7 +29,7 @@ Address ──(GenericForeignKey)──▶ Restaurant | User
 ## User
 Login por email (`USERNAME_FIELD="email"`, sem username). Campos próprios: name,
 cpf (unique, null), phone, birthday, gender, avatar/banner_url, role
-(customer/owner/admin), level, **`allow_info`** (LGPD, default false). Detalhe
+(customer/owner/admin), **`allow_info`** (LGPD, default false). Detalhe
 do consentimento em [[security]].
 
 ## Restaurant
@@ -41,7 +41,6 @@ Núcleo. Além de dados cadastrais:
   has_drive_thru, has_reservation, accepts_vale_refeicao, accepts_online_order.
 - `average_rating` / `total_reviews`: **cache denormalizado** das reviews
   (recalculado por `recalc_rating()`; não é fonte da verdade).
-- `origin` (manual/google) + `external_id` (unique) — anti-duplicata em import.
 - `embedding_stale` (default true) — marca pendência de reindexação.
 
 ## Sinais de preferência (alimentam a busca)
@@ -58,7 +57,7 @@ o recompute não as sobrescreve. Ver [[search-rag]].
 ## Embeddings
 `RestaurantEmbedding` (OneToOne) guarda o vetor (`VectorField(768)`), o
 documento-texto usado e o modelo. Distância por operador `<=>` (cosseno) do
-pgvector. O shinzou lê essa tabela direto.
+pgvector. `embeddings/search.py` faz o kNN nessa tabela via ORM (`CosineDistance`).
 
 ## Taxonomias (lookup)
 Todas herdam `BaseLookup` (name unique, ordenado). Semeadas via data migration;

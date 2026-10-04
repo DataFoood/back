@@ -1,3 +1,5 @@
+from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -117,11 +119,62 @@ class UserCreateView(CreateAPIView):
 
 
 class UserListView(ListAPIView):
-    """GET /users/ — listagem só para admin"""
-    queryset = User.objects.all()
+    """GET /users/ — listagem só para admin. ?q= (nome/email) ?role="""
     serializer_class = UserDetailSerializer
     permission_classes = [IsAdminUser]
     pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        qs = User.objects.all()
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(Q(name__icontains=q) | Q(email__icontains=q))
+        role = self.request.query_params.get("role")
+        if role in User.Role.values:
+            qs = qs.filter(role=role)
+        return qs
+
+
+class AdminUserUpdateView(APIView):
+    """PATCH /api/users/<pk>/admin/ — admin muda papel e ativa/desativa a conta.
+    role=admin dá is_staff (e tira, ao rebaixar). is_active=true reativa conta
+    removida; false bloqueia e derruba as sessões. Admin não altera a si mesmo."""
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        request=inline_serializer(
+            "AdminUserUpdate",
+            {
+                "role": serializers.ChoiceField(choices=User.Role.choices, required=False),
+                "is_active": serializers.BooleanField(required=False),
+            },
+        ),
+        responses=UserDetailSerializer,
+    )
+    def patch(self, request, pk):
+        user = get_object_or_404(User.all_objects, pk=pk)
+        if user.pk == request.user.pk:
+            return Response({"detail": "Você não pode alterar a própria conta aqui."},
+                            status=status.HTTP_400_BAD_REQUEST)
+        role, active = request.data.get("role"), request.data.get("is_active")
+        if role is not None and role not in User.Role.values:
+            return Response({"role": f"Um de {User.Role.values}."}, status=status.HTTP_400_BAD_REQUEST)
+        if active is not None and not isinstance(active, bool):
+            return Response({"is_active": "Booleano."}, status=status.HTTP_400_BAD_REQUEST)
+
+        fields = []
+        if role is not None:
+            user.role, user.is_staff = role, role == User.Role.ADMIN
+            fields += ["role", "is_staff"]
+        if active is not None:
+            user.is_active = active
+            user.deleted_at = None if active else user.deleted_at
+            fields += ["is_active", "deleted_at"]
+        if fields:
+            user.save(update_fields=fields)
+        if active is False:
+            revoke_refresh_tokens(user)
+        return Response(UserDetailSerializer(user).data)
 
 
 class UserDetailView(RetrieveUpdateAPIView):

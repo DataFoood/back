@@ -1,6 +1,7 @@
 from django.urls import path
 
 from .views import (
+    AdminUserUpdateView,
     LoginView,
     LogoutView,
     MeView,
@@ -25,5 +26,6 @@ urlpatterns = [
     path("consent/", UserConsentView.as_view(), name="user-consent"),
     path("<int:pk>/", UserDetailView.as_view(), name="user-detail"),
     path("<int:pk>/delete/", UserDeleteView.as_view(), name="user-delete"),
+    path("<int:pk>/admin/", AdminUserUpdateView.as_view(), name="user-admin-update"),
     path("<int:pk>/change-password/", UserChangePasswordView.as_view(), name="user-change-password"),
 ]

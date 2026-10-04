@@ -15,7 +15,7 @@ Direções (a refinar):
   favoritar, distribuição de reviews, posição típica nos rankings de busca.
 - **Insight de audiência:** perfis de afinidade agregados (respeitando LGPD —
   só dados de quem consentiu; preferir agregação/anonimização).
-- **Métricas de busca:** qualidade do ranking, taxa de 503, latência do shinzou.
+- **Métricas de busca:** qualidade do ranking, taxa de 503, latência da busca.
 - **Mapa/geográfico:** densidade de restaurantes e demanda por região (usa
   Address lat/long).
 
@@ -37,9 +37,10 @@ Considerações ao construir:
   ainda lista filhos de restaurante soft-deleted (escrita já dá 404).
 - **Overture Maps:** pipeline de import (campo `confidence`, choice de origin
   "overture", import DuckDB/GeoParquet, mapeamento de categorias, cron mensal,
-  confidence → peso de ranking). Groundwork já existe (`origin`/`external_id`).
+  confidence → peso de ranking). Precisa recriar `origin`/`external_id` no
+  Restaurant (removidos em 2026-10 por não terem uso).
 - **SearchHistory → ranking:** hoje só armazenado/exposto; ainda não realimenta
-  o reranking do shinzou. Ver [[search-rag]].
+  o reranking (`embeddings/search.py`). Ver [[search-rag]].
 - **Fallback de embedding:** quando o Ollama cai, a busca responde 503; falta
   estratégia de fallback (cache de query, índice texto, degradação graciosa).
 

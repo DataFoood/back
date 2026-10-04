@@ -5,7 +5,7 @@ com busca semântica (RAG).
 
 ## Base — estrutura do projeto
 - [[architecture]] — visão geral, serviços, fluxo de request.
-- [[modules]] — apps Django + serviço shinzou, arquivo por arquivo.
+- [[modules]] — apps Django, arquivo por arquivo.
 - [[data-model]] — modelos, relações, soft delete, sinais.
 - [[search-rag]] — pipeline de busca semântica fim-a-fim.
 - [[security]] — JWT, permissões, CORS, throttle, LGPD.

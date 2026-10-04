@@ -9,7 +9,6 @@
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-6.0-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![DRF](https://img.shields.io/badge/DRF-3.17-A30000?style=flat-square&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![pgvector](https://img.shields.io/badge/pgvector-vetorial-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Redis](https://img.shields.io/badge/Redis-broker%2Fcache-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
@@ -65,7 +64,7 @@ cd dtfd_bke
 
 ### 2. Criar o `.env`
 
-A partir do template. Edite os segredos (`SECRET_KEY`, `SHINZOU_SERVICE_TOKEN`)
+A partir do template. Edite o segredo (`SECRET_KEY`)
 antes de subir.
 
 **Linux / macOS:**
@@ -131,7 +130,7 @@ docker compose down -v         # apaga os volumes (zera o banco)
 
 ## Produção
 
-`docker-compose.prod.yml` sobe tudo (API com gunicorn, shinzou, workers,
+`docker-compose.prod.yml` sobe tudo (API com gunicorn, workers,
 Postgres, Redis, Ollama, frontend) atrás do Caddy com HTTPS automático.
 Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 
@@ -140,8 +139,7 @@ Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 ```bash
 cd dtfd && uv run python manage.py test      # precisa de Postgres + Redis
 uv run python manage.py test ../final-tests  # regressões de segurança (rodada final)
-cd .. && uv run pytest shinzou/tests
-uv run python final-tests/api_smoke.py       # smoke contra a API rodando
+cd .. && uv run python final-tests/api_smoke.py       # smoke contra a API rodando
 ```
 
 Como subir tudo sem Docker (Ollama falso incluído), os achados da rodada de

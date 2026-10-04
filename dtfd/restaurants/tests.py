@@ -554,14 +554,14 @@ class ViewTrackingTest(APITestCase):
 
 
 # ---------------------------------------------------------------------------
-# SEARCH — ponte pro shinzou
+# SEARCH — view (o pipeline em si é testado em embeddings/tests.py)
 # ---------------------------------------------------------------------------
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import httpx
 
 
-class SearchBridgeTest(APITestCase):
+class SearchViewTest(APITestCase):
     @classmethod
     def setUpTestData(cls):
         cls.user = make_user()
@@ -577,18 +577,11 @@ class SearchBridgeTest(APITestCase):
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
         self.assertIn("query", response.json())
 
-    @patch("restaurants.views.httpx.post")
-    def test_proxies_to_shinzou(self, mock_post):
+    @patch("restaurants.views.search")
+    def test_hydrates_ranked_cards(self, mock_search):
         r1 = make_restaurant(self.user, name="Feijoada da Vila", slug="feijoada-da-vila")
         r2 = make_restaurant(self.user, name="Bistro", slug="bistro")
-        fake = MagicMock()
-        fake.json.return_value = {"results": [
-            {"restaurant": {"id": r2.pk}, "score": 1.2, "similarity": 0.873},
-            {"restaurant": {"id": r1.pk}, "score": 0.4, "similarity": 0.61},
-            {"restaurant": {"id": 999999}, "score": 0.1, "similarity": 0.2},
-        ]}
-        fake.status_code = 200
-        mock_post.return_value = fake
+        mock_search.return_value = [(r2.pk, 1.2, 0.873, 2.345), (r1.pk, 0.4, 0.61, None), (999999, 0.1, 0.2, None)]
 
         self.client.force_authenticate(self.user)
         response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
@@ -601,38 +594,47 @@ class SearchBridgeTest(APITestCase):
         self.assertEqual(87, results[0]["match"])
         self.assertEqual("bistro", results[0]["restaurant"]["slug"])
         self.assertIn("cuisines", results[0]["restaurant"])
-        # passou o service token pro shinzou
-        _, kwargs = mock_post.call_args
-        self.assertIn("X-Service-Token", kwargs["headers"])
-        self.assertEqual("feijoada", kwargs["json"]["query"])
+        self.assertEqual(2.3, results[0]["distance_km"])
+        self.assertIsNone(results[1]["distance_km"])
+        self.assertEqual((self.user, "feijoada", 15, None, None), mock_search.call_args.args,
+                         "limit default 15, sem localização")
+        from analytics.models import PlatformDailyStat, RestaurantDailyStat
+        self.assertEqual({r1.pk: 1, r2.pk: 1}, dict(
+            RestaurantDailyStat.objects.values_list("restaurant_id", "search_impressions")
+        ), "impressão só pros exibidos")
+        self.assertEqual(1, PlatformDailyStat.objects.get().searches)
 
-    @patch("restaurants.views.httpx.post")
-    def test_shinzou_error_becomes_503(self, mock_post):
-        fake = MagicMock()
-        fake.status_code = 500
-        fake.json.side_effect = ValueError("not json")
-        mock_post.return_value = fake
+    @patch("restaurants.views.search", return_value=[])
+    def test_passes_user_location(self, mock_search):
+        self.client.force_authenticate(self.user)
+        response = self.client.post(
+            self.URL, data={"query": "pizza", "lat": -22.21, "lon": -49.94, "radius_km": 5}, format="json"
+        )
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(((-22.21, -49.94), 5.0), mock_search.call_args.args[3:])
+
+    @patch("restaurants.views.search", return_value=[])
+    def test_invalid_location_is_400(self, mock_search):
+        self.client.force_authenticate(self.user)
+        for extra in ({"lat": -22.2}, {"lat": "x", "lon": 1}, {"lat": 91, "lon": 0},
+                      {"radius_km": 5}, {"lat": 0, "lon": 0, "radius_km": 0},
+                      {"lat": 0, "lon": 0, "radius_km": 500}, {"lat": True, "lon": 0}):
+            with self.subTest(extra=extra):
+                response = self.client.post(self.URL, data={"query": "pizza", **extra}, format="json")
+                self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        mock_search.assert_not_called()
+
+    @patch("restaurants.views.search", side_effect=httpx.ConnectError("down"))
+    def test_ollama_unavailable(self, _mock):
+        from analytics.models import PlatformDailyStat
         self.client.force_authenticate(self.user)
         response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
         self.assertEqual(status.HTTP_503_SERVICE_UNAVAILABLE, response.status_code)
+        self.assertEqual(1, PlatformDailyStat.objects.get().search_failures)
 
-    @patch("restaurants.views.httpx.post", side_effect=httpx.RequestError("down"))
-    def test_shinzou_unavailable(self, _mock):
-        self.client.force_authenticate(self.user)
-        response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
-        self.assertEqual(status.HTTP_503_SERVICE_UNAVAILABLE, response.status_code)
-
-    @staticmethod
-    def _ok_mock():
-        fake = MagicMock()
-        fake.json.return_value = {"results": []}
-        fake.status_code = 200
-        return fake
-
-    @patch("restaurants.views.httpx.post")
-    def test_logged_when_consented(self, mock_post):
+    @patch("restaurants.views.search", return_value=[])
+    def test_logged_when_consented(self, _mock):
         from preferences.models import SearchHistory
-        mock_post.return_value = self._ok_mock()
         self.user.allow_info = True
         self.user.save(update_fields=["allow_info"])
         self.client.force_authenticate(self.user)
@@ -641,16 +643,15 @@ class SearchBridgeTest(APITestCase):
             SearchHistory.objects.filter(user=self.user, query="feijoada mineira").exists()
         )
 
-    @patch("restaurants.views.httpx.post")
-    def test_not_logged_without_consent(self, mock_post):
+    @patch("restaurants.views.search", return_value=[])
+    def test_not_logged_without_consent(self, _mock):
         from preferences.models import SearchHistory
-        mock_post.return_value = self._ok_mock()
         # allow_info=False (default) -> LGPD: não guarda
         self.client.force_authenticate(self.user)
         self.client.post(self.URL, data={"query": "sem consentimento"}, format="json")
         self.assertFalse(SearchHistory.objects.filter(query="sem consentimento").exists())
 
-    @patch("restaurants.views.httpx.post", side_effect=httpx.RequestError("down"))
+    @patch("restaurants.views.search", side_effect=httpx.ConnectError("down"))
     def test_failed_search_not_logged(self, _mock):
         from preferences.models import SearchHistory
         self.user.allow_info = True
@@ -876,3 +877,82 @@ class SeedDemoTest(APITestCase):
         self.assertEqual("Centro", body["address"]["neighborhood"])
         self.assertEqual(7, len(body["business_hours"]))
         self.assertTrue(body["price_ranges"])
+
+
+# ---------------------------------------------------------------------------
+# MODERAÇÃO (admin)
+# ---------------------------------------------------------------------------
+class RestaurantModerationTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = make_admin()
+        cls.owner = make_user()
+        cls.live = make_restaurant(cls.owner, name="Ativo", slug="ativo")
+        cls.gone = make_restaurant(cls.owner, name="Removido", slug="removido")
+        cls.gone.soft_delete()
+
+    def setUp(self):
+        self.client.force_authenticate(self.admin)
+
+    def test_list_includes_removed(self):
+        rows = self.client.get("/api/restaurants/admin/").json()["results"]
+        self.assertEqual({"Ativo", "Removido"}, {r["name"] for r in rows})
+        rows = self.client.get("/api/restaurants/admin/?deleted=true").json()["results"]
+        self.assertEqual(["Removido"], [r["name"] for r in rows])
+        self.assertEqual("owner@dtfd.com", rows[0]["owner_email"])
+        self.assertFalse(rows[0]["has_coordinates"])
+
+    def test_restore(self):
+        response = self.client.post(f"/api/restaurants/{self.gone.pk}/restore/")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertTrue(Restaurant.objects.filter(pk=self.gone.pk).exists())
+
+    @patch("restaurants.views.reindex_one.delay")
+    def test_reindex_enqueues(self, delay):
+        delay.return_value.id = "t-1"
+        response = self.client.post(f"/api/restaurants/{self.live.pk}/reindex/")
+        self.assertEqual((status.HTTP_202_ACCEPTED, "t-1"), (response.status_code, response.json()["task_id"]))
+        delay.assert_called_once_with(self.live.pk)
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.owner)
+        for method, url in (("get", "/api/restaurants/admin/"),
+                            ("post", f"/api/restaurants/{self.gone.pk}/restore/"),
+                            ("post", f"/api/restaurants/{self.live.pk}/reindex/")):
+            with self.subTest(url=url):
+                self.assertEqual(status.HTTP_403_FORBIDDEN, getattr(self.client, method)(url).status_code)
+
+
+class RestaurantNearbyListTest(APITestCase):
+    """?lat=&lon= no catálogo: distância por card, ordenação e raio."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from address.models import Address
+        from django.contrib.contenttypes.models import ContentType
+
+        owner = make_user()
+        ct = ContentType.objects.get_for_model(Restaurant)
+        cls.center = make_restaurant(owner, name="Centro", slug="centro")
+        cls.south = make_restaurant(owner, name="Sul", slug="sul")
+        cls.unknown = make_restaurant(owner, name="Sem geo", slug="sem-geo")
+        for r, lat in ((cls.center, "-22.2139"), (cls.south, "-22.3000")):
+            Address.objects.create(content_type=ct, object_id=r.pk, street="Rua", city="Marília",
+                                   state="SP", zipcode="17500-000", latitude=lat,
+                                   longitude="-49.9458", is_default=True)
+
+    def get(self, **params):
+        return self.client.get("/api/restaurants/", {"lat": -22.2139, "lon": -49.9458, **params}).json()
+
+    def test_ordering_by_distance_puts_unknown_last(self):
+        rows = self.get(ordering="distance")["results"]
+        self.assertEqual(["Centro", "Sul", "Sem geo"], [r["name"] for r in rows])
+        self.assertEqual([0.0, 9.6, None], [r["distance_km"] for r in rows])
+
+    def test_radius(self):
+        data = self.get(radius_km=5)
+        self.assertEqual((1, ["Centro"]), (data["count"], [r["name"] for r in data["results"]]))
+
+    def test_without_location_distance_is_null(self):
+        rows = self.client.get("/api/restaurants/").json()["results"]
+        self.assertTrue(all(r["distance_km"] is None for r in rows))

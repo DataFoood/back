@@ -64,9 +64,9 @@ class UserDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "name", "email", "cpf", "phone", "birthday", "gender",
-                  "avatar_url", "banner_url", "role", "level", "allow_info",
+                  "avatar_url", "banner_url", "role", "allow_info",
                   "is_active", "created_at"]
-        read_only_fields = ["id", "role", "level", "is_active", "created_at"]
+        read_only_fields = ["id", "role", "is_active", "created_at"]
 
 
 class UserPublicSerializer(serializers.ModelSerializer):

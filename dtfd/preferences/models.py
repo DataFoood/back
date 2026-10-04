@@ -23,8 +23,8 @@ class SearchHistory(models.Model):
 
 
 class RankingWeight(models.Model):
-    """Pesos do ranking do shinzou, gerenciáveis (admin). key-value pra
-    adicionar sinais sem migration. Lido pelo shinzou via SQL."""
+    """Pesos do ranking da busca, gerenciáveis (admin). key-value pra
+    adicionar sinais sem migration. Lido por embeddings.search."""
 
     key = models.CharField(max_length=50, unique=True)
     weight = models.FloatField(default=1.0)

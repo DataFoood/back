@@ -20,6 +20,6 @@ relacionadas. O [[log]] é o registro cronológico do que mudou.
 ## Camadas (como no padrão)
 | Camada | Aqui |
 |---|---|
-| Raw sources | o código (`dtfd/`, `shinzou/`) — imutável, fonte |
+| Raw sources | o código (`dtfd/`) — imutável, fonte |
 | Wiki | esta pasta `docs/` — derivada, mantida |
 | Schema | este README — define estrutura e workflow da wiki |

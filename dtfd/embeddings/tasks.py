@@ -12,14 +12,8 @@ def reindex_stale() -> int:
 
 
 @shared_task
-def reindex_all_task() -> int:
-    """Reindexa TODOS (ex: troca de modelo de embedding)."""
-    return reindex_all(only_stale=False)
-
-
-@shared_task
 def reindex_one(restaurant_id: int) -> bool:
-    """Reindexa um restaurante específico."""
+    """Reindexa um restaurante agora (moderação no painel admin)."""
     restaurant = Restaurant.objects.filter(pk=restaurant_id).first()
     if restaurant is None:
         return False

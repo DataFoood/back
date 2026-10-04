@@ -5,7 +5,7 @@ Segurança é requisito não-negociável do projeto. Resumo dos controles.
 ## Autenticação — JWT (simplejwt, HS256)
 - Login por email → `{access, refresh}`.
 - Rotas protegidas exigem `Authorization: Bearer <access>`.
-- **token_type:** o backend (e o shinzou) checam a claim `token_type`. Um
+- **token_type:** o backend checa a claim `token_type`. Um
   **refresh** token **não** é aceito como credencial → 401. Evita escalonar um
   refresh de longa vida em acesso a recurso.
 
@@ -19,7 +19,7 @@ Segurança é requisito não-negociável do projeto. Resumo dos controles.
 | `IsAuthorOrAdmin` | reviews | autor da review |
 | `IsParentRestaurantOwnerOrAdmin` | items/images/hours | dono do restaurante pai |
 | `IsEntityOwnerOrAdmin` | addresses | dono da entidade alvo |
-| `IsAdminUser` | listas de users, recompute, reindex | só `is_staff` |
+| `IsAdminUser` | listas de users | só `is_staff` |
 
 ## Rate limiting (anti brute-force)
 `ScopedRateThrottle` nas rotas sensíveis: **login 5/min**, **register 10/h** por
@@ -68,12 +68,6 @@ DELETE de usuário seta `deleted_at` **e** `is_active=False` → login barrado n
 hora. Registros soft-deleted somem das listagens padrão (`ActiveManager`). Ver
 [[data-model]].
 
-## Ponte Django ↔ shinzou (B2B interno)
-Duas camadas: `X-Service-Token` (constant-time, `hmac.compare_digest`) +
-Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
-**não é exposto** publicamente — só o Django o alcança. Ver
-[[search-rag]].
-
 ## LGPD — consentimento (`allow_info`)
 - Campo booleano no usuário, **default false**.
 - SearchHistory, `RestaurantView` por usuário e o recompute de afinidades só
@@ -84,10 +78,17 @@ Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
 - Sem consentimento: a busca funciona, mas nada é persistido sobre ela.
 - Toggle: `PATCH /api/users/consent/` `{allow_info: bool}` (só o próprio user).
 
+## Localização (LGPD)
+- A coordenada do usuário vem do navegador (opt-in) e é usada **só no request**
+  de busca/listagem; não é gravada.
+- Visita por região guarda só a célula de ~1 km (2 casas decimais) + contagem
+  diária por restaurante, sem usuário. O front já manda a coordenada arredondada.
+- Só endereço de **restaurante** (público) vai pro Nominatim; endereço de
+  usuário nunca sai do servidor.
+
 ## Validação de entrada
 - Payload inválido é **400**, nunca 500/503. Busca: `query` texto de até 500
-  caracteres (vira embedding — custo), `limit` inteiro 1..50. Recompute:
-  `user_id` inteiro.
+  caracteres (vira embedding — custo), `limit` inteiro 1..50.
 - URLs guardadas (`cover_image`, `website`, `menu_url`, fotos) passam pelo
   `URLValidator` do Django → `javascript:` é rejeitado (o front as usa em
   `href`/`src`).
@@ -103,6 +104,6 @@ Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
 
 ## Endurecimento de produção
 `DEBUG` é **False por padrão**. Sem `DEBUG=True`, a aplicação se recusa a
-subir sem `SECRET_KEY` e `SHINZOU_SERVICE_TOKEN`. Bloco `if not DEBUG` no
+subir sem `SECRET_KEY`. Bloco `if not DEBUG` no
 `settings.py`: HTTPS redirect (exceto `/api/health/`), cookies seguros, HSTS,
 `SECURE_PROXY_SSL_HEADER`. `manage.py check --deploy` passa sem avisos.

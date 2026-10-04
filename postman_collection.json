@@ -1250,69 +1250,6 @@
               "raw": "{\n  \"score\": 0.7\n}"
             }
           }
-        },
-        {
-          "name": "Recompute Preferences [admin]",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/preferences/recompute/",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "preferences",
-                "recompute",
-                ""
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"user_id\": \"{{user_id}}\"\n}"
-            },
-            "description": "Async (Celery). Omitir user_id = todos. 202."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Embeddings",
-      "item": [
-        {
-          "name": "Reindex [admin]",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/embeddings/reindex/",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "embeddings",
-                "reindex",
-                ""
-              ]
-            },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"all\": false\n}"
-            },
-            "description": "Async (Celery). all=false só stale. 202."
-          }
         }
       ]
     },
@@ -1344,7 +1281,7 @@
               "mode": "raw",
               "raw": "{\n  \"query\": \"lugar tranquilo pra comer feijoada\",\n  \"limit\": 15\n}"
             },
-            "description": "Ponte pro shinzou. Loga histórico só se allow_info=true (LGPD)."
+            "description": "Busca semântica (embed via Ollama + kNN pgvector + ranking). Loga histórico só se allow_info=true (LGPD)."
           }
         }
       ]

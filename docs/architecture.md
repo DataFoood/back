@@ -1,31 +1,30 @@
 # Architecture
 
 DataFood = backend de descoberta de restaurantes com busca semântica (RAG).
-Dois serviços de aplicação + infra de apoio.
+Um serviço de aplicação (Django) + infra de apoio.
 
 ## Serviços
 ```
                     ┌────────────────────────────────────────────┐
   frontend  ──────▶ │  Django / DRF  (web :8000)   [único exposto] │
   (browser)         │  - REST API, auth JWT, CRUD, regras          │
-                    │  - ponte de busca p/ o shinzou               │
+                    │  - busca semântica (embeddings/search.py)    │
                     └───┬─────────────┬──────────────┬─────────────┘
                         │             │              │
-            ┌───────────▼──┐   ┌──────▼──────┐   ┌───▼───────────────┐
-            │ Postgres     │   │ Redis       │   │ shinzou (:8001)   │
-            │ + pgvector   │   │ broker/cache│   │ FastAPI [interno] │
-            └───────▲──────┘   └─────────────┘   │ busca semântica   │
-                    │                            └───┬───────────────┘
-            ┌───────┴───────┐    ┌───────────┐       │ lê o MESMO Postgres
-            │ Celery worker │    │ Ollama     │◀──────┘ (SQL cru)
-            │ + beat (cron) │    │ embeddings │
-            └───────────────┘    └───────────┘
+            ┌───────────▼──┐   ┌──────▼──────┐   ┌───▼────────┐
+            │ Postgres     │   │ Redis       │   │ Ollama     │
+            │ + pgvector   │   │ broker/cache│   │ embeddings │
+            └───────▲──────┘   └─────────────┘   └───▲────────┘
+                    │                                │
+            ┌───────┴───────┐                        │
+            │ Celery worker │────────────────────────┘
+            │ + beat (cron) │   (reindex)
+            └───────────────┘
 ```
 
 | Serviço | Papel | Exposto? |
 |---|---|---|
-| **web** (Django) | API REST, auth, CRUD, orquestração | **Sim** (:8000) |
-| **shinzou** (FastAPI) | busca semântica/ranking | Não (interno :8001) |
+| **web** (Django) | API REST, auth, CRUD, busca semântica | **Sim** (:8000) |
 | **worker/beat** (Celery) | indexação e recompute assíncronos + cron | Não |
 | **db** (Postgres+pgvector) | dados + vetores | Não |
 | **redis** | broker Celery + cache de throttle | Não |
@@ -39,15 +38,15 @@ Detalhes de portas/env em [[infrastructure]].
 3. View executa, ORM fala com Postgres, retorna JSON.
 
 ## Fluxo de uma busca semântica
-Front → `POST /api/search/` no Django → Django repassa ao **shinzou** (service
-token + JWT) → shinzou embeda a query (Ollama), faz kNN no pgvector, rerankeia
-com preferências do usuário, devolve ranking → Django retorna ao front.
+Front → `POST /api/search/` no Django → embeda a query (Ollama), kNN no
+pgvector via ORM, rerankeia com preferências do usuário → cards rankeados.
 Detalhe completo em [[search-rag]].
 
-## Por que dois serviços
-O Django concentra regra de negócio e é a única superfície pública. A busca
-(IA/vetorial, mais pesada e com dependências próprias) fica isolada no shinzou,
-interno, escalável à parte. O front nunca fala direto com o shinzou.
+## Por que um serviço só
+Até 2026-10 a busca rodava num serviço FastAPI separado (shinzou), mas ele lia
+as tabelas do Django por SQL cru e revalidava o mesmo JWT: acoplamento total
+sem isolamento real. A busca virou um módulo do Django (`embeddings/search.py`).
+O trabalho pesado é do Ollama, que continua sendo um container à parte.
 
 ## Decisões estruturais
 - **Apps no topo do sys.path:** imports são `from users.models import User`

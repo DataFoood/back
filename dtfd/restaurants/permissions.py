@@ -9,7 +9,8 @@ from .models import Restaurant
 
 
 class IsRestaurantOwnerOrAdmin(BasePermission):
-    """Leitura publica. Escrita so para o dono do restaurante ou admin."""
+    """Leitura publica. Escrita so para o dono (obj.<owner_field>) ou admin."""
+    owner_field = "owner"
 
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
@@ -20,22 +21,12 @@ class IsRestaurantOwnerOrAdmin(BasePermission):
         if request.method in SAFE_METHODS:
             return True
         user = cast(User, request.user)
-        return obj.owner == user or user.is_staff
+        return getattr(obj, self.owner_field) == user or user.is_staff
 
 
-class IsAuthorOrAdmin(BasePermission):
+class IsAuthorOrAdmin(IsRestaurantOwnerOrAdmin):
     """Review: leitura publica. Escrita so do autor ou admin."""
-
-    def has_permission(self, request, view):
-        if request.method in SAFE_METHODS:
-            return True
-        return bool(request.user and request.user.is_authenticated)
-
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        user = cast(User, request.user)
-        return obj.author == user or user.is_staff
+    owner_field = "author"
 
 
 class IsParentRestaurantOwnerOrAdmin(BasePermission):

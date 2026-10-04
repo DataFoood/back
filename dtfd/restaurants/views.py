@@ -3,7 +3,6 @@ from datetime import timedelta
 from typing import cast
 
 import httpx
-from django.conf import settings
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate
@@ -18,6 +17,7 @@ from rest_framework.generics import (
 )
 from rest_framework.permissions import (
     AllowAny,
+    IsAdminUser,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
@@ -25,7 +25,10 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from analytics.models import RegionVisit, RestaurantDailyStat
+from analytics.services import bump_platform, bump_restaurants, record_region_visit
+from embeddings.search import haversine_km, search
+from embeddings.tasks import reindex_one
 from users.models import User
 from utils.pagination import DefaultPagination
 
@@ -54,10 +57,12 @@ from .serializers import (
     CARD_PREFETCH,
     BusinessHourSerializer,
     LookupSerializer,
+    primary_address,
     RestaurantCardSerializer,
     RestaurantFavoriteSerializer,
     RestaurantImageSerializer,
     RestaurantItemSerializer,
+    RestaurantAdminSerializer,
     RestaurantReadSerializer,
     RestaurantReviewSerializer,
     RestaurantWriteSerializer,
@@ -120,6 +125,7 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
     """GET /api/restaurants/ — publico, paginado, com filtros:
          ?q=texto  ?cuisine=1,2  ?ambient=  ?price_range=  ?service_model=
          ?target_audience=  ?city=  ?delivery=true  ?ordering=recent|rating|name
+         ?lat=&lon= (visitante; não é guardado) + ?ordering=distance e/ou ?radius_km=
        POST /api/restaurants/ — autenticado, vira owner"""
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = DefaultPagination
@@ -147,7 +153,35 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
             qs = qs.filter(has_delivery=True)
 
         ordering = ORDERINGS.get(params.get("ordering", ""), ORDERINGS["recent"])
-        return qs.distinct().order_by(*ordering).prefetch_related(*CARD_PREFETCH)
+        qs = qs.distinct().order_by(*ordering).prefetch_related(*CARD_PREFETCH)
+
+        origin = _visitor_coords(params)
+        if origin is None:
+            return qs
+        return self._by_distance(qs, origin, params)
+
+    @staticmethod
+    def _by_distance(qs, origin, params):
+        """Anota distance_km; ordena por distância e/ou corta no raio.
+        ponytail: distância calculada em Python sobre o filtro inteiro; PostGIS
+        (ou bounding box no SQL) se o catálogo passar de alguns milhares."""
+        rows = list(qs)
+        for r in rows:
+            address = primary_address(r)
+            has_coords = address is not None and address.latitude is not None
+            r.distance_km = (
+                round(haversine_km(*origin, float(address.latitude), float(address.longitude)), 1)
+                if has_coords else None
+            )
+        try:
+            radius = float(params["radius_km"])
+        except (KeyError, ValueError):
+            radius = None
+        if radius is not None:
+            rows = [r for r in rows if r.distance_km is not None and r.distance_km <= radius]
+        if params.get("ordering") == "distance":
+            rows.sort(key=lambda r: (r.distance_km is None, r.distance_km or 0))
+        return rows
 
     @transaction.atomic
     def perform_create(self, serializer):
@@ -199,9 +233,22 @@ class TaxonomiesView(APIView):
         })
 
 
+def _visitor_coords(params):
+    """(lat, lon) do visitante vindo da query (?lat=&lon=), ou None se ausente/inválido."""
+    try:
+        lat, lon = float(params["lat"]), float(params["lon"])
+    except (KeyError, ValueError):
+        return None
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return None
+    return lat, lon
+
+
 class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
     """GET publico; PUT/PATCH/DELETE so owner ou admin. DELETE = soft.
-    Também atende GET /api/restaurants/by-slug/<slug>/."""
+    Também atende GET /api/restaurants/by-slug/<slug>/.
+    Métricas do dono (anônimas): ?src=search conta clique vindo da busca;
+    ?lat=&lon= (coordenada do visitante) conta a visita na região (~1 km)."""
     queryset = Restaurant.objects.prefetch_related(*DETAIL_PREFETCH)
     permission_classes = [IsRestaurantOwnerOrAdmin]
 
@@ -221,6 +268,12 @@ class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
         is_manager = user.is_authenticated and (instance.owner_id == user.pk or user.is_staff)
         if not is_manager:
             Restaurant.objects.filter(pk=instance.pk).update(view_count=F("view_count") + 1)
+            bump_restaurants([instance.pk], "views")
+            if request.query_params.get("src") == "search":
+                bump_restaurants([instance.pk], "search_clicks")
+            coords = _visitor_coords(request.query_params)
+            if coords:
+                record_region_visit(instance.pk, *coords)
         # sinal de preferência por usuário: só com consentimento LGPD
         if request.user.is_authenticated and request.user.allow_info:
             view, created = RestaurantView.objects.get_or_create(
@@ -238,8 +291,7 @@ class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
         return Response(RestaurantReadSerializer(instance, context=self.get_serializer_context()).data)
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()
 
 
 class RestaurantStatsView(APIView):
@@ -260,7 +312,21 @@ class RestaurantStatsView(APIView):
                 "average_rating": serializers.FloatField(),
                 "rating_distribution": serializers.DictField(child=serializers.IntegerField()),
                 "window_days": serializers.IntegerField(),
+                "views_window": serializers.IntegerField(),
+                "search_impressions_window": serializers.IntegerField(),
+                "search_clicks_window": serializers.IntegerField(),
+                "search_ctr": serializers.FloatField(allow_null=True),
                 "series": serializers.ListField(child=serializers.DictField()),
+                "regions": inline_serializer(
+                    "RegionVisits",
+                    {
+                        "label": serializers.CharField(),
+                        "lat": serializers.FloatField(),
+                        "lon": serializers.FloatField(),
+                        "visits": serializers.IntegerField(),
+                    },
+                    many=True,
+                ),
                 "recent_reviews": RestaurantReviewSerializer(many=True),
             },
         )
@@ -285,14 +351,32 @@ class RestaurantStatsView(APIView):
             return {row["day"]: row["n"] for row in rows}
 
         fav_daily, rev_daily = daily(favorites), daily(reviews)
-        series = [
-            {
-                "date": (since + timedelta(days=i)).isoformat(),
-                "favorites": fav_daily.get(since + timedelta(days=i), 0),
-                "reviews": rev_daily.get(since + timedelta(days=i), 0),
-            }
-            for i in range(self.WINDOW_DAYS)
-        ]
+        traffic = {
+            row["date"]: row
+            for row in RestaurantDailyStat.objects.filter(restaurant=restaurant, date__gte=since)
+            .values("date", "views", "search_impressions", "search_clicks")
+        }
+        empty = {"views": 0, "search_impressions": 0, "search_clicks": 0}
+        series = []
+        for i in range(self.WINDOW_DAYS):
+            day = since + timedelta(days=i)
+            t = traffic.get(day, empty)
+            series.append({
+                "date": day.isoformat(),
+                "favorites": fav_daily.get(day, 0),
+                "reviews": rev_daily.get(day, 0),
+                "views": t["views"],
+                "search_impressions": t["search_impressions"],
+                "search_clicks": t["search_clicks"],
+            })
+        impressions = sum(row["search_impressions"] for row in series)
+        clicks = sum(row["search_clicks"] for row in series)
+        regions = (
+            RegionVisit.objects.filter(restaurant=restaurant, date__gte=since)
+            .values("cell__label", "cell__lat", "cell__lon")
+            .annotate(visits=Sum("count"))
+            .order_by("-visits")[:10]
+        )
         distribution = {str(n): 0 for n in range(1, 6)}
         for row in reviews.values("rating").annotate(n=Count("id")):
             distribution[str(row["rating"])] = row["n"]
@@ -306,11 +390,68 @@ class RestaurantStatsView(APIView):
             "average_rating": float(restaurant.average_rating),
             "rating_distribution": distribution,
             "window_days": self.WINDOW_DAYS,
+            "views_window": sum(row["views"] for row in series),
+            "search_impressions_window": impressions,
+            "search_clicks_window": clicks,
+            "search_ctr": round(clicks / impressions, 4) if impressions else None,
             "series": series,
+            "regions": [
+                {
+                    "label": r["cell__label"] or f"{r['cell__lat']}, {r['cell__lon']}",
+                    "lat": float(r["cell__lat"]),
+                    "lon": float(r["cell__lon"]),
+                    "visits": r["visits"],
+                }
+                for r in regions
+            ],
             "recent_reviews": RestaurantReviewSerializer(
                 reviews.select_related("author").order_by("-created_at")[:5], many=True
             ).data,
         })
+
+
+# ---------------------------------------------------------------------------
+# MODERAÇÃO (admin)
+# ---------------------------------------------------------------------------
+class RestaurantAdminListView(ListAPIView):
+    """GET /api/restaurants/admin/ — todos, inclusive removidos (admin).
+    ?q= (nome)  ?deleted=true|false"""
+    serializer_class = RestaurantAdminSerializer
+    permission_classes = [IsAdminUser]
+    pagination_class = DefaultPagination
+
+    def get_queryset(self):
+        qs = Restaurant.all_objects.select_related("owner").prefetch_related("addresses")
+        q = (self.request.query_params.get("q") or "").strip()
+        if q:
+            qs = qs.filter(name__icontains=q)
+        deleted = self.request.query_params.get("deleted")
+        if deleted in ("true", "false"):
+            qs = qs.filter(deleted_at__isnull=deleted == "false")
+        return qs.order_by("-created_at", "id")
+
+
+class RestaurantRestoreView(APIView):
+    """POST /api/restaurants/<pk>/restore/ — desfaz o soft delete (admin)."""
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(request=None, responses=RestaurantAdminSerializer)
+    def post(self, request, pk):
+        restaurant = get_object_or_404(Restaurant.all_objects, pk=pk)
+        restaurant.deleted_at = None
+        restaurant.save(update_fields=["deleted_at"])
+        return Response(RestaurantAdminSerializer(restaurant).data)
+
+
+class RestaurantReindexView(APIView):
+    """POST /api/restaurants/<pk>/reindex/ — regera o embedding agora (admin, async)."""
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(request=None, responses={202: inline_serializer("ReindexQueued", {"task_id": serializers.CharField()})})
+    def post(self, request, pk):
+        get_object_or_404(Restaurant, pk=pk)
+        task = reindex_one.delay(pk)
+        return Response({"task_id": task.id}, status=status.HTTP_202_ACCEPTED)
 
 
 # ---------------------------------------------------------------------------
@@ -351,8 +492,7 @@ class ReviewDetailView(RetrieveUpdateDestroyAPIView):
         review.restaurant.recalc_rating()
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()
         instance.restaurant.recalc_rating()
 
 
@@ -379,8 +519,7 @@ class ImageDetailView(RetrieveUpdateDestroyAPIView):
         return RestaurantImage.objects.filter(restaurant_id=self.kwargs["restaurant_pk"])
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()
 
 
 # ---------------------------------------------------------------------------
@@ -418,8 +557,7 @@ class BusinessHourDetailView(RetrieveUpdateDestroyAPIView):
         return BusinessHour.objects.filter(restaurant_id=self.kwargs["restaurant_pk"])
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()
 
 
 # ---------------------------------------------------------------------------
@@ -451,8 +589,7 @@ class ItemDetailView(RetrieveUpdateDestroyAPIView):
         return RestaurantItem.objects.filter(restaurant_id=self.kwargs["restaurant_pk"])
 
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()
 
 
 # ---------------------------------------------------------------------------
@@ -512,13 +649,10 @@ class FavoriteListView(ListAPIView):
 
 
 # ---------------------------------------------------------------------------
-# SEARCH — ponte pro shinzou (busca semântica)
+# SEARCH — busca semântica (embeddings.search)
 # ---------------------------------------------------------------------------
 class SearchView(APIView):
-    """POST /api/search/ — repassa a query pro shinzou com service token +
-    o JWT do usuário. Frontend fala só com o Django; shinzou fica interno.
-    Só JWT (não sessão) — o Bearer precisa existir pra repassar ao shinzou."""
-    authentication_classes = [JWTAuthentication]
+    """POST /api/search/ — busca semântica por linguagem natural."""
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "search"
@@ -528,6 +662,8 @@ class SearchView(APIView):
     # entrada: query vira embedding (custo) -> tamanho limitado; limit 1..50
     MAX_QUERY_LENGTH = 500
     MAX_LIMIT = 50
+    DEFAULT_LIMIT = 15
+    MAX_RADIUS_KM = 100
 
     @extend_schema(
         request=inline_serializer(
@@ -535,6 +671,9 @@ class SearchView(APIView):
             {
                 "query": serializers.CharField(),
                 "limit": serializers.IntegerField(required=False),
+                "lat": serializers.FloatField(required=False),
+                "lon": serializers.FloatField(required=False),
+                "radius_km": serializers.FloatField(required=False),
             },
         ),
         responses=inline_serializer(
@@ -546,14 +685,16 @@ class SearchView(APIView):
                         "restaurant": RestaurantCardSerializer(),
                         "score": serializers.FloatField(),
                         "match": serializers.IntegerField(allow_null=True),
+                        "distance_km": serializers.FloatField(allow_null=True),
                     },
                     many=True,
                 ),
             },
         ),
-        description="Busca semântica (via shinzou). Resposta = lista rankeada "
-        "de cards de restaurante + score do ranking + match (0-100, "
-        "similaridade semântica).",
+        description="Busca semântica. Resposta = lista rankeada de cards de "
+        "restaurante + score do ranking + match (0-100, similaridade semântica). "
+        "`lat`/`lon` opcionais (localização do usuário, usada só neste request) "
+        "favorecem os mais próximos; `radius_km` corta quem está fora do raio.",
     )
     def post(self, request):
         query = request.data.get("query")
@@ -574,66 +715,74 @@ class SearchView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payload = {"query": query, "limit": limit}
-        headers = {
-            "X-Service-Token": settings.SHINZOU_SERVICE_TOKEN,
-            "Authorization": request.headers.get("Authorization", ""),
-        }
+        origin, radius_km, geo_error = self._geo(request.data)
+        if geo_error:
+            return Response(geo_error, status=status.HTTP_400_BAD_REQUEST)
+
         try:
-            resp = httpx.post(
-                f"{settings.SHINZOU_URL}/search", json=payload, headers=headers, timeout=60
+            ranked = search(request.user, query, limit or self.DEFAULT_LIMIT, origin, radius_km)
+        except httpx.HTTPError:
+            logger.warning("Ollama indisponível na busca", exc_info=True)
+            bump_platform("search_failures")
+            return Response(
+                {"detail": "Serviço de busca indisponível."},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        except httpx.RequestError:
-            logger.warning("shinzou inacessível", exc_info=True)
-            return self._unavailable()
+        bump_platform("searches")
 
-        if resp.status_code != status.HTTP_200_OK:
-            logger.warning("shinzou respondeu %s", resp.status_code)
-            return self._unavailable()
-        try:
-            raw_results = resp.json().get("results", [])
-        except ValueError:
-            return self._unavailable()
-
-        # loga só com 200 E consentimento LGPD (allow_info). Poda além de N.
+        # loga só com sucesso E consentimento LGPD (allow_info). Poda além de N.
         if request.user.allow_info:
             self._log_search(request.user, query)
 
-        return Response({"results": self._hydrate(request, raw_results)})
+        results = self._hydrate(request, ranked)
+        # impressão = restaurante efetivamente exibido no resultado
+        bump_restaurants([row["restaurant"]["id"] for row in results], "search_impressions")
+        return Response({"results": results})
+
+    def _geo(self, data):
+        """(origin, radius_km, erro). Tudo opcional; lat e lon andam juntos."""
+        def number(key):
+            value = data.get(key)
+            if value is None:
+                return None
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError
+            return float(value)
+
+        try:
+            lat, lon, radius = number("lat"), number("lon"), number("radius_km")
+        except ValueError:
+            return None, None, {"detail": "lat, lon e radius_km devem ser números."}
+        if (lat is None) != (lon is None):
+            return None, None, {"detail": "Envie lat e lon juntos."}
+        if lat is None:
+            if radius is not None:
+                return None, None, {"radius_km": "Requer lat e lon."}
+            return None, None, None
+        if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+            return None, None, {"detail": "Coordenada fora do intervalo."}
+        if radius is not None and not 0 < radius <= self.MAX_RADIUS_KM:
+            return None, None, {"radius_km": f"Entre 0 e {self.MAX_RADIUS_KM} km."}
+        return (lat, lon), radius, None
 
     @staticmethod
-    def _unavailable():
-        return Response(
-            {"detail": "Serviço de busca indisponível."},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
-
-    @staticmethod
-    def _hydrate(request, raw_results):
-        """Troca o restaurante mínimo do shinzou pelo card completo, mantendo
-        a ordem do ranking. Restaurante sumido (soft-deleted) é descartado."""
-        ids = [
-            (row.get("restaurant") or {}).get("id") for row in raw_results
-        ]
-        restaurants = Restaurant.objects.filter(pk__in=[i for i in ids if i]).prefetch_related(*CARD_PREFETCH)
+    def _hydrate(request, ranked):
+        """Troca os ids do ranking pelos cards completos, mantendo a ordem."""
+        restaurants = Restaurant.objects.filter(
+            pk__in=[rid for rid, *_ in ranked]
+        ).prefetch_related(*CARD_PREFETCH)
         by_id = {r.pk: r for r in restaurants}
         context = {"request": request, "favorited_ids": favorited_ids(request, restaurants)}
-
-        results = []
-        for row, rid in zip(raw_results, ids):
-            restaurant = by_id.get(rid)
-            if restaurant is None:
-                continue
-            similarity = row.get("similarity")
-            match = None
-            if isinstance(similarity, (int, float)):
-                match = max(0, min(100, round(similarity * 100)))
-            results.append({
-                "restaurant": RestaurantCardSerializer(restaurant, context=context).data,
-                "score": row.get("score"),
-                "match": match,
-            })
-        return results
+        return [
+            {
+                "restaurant": RestaurantCardSerializer(by_id[rid], context=context).data,
+                "score": round(score, 4),
+                "match": max(0, min(100, round(similarity * 100))),
+                "distance_km": None if distance is None else round(distance, 1),
+            }
+            for rid, score, similarity, distance in ranked
+            if rid in by_id
+        ]
 
     def _log_search(self, user, query):
         from preferences.models import SearchHistory

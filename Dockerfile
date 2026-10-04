@@ -13,7 +13,6 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev
 
 COPY dtfd/ ./dtfd/
-COPY shinzou/ ./shinzou/
 
 # roda sem root; staticfiles precisa ser gravável pelo collectstatic
 RUN useradd --system --uid 1000 --home /app app \

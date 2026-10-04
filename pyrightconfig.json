@@ -2,7 +2,7 @@
   "venvPath": ".",
   "venv": ".venv",
   "extraPaths": ["dtfd", "."],
-  "include": ["dtfd", "shinzou"],
+  "include": ["dtfd"],
   "exclude": ["**/migrations", "**/__pycache__", ".venv"],
   "typeCheckingMode": "basic"
 }

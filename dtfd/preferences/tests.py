@@ -115,7 +115,6 @@ class PreferencesEndpointTest(APITestCase):
         self.assertEqual(status.HTTP_404_NOT_FOUND, response.status_code)
 
 
-from unittest.mock import MagicMock, patch
 
 from .models import RankingWeight
 
@@ -123,28 +122,7 @@ from .models import RankingWeight
 class RankingWeightTest(APITestCase):
     def test_weights_seeded(self):
         keys = set(RankingWeight.objects.values_list("key", flat=True))
-        self.assertEqual({"semantic", "preference", "review"}, keys)
-
-
-class RecomputeEndpointTest(APITestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.admin = User.objects.create_superuser(email="a@dtfd.com", password="SenhaForte123", name="A")
-        cls.common = make_user(email="c@dtfd.com")
-        cls.URL = "/api/preferences/recompute/"
-
-    @patch("preferences.views.recompute_all.delay")
-    def test_admin_enqueues_recompute(self, mock_delay):
-        mock_delay.return_value = MagicMock(id="task-x")
-        self.client.force_authenticate(self.admin)
-        response = self.client.post(self.URL, data={}, format="json")
-        self.assertEqual(status.HTTP_202_ACCEPTED, response.status_code)
-        mock_delay.assert_called_once()
-
-    def test_non_admin_forbidden(self):
-        self.client.force_authenticate(self.common)
-        response = self.client.post(self.URL, data={}, format="json")
-        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+        self.assertEqual({"semantic", "preference", "review", "distance"}, keys)
 
 
 from .models import SearchHistory
@@ -169,3 +147,32 @@ class SearchHistoryTest(APITestCase):
     def test_list_unauthenticated(self):
         response = self.client.get("/api/preferences/searches/")
         self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+
+class RankingWeightEndpointTest(APITestCase):
+    URL = "/api/preferences/weights/"
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = User.objects.create_superuser(email="adm@dtfd.com", password="SenhaForte123", name="A")
+        cls.common = make_user(email="c@dtfd.com")
+
+    def test_admin_reads_and_updates(self):
+        self.client.force_authenticate(self.admin)
+        self.assertEqual(0.5, self.client.get(self.URL).json()["distance"])
+        response = self.client.patch(self.URL, {"distance": 1.2, "review": 0}, format="json")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual(1.2, response.json()["distance"])
+        self.assertEqual(0.0, RankingWeight.objects.get(key="review").weight)
+
+    def test_validation(self):
+        self.client.force_authenticate(self.admin)
+        for body in ({"nope": 1}, {"semantic": -1}, {"semantic": 9}, {"semantic": "x"}, {"semantic": True}, {}):
+            with self.subTest(body=body):
+                response = self.client.patch(self.URL, body, format="json")
+                self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertEqual(1.0, RankingWeight.objects.get(key="semantic").weight, "nada gravado")
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.common)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, self.client.get(self.URL).status_code)

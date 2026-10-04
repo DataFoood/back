@@ -1,6 +1,6 @@
 # Deploy (produção)
 
-Stack completa num servidor com Docker: API (gunicorn), shinzou, worker/beat,
+Stack completa num servidor com Docker: API (gunicorn), worker/beat,
 Postgres+pgvector, Redis, Ollama, frontend Next.js e **Caddy** na frente com
 HTTPS automático (Let's Encrypt). Só as portas 80/443 ficam expostas.
 
@@ -15,7 +15,7 @@ HTTPS automático (Let's Encrypt). Só as portas 80/443 ficam expostas.
 ```bash
 cd back
 cp .env.prod.example .env.prod
-# preencha: SECRET_KEY, SHINZOU_SERVICE_TOKEN, DB_PASS, domínios, CORS/CSRF
+# preencha: SECRET_KEY, DB_PASS, domínios, CORS/CSRF
 python3 -c "import secrets; print(secrets.token_urlsafe(50))"   # gera segredos
 
 docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
@@ -33,7 +33,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec web python m
 > `seed_demo --demo-users` cria contas com senha conhecida — **não use em produção**.
 
 ## Checklist
-- [ ] `DEBUG=False`, `SECRET_KEY` e `SHINZOU_SERVICE_TOKEN` longos e aleatórios.
+- [ ] `DEBUG=False`, `SECRET_KEY` longo e aleatório.
 - [ ] `ALLOWED_HOSTS` = domínio da API (+ `web`, usado internamente).
 - [ ] `CORS_ALLOWED_ORIGINS` = `https://<APP_DOMAIN>`; `CSRF_TRUSTED_ORIGINS` = `https://<API_DOMAIN>`.
 - [ ] `DB_PASS` forte; backups do volume `postgres_data` (ex.: `pg_dump` diário).

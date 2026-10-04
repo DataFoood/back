@@ -5,8 +5,11 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from embeddings.search import DEFAULT_WEIGHTS
+
 from .models import (
     BaseAffinity,
+    RankingWeight,
     SearchHistory,
     UserAmbientAffinity,
     UserCuisineAffinity,
@@ -18,7 +21,6 @@ from .serializers import (
     PriceAffinitySerializer,
     SearchHistorySerializer,
 )
-from .tasks import recompute_all, recompute_one
 
 
 class PreferencesView(APIView):
@@ -72,37 +74,40 @@ class SearchHistoryView(ListAPIView):
         return SearchHistory.objects.filter(user=self.request.user)[:50]
 
 
-class RecomputeView(APIView):
-    """POST /api/preferences/recompute/ — enfileira recálculo (admin, async).
-    body: {"user_id": int}  (omitido: todos)"""
-    permission_classes = [IsAdminUser]
+WEIGHTS_SCHEMA = inline_serializer(
+    "RankingWeights", {key: serializers.FloatField(required=False) for key in DEFAULT_WEIGHTS}
+)
 
-    @extend_schema(
-        request=inline_serializer(
-            "RecomputeRequest",
-            {"user_id": serializers.IntegerField(required=False)},
-        ),
-        responses=inline_serializer(
-            "RecomputeResponse",
-            {"task_id": serializers.CharField(), "status": serializers.CharField()},
-        ),
-    )
-    def post(self, request):
-        user_id = request.data.get("user_id")
-        if user_id is not None:
-            try:
-                user_id = int(user_id)
-            except (TypeError, ValueError):
-                return Response(
-                    {"user_id": "Deve ser um inteiro."}, status=status.HTTP_400_BAD_REQUEST
-                )
-            task = recompute_one.delay(user_id)
-        else:
-            task = recompute_all.delay()
-        return Response(
-            {"task_id": task.id, "status": "enfileirado"},
-            status=status.HTTP_202_ACCEPTED,
-        )
+
+class RankingWeightView(APIView):
+    """GET/PATCH /api/preferences/weights/ — pesos do ranking da busca (admin).
+    PATCH parcial: {"semantic": 1.0, "distance": 0.8, ...}."""
+    permission_classes = [IsAdminUser]
+    MAX_WEIGHT = 5.0
+
+    def _current(self):
+        return {**DEFAULT_WEIGHTS, **dict(RankingWeight.objects.values_list("key", "weight"))}
+
+    @extend_schema(responses=WEIGHTS_SCHEMA)
+    def get(self, request):
+        return Response(self._current())
+
+    @extend_schema(request=WEIGHTS_SCHEMA, responses=WEIGHTS_SCHEMA)
+    def patch(self, request):
+        current = self._current()
+        if not isinstance(request.data, dict) or not request.data:
+            return Response({"detail": "Envie {chave: peso}."}, status=status.HTTP_400_BAD_REQUEST)
+        errors = {}
+        for key, value in request.data.items():
+            if key not in current:
+                errors[key] = "Chave desconhecida."
+            elif isinstance(value, bool) or not isinstance(value, (int, float)) or not 0 <= value <= self.MAX_WEIGHT:
+                errors[key] = f"Número entre 0 e {self.MAX_WEIGHT}."
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        for key, value in request.data.items():
+            RankingWeight.objects.update_or_create(key=key, defaults={"weight": float(value)})
+        return Response(self._current())
 
 
 class CuisineAffinityEditView(_AffinityEditView):

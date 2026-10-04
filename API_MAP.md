@@ -83,24 +83,28 @@ preferences; searches) **não** paginam — retornam array direto.
 | POST | `login/refresh/` | 🌐 | renova access (rotaciona refresh) |
 | POST | `logout/` | 🌐 | invalida o refresh |
 | GET/PATCH | `me/` | 🔑 | perfil do logado |
-| GET | `` (lista) | 🛡️ | paginado |
+| GET | `` (lista) | 🛡️ | paginado; `?q=` (nome/e-mail), `?role=` |
 | GET | `removed/` | 🛡️ | soft-deleted, paginado |
 | GET | `<id>/` | 🔑 | completo p/ dono/admin; terceiros veem só `id, name, avatar_url, banner_url, created_at` |
 | PATCH | `<id>/` | 👤 | edita perfil |
 | PATCH | `consent/` | 🔑 | **LGPD** — liga/desliga `allow_info` do próprio user |
 | POST | `<id>/change-password/` | 🔑 (só o próprio) | exige senha atual; revoga todas as sessões e responde `{detail, access, refresh}` |
 | DELETE | `<id>/delete/` | 👤 | soft delete (bloqueia login na hora) |
+| PATCH | `<id>/admin/` | 🛡️ | `{role?, is_active?}` — `role=admin` dá `is_staff`; `is_active=true` reativa removido; `false` derruba sessões. Não vale pra si mesmo |
 
 ### Restaurants — `/api/restaurants/`
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
-| GET | `` | 🌐 | lista paginada de **cards**; filtros `q`, `cuisine`, `ambient`, `price_range`, `service_model`, `target_audience` (ids, vírgula), `city`, `delivery=true`, `ordering=recent\|rating\|name` |
+| GET | `` | 🌐 | lista paginada de **cards**; filtros `q`, `cuisine`, `ambient`, `price_range`, `service_model`, `target_audience` (ids, vírgula), `city`, `delivery=true`, `ordering=recent\|rating\|name\|distance`; `lat`+`lon` (visitante, não guardado) preenchem `distance_km` e liberam `ordering=distance` e `radius_km` |
 | POST | `` | 🔑 | cria (vira owner; customer → role owner) |
 | GET | `mine/` | 🔑 | meus restaurantes (cards, sem paginação) |
 | GET | `taxonomies/` | 🌐 | as 7 taxonomias `{cuisines: [{id,name}], ...}` |
 | GET | `by-slug/<slug>/` | 🌐 | detalhe pelo slug (mesmo payload do `<id>/`) |
-| GET | `<id>/` | 🌐 | detalhe; soma `view_count`; view por usuário só com consentimento |
-| GET | `<id>/stats/` | 👤 (owner) | métricas agregadas: views, favoritos, reviews, série 30 dias, distribuição de notas |
+| GET | `<id>/` | 🌐 | detalhe; soma `view_count` e a visita do dia; `?src=search` conta clique vindo da busca; `?lat=&lon=` conta a visita na região (~1 km). View por usuário só com consentimento |
+| GET | `<id>/stats/` | 👤 (owner) | métricas agregadas (30 dias): visitas, aparições na busca, cliques vindos da busca + CTR, favoritos, reviews, série diária, top 10 regiões das visitas, distribuição de notas |
+| GET | `admin/` | 🛡️ | moderação: todos, inclusive removidos; `?q=`, `?deleted=true\|false` |
+| POST | `<id>/restore/` | 🛡️ | desfaz soft delete |
+| POST | `<id>/reindex/` | 🛡️ | regera o embedding (async, **202**) |
 | PATCH/DELETE | `<id>/` | 👤 (owner) | DELETE = soft |
 | POST/DELETE | `<id>/favorite/` | 🔑 | favoritar (idempotente) / desfavoritar |
 | GET | `favorites/` | 🔑 | meus favoritos `[{id, restaurant: <card>, created_at}]` |
@@ -118,7 +122,7 @@ canal de venda (`has_dine_in`, `has_delivery`, ...). `average_rating`/
 
 **Card** (listas, busca, favoritos): `id, name, slug, description, cover_image,
 average_rating, total_reviews, cuisines, ambients, price_ranges, address,
-is_open_now, is_favorited, has_delivery, has_reservation`. O detalhe tem tudo
+is_open_now, is_favorited, has_delivery, has_reservation, distance_km`. O detalhe tem tudo
 isso + items, reviews (com `author_name`), images, business_hours e demais
 taxonomias/canais. `address` é o endereço **público** do restaurante (ou
 `null`); `is_open_now` é `null` se não há horários cadastrados.
@@ -131,6 +135,11 @@ No POST mande `entity_type` (`"restaurant"`|`"user"`) + `object_id`.
 | GET/POST | `` | 👤 (dono da entidade) |
 | GET/PATCH/DELETE | `<id>/` | 👤 |
 
+Endereço de **restaurante** é geocodificado sozinho (Nominatim/OSM, em
+background) quando criado ou quando a rua/cidade/CEP muda — `latitude`/`longitude`
+aparecem alguns segundos depois. Mandar `latitude` explícita desliga isso.
+Endereço de usuário nunca sai pro Nominatim.
+
 ### Preferences — `/api/preferences/`
 Afinidades do usuário em 3 dimensões (cuisine, ambient, price), calculadas dos
 sinais (views + favoritos). Editar uma afinidade marca `is_manual=true` → o
@@ -142,28 +151,31 @@ recompute automático **para de sobrescrever** aquela linha.
 | PATCH | `cuisines/<id>/` | 🔑 | edita score → manual |
 | PATCH | `ambients/<id>/` | 🔑 | |
 | PATCH | `prices/<id>/` | 🔑 | |
-| POST | `recompute/` | 🛡️ | async (Celery); `{user_id}` ou todos; **202** |
+| GET/PATCH | `weights/` | 🛡️ | pesos do ranking `{semantic, preference, review, distance}` (0..5); PATCH parcial |
 
-### Embeddings — `/api/embeddings/`
+### Analytics — `/api/analytics/`
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
-| POST | `reindex/` | 🛡️ | async; `{all: bool}` (default só stale); **202** |
+| GET | `platform/` | 🛡️ | contas por papel, restaurantes (removidos, sem localização, indexação pendente), buscas/falhas e visitas por dia (30 dias) |
 
 ### Search — `/api/search/` ⭐
 | Método | Rota | Acesso |
 |---|---|---|
-| POST | `` | 🔑 (só JWT) |
+| POST | `` | 🔑 |
 
 ```json
 // request
-{ "query": "lugar tranquilo pra comer feijoada", "limit": 15 }
+{ "query": "lugar tranquilo pra comer feijoada", "limit": 15, "lat": -22.21, "lon": -49.94, "radius_km": 5 }
 ```
 Body: `query` obrigatório (texto, **máx 500 caracteres**); `limit` opcional
-(inteiro 1..50, default 15). Fora disso → 400.
+(inteiro 1..50, default 15). `lat`+`lon` opcionais (juntos): localização do
+usuário, usada **só neste request** — favorece os mais próximos (peso
+`distance`). `radius_km` (0..100, exige lat/lon) corta quem está fora do raio
+ou sem coordenada. Fora disso → 400.
 Rate limit: 30/min por usuário (`SEARCH_RATE`).
 ```json
 // response
-{ "results": [ { "restaurant": { /* card */ }, "score": 1.42, "match": 87 } ] }
+{ "results": [ { "restaurant": { /* card */ }, "score": 1.42, "match": 87, "distance_km": 0.8 } ] }
 ```
 `match` = similaridade semântica (0-100) — é o "% match" da UI. `score` só
 ordena.
@@ -172,16 +184,14 @@ ordena.
 
 ## 4. Busca semântica — como funciona por trás
 
-O frontend fala **só com o Django** (`:8000`). A IA de busca roda num serviço
-interno separado (**shinzou**, FastAPI `:8001`) que **não é exposto**
-publicamente. `POST /api/search/` é uma ponte: o Django repassa a query ao
-shinzou com um service-token + o JWT do usuário, recebe o ranking e devolve.
+O frontend fala **só com o Django** (`:8000`). `POST /api/search/` roda a busca
+no próprio Django; o Ollama (interno) só gera o vetor da query.
 
 Pipeline: query → embedding (Ollama) → kNN no pgvector → reranking ponderado
 (semântico + preferências do usuário + reviews) → top N.
 
 Erros que o front deve tratar:
-- **503** — serviço de busca indisponível (shinzou/Ollama fora ou erro
+- **503** — serviço de busca indisponível (Ollama fora ou erro
   interno). Mostrar fallback amigável; o restante do app continua funcionando.
 - **429** — muitas buscas seguidas.
 - **400** — `query` vazio/não-texto/> 500 caracteres ou `limit` inválido.
@@ -211,17 +221,15 @@ write no update) no perfil.
   5000-5002; produção usa `CORS_ALLOWED_ORIGINS`.
 - **Health:** `GET /api/health/` → `{"status": "ok", "db": true}`.
 - **Idempotência:** favoritar duas vezes não duplica (201 na 1ª, 200 depois).
-- **202 Accepted:** rotas admin de recompute/reindex são assíncronas — retornam
-  `task_id`; o trabalho roda no worker Celery em background.
 
 ---
 
 ## 7. Subir o ambiente
 
 ```bash
-docker compose up -d --build      # sobe db, redis, ollama, web, worker, beat, shinzou
+docker compose up -d --build      # sobe db, redis, ollama, web, worker, beat
 ```
 
 Django em `http://localhost:8000`. Swagger em `/api/docs/`. A 1ª subida puxa o
 modelo de embedding no Ollama (pode demorar). Só a porta 8000 (Django) é pra
-consumo do front; o shinzou (8001) é interno.
+consumo do front.

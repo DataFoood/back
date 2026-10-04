@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.contrib.contenttypes.models import ContentType
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -211,3 +213,79 @@ class AddressModifyTest(APITestCase):
         self.client.patch(self.URL, data={"object_id": self.other.pk}, format="json")
         self.addr.refresh_from_db()
         self.assertEqual(self.user.pk, self.addr.object_id, "object_id não pode ser remapeado em update")
+
+
+# ---------------------------------------------------------------------------
+# GEOCODING (Nominatim falso)
+# ---------------------------------------------------------------------------
+from unittest.mock import MagicMock, patch
+
+from .geocoding import geocode
+from .tasks import geocode_address
+
+
+def nominatim(*responses):
+    """httpx.get falso que devolve as respostas em ordem."""
+    fakes = []
+    for body in responses:
+        fake = MagicMock()
+        fake.json.return_value = body
+        fakes.append(fake)
+    return patch("address.geocoding.httpx.get", side_effect=fakes)
+
+
+class GeocodingTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = make_user()
+        cls.restaurant = make_restaurant(cls.owner)
+
+    def test_geocode_falls_back_to_city(self):
+        address = address_for(self.restaurant)
+        with nominatim([], [{"lat": "-22.2139", "lon": "-49.9458"}]) as get:
+            self.assertEqual((Decimal("-22.213900"), Decimal("-49.945800")), geocode(address))
+        self.assertIn("street", get.call_args_list[0].kwargs["params"])
+        self.assertNotIn("street", get.call_args_list[1].kwargs["params"])
+        self.assertIn("DataFood", get.call_args.kwargs["headers"]["User-Agent"])
+
+    def test_task_saves_coordinates(self):
+        address = address_for(self.restaurant)
+        with nominatim([{"lat": "-22.2", "lon": "-49.9"}]):
+            self.assertTrue(geocode_address(address.pk))
+        address.refresh_from_db()
+        self.assertEqual(Decimal("-22.200000"), address.latitude)
+
+    def test_task_survives_nominatim_down(self):
+        import httpx
+        address = address_for(self.restaurant)
+        with patch("address.geocoding.httpx.get", side_effect=httpx.ConnectError("down")):
+            self.assertFalse(geocode_address(address.pk))
+
+    @patch("address.views.geocode_address.delay")
+    def test_restaurant_address_is_geocoded_after_commit(self, delay):
+        self.client.force_authenticate(self.owner)
+        body = {"entity_type": "restaurant", "object_id": self.restaurant.pk,
+                "street": "Rua A", "city": "Marília", "state": "SP", "zipcode": "17500-000"}
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(BASE, body, format="json")
+        delay.assert_called_once_with(response.json()["id"])
+
+    @patch("address.views.geocode_address.delay")
+    def test_user_address_never_leaves(self, delay):
+        self.client.force_authenticate(self.owner)
+        body = {"entity_type": "user", "object_id": self.owner.pk,
+                "street": "Rua A", "city": "Marília", "state": "SP", "zipcode": "17500-000"}
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.post(BASE, body, format="json")
+        delay.assert_not_called()
+
+    @patch("address.views.geocode_address.delay")
+    def test_manual_coordinates_are_respected(self, delay):
+        self.client.force_authenticate(self.owner)
+        address = address_for(self.restaurant)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.patch(f"{BASE}{address.pk}/", {"street": "Rua B", "latitude": "-22.1", "longitude": "-49.9"}, format="json")
+        delay.assert_not_called()
+        with self.captureOnCommitCallbacks(execute=True):
+            self.client.patch(f"{BASE}{address.pk}/", {"street": "Rua C"}, format="json")
+        delay.assert_called_once_with(address.pk)

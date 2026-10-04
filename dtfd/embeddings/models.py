@@ -5,7 +5,7 @@ from pgvector.django import VectorField
 
 class RestaurantEmbedding(models.Model):
     """Vetor de embedding do restaurante (1:1). Guardado no mesmo Postgres
-    via pgvector. shinzou faz kNN direto nesta tabela."""
+    via pgvector. embeddings.search faz o kNN nesta tabela."""
 
     restaurant = models.OneToOneField(
         "restaurants.Restaurant", on_delete=models.CASCADE, related_name="embedding"

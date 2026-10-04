@@ -7,7 +7,7 @@ Rodar (a partir de dtfd/, com Postgres + Redis de pé):
     uv run python manage.py test ../final-tests
 """
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.core.cache import cache
 from django.test import override_settings
@@ -131,14 +131,11 @@ class SearchInputValidationTest(APITestCase):
                 response = self.client.post("/api/search/", {"query": "pizza", "limit": limit}, format="json")
                 self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
-    @patch("restaurants.views.httpx.post")
-    def test_valid_limit_is_forwarded(self, mock_post):
-        fake = MagicMock(status_code=200)
-        fake.json.return_value = {"results": []}
-        mock_post.return_value = fake
+    @patch("restaurants.views.search", return_value=[])
+    def test_valid_limit_is_forwarded(self, mock_search):
         response = self.client.post("/api/search/", {"query": "pizza", "limit": 6}, format="json")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual(6, mock_post.call_args.kwargs["json"]["limit"])
+        self.assertEqual(6, mock_search.call_args.args[2])
 
 
 class OwnerViewCountTest(APITestCase):
@@ -194,14 +191,6 @@ class BusinessHourRecreateTest(APITestCase):
         self.client.post(self.base, {"day_week": 3, "is_closed": True, "meta_interval": {}}, format="json")
         dup = self.client.post(self.base, {"day_week": 3, "is_closed": True, "meta_interval": {}}, format="json")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, dup.status_code)
-
-
-class RecomputeInputTest(APITestCase):
-    def test_invalid_user_id_is_400(self):
-        admin = User.objects.create_superuser(email="adm@dtfd.com", password=PASSWORD, name="Adm")
-        self.client.force_authenticate(admin)
-        response = self.client.post("/api/preferences/recompute/", {"user_id": "abc"}, format="json")
-        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
 
 class AccessControlMatrixTest(APITestCase):

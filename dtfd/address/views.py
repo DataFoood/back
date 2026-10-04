@@ -1,8 +1,8 @@
 from typing import cast
 
 from django.contrib.contenttypes.models import ContentType
+from django.db import transaction
 from django.db.models import Q
-from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 
@@ -12,6 +12,20 @@ from users.models import User
 from .models import Address
 from .permissions import IsEntityOwnerOrAdmin, owns_entity
 from .serializers import AddressSerializer
+from .tasks import geocode_address
+
+# mudou um destes -> coordenada antiga não vale mais
+LOCATION_FIELDS = {"street", "number", "city", "state", "zipcode", "country"}
+
+
+def geocode_if_needed(address, changed: set[str]):
+    """Só endereço de restaurante (público) vai pro Nominatim; coordenada
+    enviada explicitamente pelo dono é respeitada."""
+    if address.content_type.model != "restaurant" or "latitude" in changed:
+        return
+    if address.latitude is None or changed & LOCATION_FIELDS:
+        # depois do commit: o worker precisa enxergar a linha
+        transaction.on_commit(lambda: geocode_address.delay(address.pk))
 
 
 class AddressListCreateView(ListCreateAPIView):
@@ -38,7 +52,8 @@ class AddressListCreateView(ListCreateAPIView):
         entity = content_type.get_object_for_this_type(pk=object_id)
         if not owns_entity(cast(User, self.request.user), entity):
             raise PermissionDenied("Você não pode criar endereço para esta entidade.")
-        serializer.save()
+        address = serializer.save()
+        geocode_if_needed(address, set(serializer.validated_data))
 
 
 class AddressDetailView(RetrieveUpdateDestroyAPIView):
@@ -47,6 +62,9 @@ class AddressDetailView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsEntityOwnerOrAdmin]
     queryset = Address.objects.all()
 
+    def perform_update(self, serializer):
+        address = serializer.save()
+        geocode_if_needed(address, set(serializer.validated_data))
+
     def perform_destroy(self, instance):
-        instance.deleted_at = timezone.now()
-        instance.save(update_fields=["deleted_at"])
+        instance.soft_delete()

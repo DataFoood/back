@@ -23,7 +23,6 @@ Ollama (`ollama-init`) antes do web ficar pronto — pode demorar.
 | `web` | Django runserver | **8000**:8000 | API (único exposto ao front) |
 | `worker` | celery -A dtfd worker | — | tasks assíncronas |
 | `beat` | celery -A dtfd beat | — | cron (reindex/recompute) |
-| `shinzou` | uvicorn shinzou.main:app | **8001**:8001 | busca (interno) |
 
 Portas host 5433/11435 evitam conflito com Postgres/Ollama já rodando na
 máquina. Detalhe dos papéis em [[architecture]].
@@ -43,9 +42,8 @@ máquina. Detalhe dos papéis em [[architecture]].
 | `CELERY_BROKER_URL` / `CELERY_RESULT_BACKEND` | redis://redis:6379/0 e /2 | |
 | `OLLAMA_URL` | http://ollama:11434 | |
 | `EMBEDDING_MODEL` / `EMBEDDING_DIM` | nomic-embed-text / 768 | |
-| `SHINZOU_URL` | http://shinzou:8001 | ponte |
-| `SHINZOU_SERVICE_TOKEN` | (segredo) | auth de serviço |
-| `SECRET_KEY` | (segredo) | compartilhada Django↔shinzou (JWT) |
+| `SECRET_KEY` | (segredo) | assina o JWT |
+| `NOMINATIM_URL` / `NOMINATIM_USER_AGENT` | https://nominatim.openstreetmap.org / DataFood/0.1 (...) | geocoding (1 req/s; UA identificando o app) |
 | `ALLOWED_HOSTS` | separado por `;` | parsing custom no settings |
 | `NUM_PROXIES` | 0 (dev) / 1 (prod, Caddy) | quantos proxies confiáveis ficam na frente — define o IP usado no rate limit ([[security]]) |
 | `SEARCH_RATE` | 30/min | throttle da busca por usuário |
@@ -63,10 +61,9 @@ sudo -u postgres createdb -O dtfd dtfd
 # env apontando para localhost
 export DEBUG=True DB_HOST=localhost REDIS_URL=redis://localhost:6379/1 \
   CELERY_BROKER_URL=redis://localhost:6379/0 CELERY_RESULT_BACKEND=redis://localhost:6379/2 \
-  OLLAMA_URL=http://localhost:11434 SHINZOU_URL=http://localhost:8001 CELERY_TASK_ALWAYS_EAGER=True
+  OLLAMA_URL=http://localhost:11434 CELERY_TASK_ALWAYS_EAGER=True
 uv sync
 uv run python final-tests/fake_ollama.py &          # embeddings determinísticos, sem GPU
-uv run uvicorn shinzou.main:app --port 8001 &
 cd dtfd && uv run python manage.py migrate && uv run python manage.py seed_demo --demo-users \
   && uv run python manage.py reindex_restaurants && uv run python manage.py runserver
 ```
@@ -83,8 +80,8 @@ pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 
 ## Qualidade
 - Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (178 Django) + `shinzou/tests` (6).
-- Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
+  (220 Django).
+- Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (15).
 - Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (67 checagens).
 - Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**
   de stubs (`request.user` tipado como `_User`/`AnonymousUser`, mixins sem

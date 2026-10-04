@@ -34,7 +34,6 @@ class User(AbstractUser, AbstractAudit):
     avatar_url = models.URLField(blank=True)
     banner_url = models.URLField(blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
-    level = models.PositiveSmallIntegerField(default=1)
     # LGPD: só guarda histórico de busca/sinais se o usuário consentir.
     allow_info = models.BooleanField(default=False)
 

@@ -185,7 +185,7 @@ class UserDetailTest(APITestCase):
         with self.subTest():
             self.assertEqual(status.HTTP_200_OK, response.status_code)
         expected = {"id", "name", "email", "cpf", "phone", "birthday", "gender",
-                    "avatar_url", "banner_url", "role", "level", "allow_info",
+                    "avatar_url", "banner_url", "role", "allow_info",
                     "is_active", "created_at"}
         self.assertSetEqual(expected, set(response.json().keys()))
 
@@ -349,7 +349,6 @@ class UserPrivilegeEscalationTest(APITestCase):
         self.assertFalse(user.is_staff, "is_staff nao pode ser setado no register")
         self.assertFalse(user.is_superuser, "is_superuser nao pode ser setado no register")
         self.assertEqual("customer", user.role, "role nao pode ser setado no register")
-        self.assertEqual(1, user.level, "level nao pode ser setado no register")
 
     def test_edit_cannot_escalate_privileges(self):
         victim = make_user(email="v@dtfd.com")
@@ -367,7 +366,6 @@ class UserPrivilegeEscalationTest(APITestCase):
         self.assertFalse(victim.is_superuser)
         self.assertTrue(victim.is_active)
         self.assertEqual("customer", victim.role)
-        self.assertEqual(1, victim.level)
 
 
 # ---------------------------------------------------------------------------
@@ -571,3 +569,59 @@ class UserLogoutTest(APITestCase):
     def test_logout_requires_refresh(self):
         response = self.client.post("/api/users/logout/", data={}, format="json")
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+
+
+class AdminUserManagementTest(APITestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.admin = make_admin()
+        cls.target = make_user(email="alvo@dtfd.com", name="Alvo Silva")
+
+    def setUp(self):
+        self.client.force_authenticate(self.admin)
+
+    def url(self, user):
+        return f"/api/users/{user.pk}/admin/"
+
+    def test_list_filters(self):
+        rows = self.client.get("/api/users/?q=alvo").json()["results"]
+        self.assertEqual(["alvo@dtfd.com"], [u["email"] for u in rows])
+        rows = self.client.get("/api/users/?role=admin").json()["results"]
+        self.assertEqual(["admin@dtfd.com"], [u["email"] for u in rows])
+
+    def test_promote_and_demote_syncs_is_staff(self):
+        self.client.patch(self.url(self.target), {"role": "admin"}, format="json")
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.is_staff)
+        self.client.patch(self.url(self.target), {"role": "owner"}, format="json")
+        self.target.refresh_from_db()
+        self.assertEqual(("owner", False), (self.target.role, self.target.is_staff))
+
+    def test_reactivate_removed_account(self):
+        self.target.deleted_at = timezone.now()
+        self.target.is_active = False
+        self.target.save()
+        response = self.client.patch(self.url(self.target), {"is_active": True}, format="json")
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.target.refresh_from_db()
+        self.assertTrue(self.target.is_active)
+        self.assertIsNone(self.target.deleted_at)
+
+    def test_deactivate_blocks_login(self):
+        self.client.patch(self.url(self.target), {"is_active": False}, format="json")
+        self.client.force_authenticate(None)
+        response = self.client.post("/api/users/login/", {"email": "alvo@dtfd.com", "password": "SenhaForte123"}, format="json")
+        self.assertEqual(status.HTTP_401_UNAUTHORIZED, response.status_code)
+
+    def test_cannot_change_self_or_send_garbage(self):
+        self.assertEqual(status.HTTP_400_BAD_REQUEST,
+                         self.client.patch(self.url(self.admin), {"role": "customer"}, format="json").status_code)
+        for body in ({"role": "god"}, {"is_active": "yes"}):
+            with self.subTest(body=body):
+                self.assertEqual(status.HTTP_400_BAD_REQUEST,
+                                 self.client.patch(self.url(self.target), body, format="json").status_code)
+
+    def test_non_admin_forbidden(self):
+        self.client.force_authenticate(self.target)
+        response = self.client.patch(self.url(self.admin), {"role": "customer"}, format="json")
+        self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)

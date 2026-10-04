@@ -25,7 +25,6 @@ class Address(AbstractAudit):
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     is_default = models.BooleanField(default=False)
-    geocoded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [models.Index(fields=["content_type", "object_id"])]

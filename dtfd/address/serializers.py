@@ -18,7 +18,7 @@ class AddressSerializer(serializers.ModelSerializer):
         fields = [
             "id", "entity_type", "object_id", "label", "street", "number",
             "complement", "neighborhood", "city", "state", "country",
-            "zipcode", "latitude", "longitude", "is_default", "geocoded_at",
+            "zipcode", "latitude", "longitude", "is_default",
             "created_at", "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]

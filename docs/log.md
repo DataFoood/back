@@ -2,6 +2,38 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-04 — proximidade, métricas do dono e console admin
+- **Geocoding** de endereço de restaurante via Nominatim (task Celery depois do
+  commit; `manage.py geocode_addresses` pra backfill).
+- **Busca por proximidade:** `lat`/`lon`/`radius_km` no `POST /api/search/` e
+  no catálogo (`ordering=distance`); 4º sinal `distance` no ranking (peso na
+  tabela `RankingWeight`, seed 0.5). Coordenada do usuário não é guardada.
+- **App `analytics`:** visitas/dia, aparições na busca, cliques vindos da busca e
+  visitas por região (~1 km) por restaurante; buscas/falhas da plataforma.
+  `stats/` do dono ampliado.
+- **Admin:** `GET/PATCH /api/preferences/weights/`, `PATCH /api/users/<id>/admin/`
+  (papel/ativação), `?q=`/`?role=` em `/api/users/`,
+  `/api/restaurants/admin/`, `restore/`, `reindex/`, `GET /api/analytics/platform/`.
+- `createsuperuser` agora cria `role=admin` (migration corrige os existentes).
+- Front novo (`dtfd_fte`) integrado a tudo isso.
+- 220 testes Django + 15 regressões + smoke 67/67 + fluxo do `dtfd_fte` 32/32.
+
+## 2026-10-04 — cortes de over-engineering (ponytail audit)
+- **shinzou (FastAPI) absorvido pelo Django:** a busca virou
+  `embeddings/search.py` (kNN via ORM `CosineDistance`, mesmo `rank()` z-score).
+  Saíram o service token, a revalidação de JWT, o SQL cru com nome de tabela,
+  o pool próprio, a hidratação duplicada e os knobs de env sem uso
+  (`SHINZOU_*`). Contrato de `POST /api/search/` inalterado.
+- Removidas as rotas admin `POST /api/preferences/recompute/` e
+  `POST /api/embeddings/reindex/` (o front não usa); ficam o beat e os
+  `manage.py reindex_restaurants` / `recompute_preferences`. Tasks sem
+  chamador (`reindex_one`, `reindex_all_task`, `recompute_one`) saíram.
+- Colunas sem uso removidas (migrations): `Restaurant.origin`/`external_id`,
+  `User.level`, `Address.geocoded_at`.
+- `AbstractAudit.soft_delete()` substitui 6 cópias; `IsAuthorOrAdmin` herda de
+  `IsRestaurantOwnerOrAdmin` (`owner_field`).
+- 182 testes Django + 15 regressões verdes; schema OpenAPI válido.
+
 ## 2026-09-28 — testes finais de integração e segurança
 - Stack inteiro testado sem Docker (Postgres+pgvector, Redis, shinzou e um
   Ollama falso determinístico) com o front em navegação E2E. Ver

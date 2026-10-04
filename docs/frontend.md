@@ -16,7 +16,7 @@ Pública            Autenticada                 Admin
 ─────────          ───────────                 ─────
 Landing            Busca semântica             Dashboard admin
 Login/Cadastro     Detalhe restaurante         Moderação restaurantes
-Lista/Explorar     Favoritos                   Jobs (reindex/recompute)
+Lista/Explorar     Favoritos                   
 Detalhe (read)     Perfil + consentimento      Usuários
                    Minhas preferências
                    (Owner) Gerir restaurante
@@ -75,9 +75,7 @@ CRUD do próprio restaurante e filhos.
 
 ### 10. Admin 🛡️
 - `GET /api/users/` e `/api/users/removed/` (paginado).
-- `POST /api/preferences/recompute/` — recálculo async (**202**).
-- `POST /api/embeddings/reindex/` — reindexação async (**202**).
-- Jobs retornam `task_id`; rodam no worker em background.
+- Reindex/recompute rodam no beat (cron) ou via `manage.py`; não há rota HTTP.
 
 ## Padrões pro front lembrar
 - **Auth:** Bearer access em tudo logado; renovar via refresh; refresh **não**

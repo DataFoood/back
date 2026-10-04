@@ -173,6 +173,7 @@ class _RestaurantComputedMixin(serializers.Serializer):
 
 class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
     """Versão enxuta pra listas, busca e favoritos."""
+    distance_km = serializers.SerializerMethodField()
     cuisines = LookupSerializer(many=True, read_only=True)
     ambients = LookupSerializer(many=True, read_only=True)
     price_ranges = LookupSerializer(many=True, read_only=True)
@@ -183,9 +184,13 @@ class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "name", "slug", "description", "cover_image",
             "average_rating", "total_reviews", "cuisines", "ambients",
             "price_ranges", "address", "is_open_now", "is_favorited",
-            "has_delivery", "has_reservation",
+            "has_delivery", "has_reservation", "distance_km",
         ]
         read_only_fields = fields
+
+    def get_distance_km(self, obj) -> float | None:
+        # só vem preenchido na listagem com ?lat=&lon= (anotado pela view)
+        return getattr(obj, "distance_km", None)
 
 
 CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours"]
@@ -247,3 +252,21 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
             i += 1
             slug = f"{base}-{i}"
         return slug
+
+
+class RestaurantAdminSerializer(serializers.ModelSerializer):
+    """Moderação (admin): inclui removidos e pendências de indexação/geocoding."""
+    owner_email = serializers.EmailField(source="owner.email", default=None, read_only=True)
+    has_coordinates = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Restaurant
+        fields = [
+            "id", "name", "slug", "owner", "owner_email", "average_rating",
+            "total_reviews", "view_count", "embedding_stale", "has_coordinates",
+            "created_at", "deleted_at",
+        ]
+        read_only_fields = fields
+
+    def get_has_coordinates(self, obj) -> bool:
+        return any(a.latitude is not None for a in obj.addresses.all())

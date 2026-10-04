@@ -6,7 +6,7 @@ refresh, blacklist, revogação de sessão, isolamento entre contas).
 
 Pré-requisito: API em API_URL (default http://localhost:8000) com o seed de
 demonstração (`seed_demo --demo-users` + `reindex_restaurants`). A busca
-semântica aceita 200 (shinzou + Ollama de pé) ou 503 (indisponível) — o
+semântica aceita 200 (Ollama de pé) ou 503 (indisponível) — o
 script informa qual foi.
 
 Uso:

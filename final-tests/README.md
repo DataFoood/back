@@ -8,6 +8,8 @@ criado ou descoberto nela fica aqui.
 | `test_security_regressions.py` | 16 testes Django: um por achado + varredura de autorização. **Falham no código anterior, passam no atual.** |
 | `api_smoke.py` | 67 checagens contra a API **rodando** (sem mocks): visitante, cliente, dono, sessão, CORS, limpeza |
 | `fake_ollama.py` | Ollama falso (`POST /api/embeddings`) para rodar a busca semântica sem GPU/modelo |
+| `fake_nominatim.py` | Nominatim falso (geocoding) para não bater no OpenStreetMap em teste |
+| `front_flow.py` | 32 checagens no formato do front `dtfd_fte`: proximidade, métricas do dono, console admin, sessão |
 
 ## Como rodar
 
@@ -26,21 +28,20 @@ uv run python final-tests/api_smoke.py
 
 Sem Docker (como esta rodada foi feita): ver "Rodar sem Docker" em
 [`docs/infrastructure.md`](../docs/infrastructure.md). Em resumo: Postgres 16 +
-`postgresql-16-pgvector`, Redis, `fake_ollama.py`, shinzou e `runserver`.
+`postgresql-16-pgvector`, Redis, `fake_ollama.py` e `runserver`.
 
 ```bash
 cd dtfd
-uv run python manage.py test               # 178 testes da suíte
-uv run python manage.py test ../final-tests  # 16 regressões
-cd .. && uv run pytest shinzou/tests        # 6 do shinzou
-uv run python final-tests/api_smoke.py      # 67 checagens (API em :8000)
+uv run python manage.py test               # 220 testes da suíte
+uv run python manage.py test ../final-tests  # 15 regressões
+cd .. && uv run python final-tests/api_smoke.py      # 67 checagens (API em :8000)
 ```
 
 Observações:
 - O smoke faz 2 logins; o limite é 5/min por IP. Para repetir em sequência:
   `redis-cli -n 1 flushdb` (zera os contadores do throttle em dev).
-- Busca: com shinzou + Ollama (real ou falso) o smoke valida resultados; sem
-  eles aceita 503 e avisa.
+- Busca: com Ollama (real ou falso) o smoke valida resultados; sem ele
+  aceita 503 e avisa.
 - Com o `fake_ollama.py` o `% match` é baixo (0–10%): o vetor é
   bag-of-words, não semântico. Serve para testar o pipeline, não a
   relevância.

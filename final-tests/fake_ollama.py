@@ -1,7 +1,7 @@
 """Ollama falso para testes locais sem GPU/modelo.
 
-Implementa só `POST /api/embeddings` (o único endpoint que Django e shinzou
-usam) devolvendo um vetor determinístico de EMBEDDING_DIM dimensões:
+Implementa só `POST /api/embeddings` (o único endpoint que o Django
+usa) devolvendo um vetor determinístico de EMBEDDING_DIM dimensões:
 bag-of-words com hashing + normalização L2. Não é semântico de verdade, mas
 textos que compartilham palavras ficam próximos — o suficiente para exercitar
 o pipeline inteiro (reindex -> pgvector -> kNN -> ranking -> hidratação).
