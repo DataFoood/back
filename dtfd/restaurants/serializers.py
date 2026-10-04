@@ -5,7 +5,14 @@ from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+
 from address.models import Address
+from promotions.serializers import (
+    FlashPromotionSerializer,
+    PromotionSummarySerializer,
+    active_promotions_prefetch,
+    current_promotion,
+)
 
 from .models import (
     Ambient,
@@ -174,6 +181,7 @@ class _RestaurantComputedMixin(serializers.Serializer):
 class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
     """Versão enxuta pra listas, busca e favoritos."""
     distance_km = serializers.SerializerMethodField()
+    promotion = serializers.SerializerMethodField()
     cuisines = LookupSerializer(many=True, read_only=True)
     ambients = LookupSerializer(many=True, read_only=True)
     price_ranges = LookupSerializer(many=True, read_only=True)
@@ -184,16 +192,22 @@ class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "name", "slug", "description", "cover_image",
             "average_rating", "total_reviews", "cuisines", "ambients",
             "price_ranges", "address", "is_open_now", "is_favorited",
-            "has_delivery", "has_reservation", "distance_km",
+            "has_delivery", "has_reservation", "distance_km", "promotion",
         ]
         read_only_fields = fields
+
+    @extend_schema_field(PromotionSummarySerializer(allow_null=True))
+    def get_promotion(self, obj):
+        promo = current_promotion(obj)
+        return PromotionSummarySerializer(promo).data if promo else None
 
     def get_distance_km(self, obj) -> float | None:
         # só vem preenchido na listagem com ?lat=&lon= (anotado pela view)
         return getattr(obj, "distance_km", None)
 
 
-CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours"]
+CARD_PREFETCH_PATHS = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours"]
+CARD_PREFETCH = [*CARD_PREFETCH_PATHS, active_promotions_prefetch()]
 
 
 class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
@@ -209,6 +223,13 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
     price_ranges = LookupSerializer(many=True, read_only=True)
     business_models = LookupSerializer(many=True, read_only=True)
     physical_formats = LookupSerializer(many=True, read_only=True)
+    promotion = serializers.SerializerMethodField()
+
+    @extend_schema_field(FlashPromotionSerializer(allow_null=True))
+    def get_promotion(self, obj):
+        """Promoção relâmpago ativa, com preço final de cada item."""
+        promo = current_promotion(obj)
+        return FlashPromotionSerializer(promo).data if promo else None
 
     class Meta:
         model = Restaurant
@@ -219,6 +240,7 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "images", "reviews", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
             "address", "is_open_now", "is_favorited",
+            "promotion",
         ]
 
 

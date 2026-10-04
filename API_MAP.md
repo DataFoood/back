@@ -108,11 +108,13 @@ preferences; searches) **não** paginam — retornam array direto.
 | PATCH/DELETE | `<id>/` | 👤 (owner) | DELETE = soft |
 | POST/DELETE | `<id>/favorite/` | 🔑 | favoritar (idempotente) / desfavoritar |
 | GET | `favorites/` | 🔑 | meus favoritos `[{id, restaurant: <card>, created_at}]` |
-| GET/POST | `<id>/items/` | 🌐 ler / 👤 escrever | **máx 6 itens** |
+| GET/POST | `<id>/items/` | 🌐 ler / 👤 escrever | **máx 30 itens** |
 | ../PATCH/DELETE | `<id>/items/<id>/` | 👤 | |
 | GET/POST | `<id>/reviews/` | 🌐 ler / 🔑 escrever | autor fica dono; 1 por usuário; dono não avalia o próprio (400) |
 | ../PATCH/DELETE | `<id>/reviews/<id>/` | 👤 (autor) | |
 | GET/POST | `<id>/images/` | 🌐 ler / 👤 escrever | |
+| GET/POST | `<id>/promotions/` | 🌐 ler / 👤 escrever | **promoção relâmpago**: `{title?, starts_at?, ends_at, items: [{item, discount_type: percent\|amount, discount_value}]}`. Máx 24 h, sem sobreposição; % até 90; valor < preço. Responde com `final_price` por item |
+| DELETE | `<id>/promotions/<id>/` | 👤 | encerra agora (fica no histórico) |
 | GET/POST | `<id>/hours/` | 🌐 ler / 👤 escrever | `meta_interval` JSON |
 
 Restaurante carrega 7 taxonomias M2M (cuisines, ambients, service_models,
@@ -122,7 +124,8 @@ canal de venda (`has_dine_in`, `has_delivery`, ...). `average_rating`/
 
 **Card** (listas, busca, favoritos): `id, name, slug, description, cover_image,
 average_rating, total_reviews, cuisines, ambients, price_ranges, address,
-is_open_now, is_favorited, has_delivery, has_reservation, distance_km`. O detalhe tem tudo
+is_open_now, is_favorited, has_delivery, has_reservation, distance_km, promotion`.
+`promotion` (card) = resumo da promoção relâmpago ativa `{id, title, ends_at, items_count, max_discount_percent}` ou `null`; no detalhe vem completa, com `items[].final_price`. Catálogo aceita `?promo=true`. O detalhe tem tudo
 isso + items, reviews (com `author_name`), images, business_hours e demais
 taxonomias/canais. `address` é o endereço **público** do restaurante (ou
 `null`); `is_open_now` é `null` se não há horários cadastrados.

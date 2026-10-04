@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "preferences",
     "embeddings",
     "analytics",
+    "promotions",
 ]
 
 MIDDLEWARE = [

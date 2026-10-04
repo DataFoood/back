@@ -179,8 +179,8 @@ class BusinessHour(AbstractAudit):
 
 # --- Fase 1: dados-sinal pra busca semantica -------------------------------
 class RestaurantItem(AbstractAudit):
-    """Pratos principais do restaurante (ate 6). Alimenta o embedding e o
-    casamento por comida ('tenha feijoada'). Limite de 6 validado no serializer."""
+    """Cardápio do restaurante (até MAX_ITEMS, validado na view). Alimenta o
+    embedding, o casamento por comida ('tenha feijoada') e as promoções relâmpago."""
 
     restaurant = models.ForeignKey(
         Restaurant, on_delete=models.CASCADE, related_name="items"

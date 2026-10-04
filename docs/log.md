@@ -2,6 +2,13 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-04 — promoção relâmpago
+- App `promotions`: o dono põe itens do cardápio com desconto (% ou R$) até uma
+  hora de expiração (máx 24 h). Card ganha `promotion` (resumo), detalhe a
+  promoção completa com preço final; catálogo filtra `?promo=true`.
+- Cardápio sobe de 6 para 30 itens.
+- 233 testes Django + 15 regressões.
+
 ## 2026-10-04 — métricas v2 (BI do dono)
 - `AccessStat` substitui `RestaurantDailyStat`/`RegionVisit`: acessos por dia ×
   hora × evento × faixa etária (com consentimento) × célula de ~1 km.

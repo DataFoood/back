@@ -18,7 +18,7 @@ User ──< UserCuisine/Ambient/PriceAffinity      (derivado dos sinais)
 
 Restaurant ──< RestaurantImage
 Restaurant ──< BusinessHour (unique restaurant+day_week)
-Restaurant ──< RestaurantItem (máx 6)
+Restaurant ──< RestaurantItem (máx 30)
 Restaurant ──1:1── RestaurantEmbedding (vector 768)
 Restaurant >──< Cuisine / Ambient / ServiceModel / TargetAudience /
                 PriceRange / BusinessModel / PhysicalFormat   (7 M2M)
@@ -48,7 +48,7 @@ Núcleo. Além de dados cadastrais:
 |---|---|---|
 | `RestaurantView` | viu o restaurante (count agregado) | fraco (1×count) |
 | `RestaurantFavorite` | favoritou | forte (5) |
-| `RestaurantItem` | pratos (até 6) — entram no embedding e no match por comida | — |
+| `RestaurantItem` | cardápio (até 30) — entra no embedding, no match por comida e nas promoções | — |
 
 `compute_user_preferences` agrega esses sinais em afinidades normalizadas por
 dimensão (cuisine/ambient/price). Linhas editadas à mão viram `is_manual=true` e
@@ -66,3 +66,10 @@ o front geralmente só lê pra montar filtros.
 ## Address
 Polimórfico: `content_type` + `object_id` apontam pra Restaurant **ou** User. A
 API recebe `entity_type` (`"restaurant"`/`"user"`) e resolve o ContentType.
+
+## Promoção relâmpago (app `promotions`)
+`FlashPromotion` (restaurante, título, `starts_at`, `ends_at` ≤ 24 h, sem
+sobreposição) ──< `PromotionItem` (item do cardápio, `discount_type`
+percent|amount, `discount_value`). `final_price` é calculado (centavos, nunca
+negativo) e só visual — o restaurante cobra no balcão. Ativa = `starts_at ≤ agora
+< ends_at`; encerrar = mover `ends_at` pra agora (o histórico fica).

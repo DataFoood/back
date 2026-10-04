@@ -5,7 +5,7 @@ from typing import cast
 import httpx
 from django.db import transaction
 from django.db.models import Count, F, Q, Sum
-from django.db.models.functions import TruncDate
+from django.db.models.functions import Now, TruncDate
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -29,6 +29,7 @@ from analytics.models import AccessStat
 from analytics.services import bump_platform, record_access
 from embeddings.search import haversine_km, search
 from embeddings.tasks import reindex_one
+from promotions.serializers import active_promotions_prefetch
 from users.models import User
 from utils.pagination import DefaultPagination
 
@@ -55,6 +56,7 @@ from .permissions import (
 )
 from .serializers import (
     CARD_PREFETCH,
+    CARD_PREFETCH_PATHS,
     BusinessHourSerializer,
     LookupSerializer,
     primary_address,
@@ -70,7 +72,8 @@ from .serializers import (
 
 logger = logging.getLogger(__name__)
 
-MAX_ITEMS = 6
+# cardápio que alimenta a busca e as promoções relâmpago
+MAX_ITEMS = 30
 
 DETAIL_PREFETCH = [
     *CARD_PREFETCH, "images", "items", "service_models", "target_audiences",
@@ -124,7 +127,7 @@ class _CardListMixin:
 class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
     """GET /api/restaurants/ — publico, paginado, com filtros:
          ?q=texto  ?cuisine=1,2  ?ambient=  ?price_range=  ?service_model=
-         ?target_audience=  ?city=  ?delivery=true  ?ordering=recent|rating|name
+         ?target_audience=  ?city=  ?delivery=true  ?promo=true  ?ordering=recent|rating|name
          ?lat=&lon= (visitante; não é guardado) + ?ordering=distance e/ou ?radius_km=
        POST /api/restaurants/ — autenticado, vira owner"""
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -151,6 +154,8 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
             )
         if params.get("delivery") == "true":
             qs = qs.filter(has_delivery=True)
+        if params.get("promo") == "true":  # com promoção relâmpago ativa agora
+            qs = qs.filter(promotions__starts_at__lte=Now(), promotions__ends_at__gt=Now())
 
         ordering = ORDERINGS.get(params.get("ordering", ""), ORDERINGS["recent"])
         qs = qs.distinct().order_by(*ordering).prefetch_related(*CARD_PREFETCH)
@@ -562,7 +567,7 @@ class BusinessHourDetailView(RetrieveUpdateDestroyAPIView):
 
 
 # ---------------------------------------------------------------------------
-# ITEMS (nested) — pratos principais, gestao do owner, limite de 6
+# ITEMS (nested) — cardápio, gestão do owner, limite de MAX_ITEMS
 # ---------------------------------------------------------------------------
 class ItemListCreateView(ListCreateAPIView):
     serializer_class = RestaurantItemSerializer
@@ -638,7 +643,10 @@ class FavoriteListView(ListAPIView):
                 user=self.request.user, restaurant__deleted_at__isnull=True
             )
             .select_related("restaurant")
-            .prefetch_related(*[f"restaurant__{p}" for p in CARD_PREFETCH])
+            .prefetch_related(
+                *[f"restaurant__{p}" for p in CARD_PREFETCH_PATHS],
+                active_promotions_prefetch("restaurant__"),
+            )
             .order_by("-created_at")
         )
 

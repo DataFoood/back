@@ -76,6 +76,13 @@ Métricas agregadas e anônimas. Detalhe em [[search-rag]].
 | `tasks.py` | `label_cell` (reverse geocoding da célula) |
 | `views.py` | `PlatformMetricsView` (admin), `RestaurantInsightsView` (BI do dono) |
 
+## App `promotions`
+| Arquivo | Papel |
+|---|---|
+| `models.py` | `FlashPromotion` (+ queryset `active()`), `PromotionItem.final_price` |
+| `serializers.py` | criação validada, resumo pro card, `active_promotions_prefetch` (`Now()` no SQL) |
+| `views.py` / `urls.py` | `/api/restaurants/<id>/promotions/` (lista/cria) e `<pk>/` (encerra) |
+
 ## App `utils`
 Infra compartilhada.
 | Arquivo | Papel |
