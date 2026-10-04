@@ -25,8 +25,8 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from analytics.models import RegionVisit, RestaurantDailyStat
-from analytics.services import bump_platform, bump_restaurants, record_region_visit
+from analytics.models import AccessStat
+from analytics.services import bump_platform, record_access
 from embeddings.search import haversine_km, search
 from embeddings.tasks import reindex_one
 from users.models import User
@@ -268,12 +268,13 @@ class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
         is_manager = user.is_authenticated and (instance.owner_id == user.pk or user.is_staff)
         if not is_manager:
             Restaurant.objects.filter(pk=instance.pk).update(view_count=F("view_count") + 1)
-            bump_restaurants([instance.pk], "views")
-            if request.query_params.get("src") == "search":
-                bump_restaurants([instance.pk], "search_clicks")
-            coords = _visitor_coords(request.query_params)
-            if coords:
-                record_region_visit(instance.pk, *coords)
+            from_search = request.query_params.get("src") == "search"
+            record_access(
+                [instance.pk],
+                AccessStat.Event.SEARCH_VIEW if from_search else AccessStat.Event.VIEW,
+                user=request.user,
+                coords=_visitor_coords(request.query_params),
+            )
         # sinal de preferência por usuário: só com consentimento LGPD
         if request.user.is_authenticated and request.user.allow_info:
             view, created = RestaurantView.objects.get_or_create(
@@ -351,28 +352,28 @@ class RestaurantStatsView(APIView):
             return {row["day"]: row["n"] for row in rows}
 
         fav_daily, rev_daily = daily(favorites), daily(reviews)
+        accesses = AccessStat.objects.filter(restaurant=restaurant, date__gte=since)
         traffic = {
-            row["date"]: row
-            for row in RestaurantDailyStat.objects.filter(restaurant=restaurant, date__gte=since)
-            .values("date", "views", "search_impressions", "search_clicks")
+            (row["date"], row["event"]): row["n"]
+            for row in accesses.values("date", "event").annotate(n=Sum("count"))
         }
-        empty = {"views": 0, "search_impressions": 0, "search_clicks": 0}
+        Event = AccessStat.Event
         series = []
         for i in range(self.WINDOW_DAYS):
             day = since + timedelta(days=i)
-            t = traffic.get(day, empty)
+            clicks_day = traffic.get((day, Event.SEARCH_VIEW), 0)
             series.append({
                 "date": day.isoformat(),
                 "favorites": fav_daily.get(day, 0),
                 "reviews": rev_daily.get(day, 0),
-                "views": t["views"],
-                "search_impressions": t["search_impressions"],
-                "search_clicks": t["search_clicks"],
+                "views": traffic.get((day, Event.VIEW), 0) + clicks_day,
+                "search_impressions": traffic.get((day, Event.IMPRESSION), 0),
+                "search_clicks": clicks_day,
             })
         impressions = sum(row["search_impressions"] for row in series)
         clicks = sum(row["search_clicks"] for row in series)
         regions = (
-            RegionVisit.objects.filter(restaurant=restaurant, date__gte=since)
+            accesses.filter(event__in=[Event.VIEW, Event.SEARCH_VIEW], cell__isnull=False)
             .values("cell__label", "cell__lat", "cell__lon")
             .annotate(visits=Sum("count"))
             .order_by("-visits")[:10]
@@ -736,7 +737,10 @@ class SearchView(APIView):
 
         results = self._hydrate(request, ranked)
         # impressão = restaurante efetivamente exibido no resultado
-        bump_restaurants([row["restaurant"]["id"] for row in results], "search_impressions")
+        record_access(
+            [row["restaurant"]["id"] for row in results], AccessStat.Event.IMPRESSION,
+            user=request.user, coords=origin,
+        )
         return Response({"results": results})
 
     def _geo(self, data):

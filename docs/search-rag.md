@@ -62,14 +62,17 @@ A query só é gravada em `SearchHistory` se a resposta foi 200 **e**
 [[security]].
 
 ## Métricas do dono (app `analytics`)
-Contadores diários anônimos, sem vínculo com usuário:
-- `RestaurantDailyStat`: `views` (detalhe aberto por quem não é dono/admin),
-  `search_impressions` (apareceu num resultado exibido), `search_clicks`
-  (detalhe aberto com `?src=search`).
-- `RegionVisit` + `GeoCell`: visita contada na célula de ~1 km (coordenada
-  arredondada em 2 casas) do visitante, quando o front manda `?lat=&lon=`. A
-  célula ganha nome (bairro, cidade) por reverse geocoding, uma vez.
+Tabela fato `AccessStat`: contagem por restaurante × dia × hora × evento ×
+faixa etária × célula — nada de usuário.
+- **evento:** `impression` (apareceu num resultado exibido da busca), `view`
+  (abriu o detalhe), `search_view` (abriu o detalhe vindo da busca = clique).
+- **faixa etária:** só de quem deu consentimento (`allow_info`) e informou a
+  data de nascimento; o resto é `unknown`.
+- **célula:** ~1 km (coordenada arredondada em 2 casas) quando o front manda a
+  localização; nula sem localização. Nome (bairro, cidade) por reverse
+  geocoding, uma vez por célula (`GeoCell`).
+- **k-anonimato (K=5):** o BI (`/api/analytics/restaurants/<id>/`) devolve
+  `null` pra qualquer grupo com 1-4 acessos e tira do mapa células abaixo de K.
 - `PlatformDailyStat`: buscas e falhas (503) por dia, pro painel admin.
-
-`GET /api/restaurants/<id>/stats/` agrega a janela de 30 dias; o admin vê
-`GET /api/analytics/platform/`.
+- Demo: `manage.py seed_analytics_demo [--days 30] [--clear]` gera acessos
+  fictícios ao redor dos restaurantes (só com `DEBUG=True`).

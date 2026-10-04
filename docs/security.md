@@ -81,8 +81,9 @@ hora. Registros soft-deleted somem das listagens padrão (`ActiveManager`). Ver
 ## Localização (LGPD)
 - A coordenada do usuário vem do navegador (opt-in) e é usada **só no request**
   de busca/listagem; não é gravada.
-- Visita por região guarda só a célula de ~1 km (2 casas decimais) + contagem
-  diária por restaurante, sem usuário. O front já manda a coordenada arredondada.
+- Acessos são guardados só como contagem (dia, hora, evento, faixa etária,
+  célula de ~1 km), sem usuário. Faixa etária só com consentimento. O BI aplica
+  k-anonimato (grupos de 1-4 acessos saem `null`).
 - Só endereço de **restaurante** (público) vai pro Nominatim; endereço de
   usuário nunca sai do servidor.
 

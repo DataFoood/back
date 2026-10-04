@@ -2,6 +2,13 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-04 — métricas v2 (BI do dono)
+- `AccessStat` substitui `RestaurantDailyStat`/`RegionVisit`: acessos por dia ×
+  hora × evento × faixa etária (com consentimento) × célula de ~1 km.
+- `GET /api/analytics/restaurants/<id>/` com filtros (período, métrica, idade,
+  horário) e k-anonimato K=5. `seed_analytics_demo` pra demonstração.
+- 227 testes Django + 15 regressões.
+
 ## 2026-10-04 — proximidade, métricas do dono e console admin
 - **Geocoding** de endereço de restaurante via Nominatim (task Celery depois do
   commit; `manage.py geocode_addresses` pra backfill).

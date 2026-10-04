@@ -2,9 +2,11 @@ from datetime import timedelta
 
 from django.db.models import Count, Q, Sum
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, inline_serializer
+from drf_spectacular.utils import OpenApiParameter, extend_schema, inline_serializer
 from rest_framework import serializers
-from rest_framework.permissions import IsAdminUser
+from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,7 +14,8 @@ from address.models import Address
 from restaurants.models import Restaurant
 from users.models import User
 
-from .models import PlatformDailyStat, RestaurantDailyStat
+from .insights import METRICS, restaurant_insights
+from .models import AccessStat, PlatformDailyStat
 
 WINDOW_DAYS = 30
 
@@ -60,9 +63,9 @@ class PlatformMetricsView(APIView):
             for row in PlatformDailyStat.objects.filter(date__gte=since).values("date", "searches", "search_failures")
         }
         views = dict(
-            RestaurantDailyStat.objects.filter(date__gte=since)
+            AccessStat.objects.filter(date__gte=since, event__in=METRICS["views"])
             .values_list("date")
-            .annotate(total=Sum("views"))
+            .annotate(total=Sum("count"))
         )
         series = []
         for i in range(WINDOW_DAYS):
@@ -83,3 +86,63 @@ class PlatformMetricsView(APIView):
             "views_window": sum(r["views"] for r in series),
             "series": series,
         })
+
+
+class RestaurantInsightsView(APIView):
+    """GET /api/analytics/restaurants/<pk>/ — BI do dono (dono ou admin).
+    ?days=7|30|90  ?metric=views|impressions|clicks  ?age=40-59,60+
+    ?hour_from=0..23&hour_to=0..23 (from > to cruza a meia-noite).
+    Só agregados; grupos com 1-4 acessos saem como null."""
+    permission_classes = [IsAuthenticated]
+    DAYS = (7, 30, 90)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("days", int, enum=list(DAYS)),
+            OpenApiParameter("metric", str, enum=list(METRICS)),
+            OpenApiParameter("age", str, description="faixas separadas por vírgula: " + ", ".join(AccessStat.Age.values)),
+            OpenApiParameter("hour_from", int),
+            OpenApiParameter("hour_to", int),
+        ],
+        responses=inline_serializer(
+            "RestaurantInsights",
+            {
+                "k": serializers.IntegerField(),
+                "window": serializers.DictField(),
+                "filters": serializers.DictField(),
+                "totals": serializers.DictField(),
+                "by_hour": serializers.ListField(child=serializers.DictField()),
+                "by_day": serializers.ListField(child=serializers.DictField()),
+                "by_age": serializers.ListField(child=serializers.DictField()),
+                "cells": serializers.ListField(child=serializers.DictField()),
+                "regions": serializers.ListField(child=serializers.DictField()),
+                "coverage": serializers.DictField(),
+            },
+        ),
+    )
+    def get(self, request, pk):
+        restaurant = get_object_or_404(Restaurant, pk=pk)
+        if restaurant.owner_id != request.user.pk and not request.user.is_staff:
+            return Response({"detail": "Proibido."}, status=status.HTTP_403_FORBIDDEN)
+        p = request.query_params
+        try:
+            days = int(p.get("days", 30))
+            hour_from, hour_to = int(p.get("hour_from", 0)), int(p.get("hour_to", 23))
+        except ValueError:
+            return Response({"detail": "days, hour_from e hour_to devem ser inteiros."}, status=status.HTTP_400_BAD_REQUEST)
+        metric = p.get("metric", "views")
+        ages = [a for a in (p.get("age") or "").split(",") if a]
+        errors = {}
+        if days not in self.DAYS:
+            errors["days"] = f"Um de {list(self.DAYS)}."
+        if metric not in METRICS:
+            errors["metric"] = f"Um de {list(METRICS)}."
+        if any(a not in AccessStat.Age.values for a in ages):
+            errors["age"] = f"Faixas válidas: {AccessStat.Age.values}."
+        if not (0 <= hour_from <= 23 and 0 <= hour_to <= 23):
+            errors["hour"] = "Horas entre 0 e 23."
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(restaurant_insights(
+            restaurant, days=days, metric=metric, ages=ages, hour_from=hour_from, hour_to=hour_to,
+        ))

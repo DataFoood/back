@@ -598,9 +598,9 @@ class SearchViewTest(APITestCase):
         self.assertIsNone(results[1]["distance_km"])
         self.assertEqual((self.user, "feijoada", 15, None, None), mock_search.call_args.args,
                          "limit default 15, sem localização")
-        from analytics.models import PlatformDailyStat, RestaurantDailyStat
+        from analytics.models import AccessStat, PlatformDailyStat
         self.assertEqual({r1.pk: 1, r2.pk: 1}, dict(
-            RestaurantDailyStat.objects.values_list("restaurant_id", "search_impressions")
+            AccessStat.objects.filter(event="impression").values_list("restaurant_id", "count")
         ), "impressão só pros exibidos")
         self.assertEqual(1, PlatformDailyStat.objects.get().searches)
 

@@ -69,10 +69,12 @@ Geração e armazenamento dos vetores + busca semântica.
 Métricas agregadas e anônimas. Detalhe em [[search-rag]].
 | Arquivo | Papel |
 |---|---|
-| `models.py` | `RestaurantDailyStat`, `GeoCell`, `RegionVisit`, `PlatformDailyStat` |
-| `services.py` | `bump_restaurants` / `bump_platform` (2 queries, sem corrida), `record_region_visit` |
+| `models.py` | `AccessStat` (fato: dia × hora × evento × faixa etária × célula), `GeoCell`, `PlatformDailyStat` |
+| `services.py` | `record_access` (2 queries, sem corrida), `age_bracket`, `bump_platform` |
+| `insights.py` | consultas do BI do dono com filtros e k-anonimato |
+| `management/commands/seed_analytics_demo.py` | acessos fictícios pra demo (só DEBUG) |
 | `tasks.py` | `label_cell` (reverse geocoding da célula) |
-| `views.py` | `PlatformMetricsView` (admin) |
+| `views.py` | `PlatformMetricsView` (admin), `RestaurantInsightsView` (BI do dono) |
 
 ## App `utils`
 Infra compartilhada.

@@ -157,6 +157,7 @@ recompute automático **para de sobrescrever** aquela linha.
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
 | GET | `platform/` | 🛡️ | contas por papel, restaurantes (removidos, sem localização, indexação pendente), buscas/falhas e visitas por dia (30 dias) |
+| GET | `restaurants/<id>/` | 👤 (owner) | BI do dono: `?days=7\|30\|90` `?metric=views\|impressions\|clicks` `?age=40-59,60+` `?hour_from=&hour_to=` (cruza meia-noite). Devolve totais, por hora, por dia, por faixa etária, células do mapa e ranking de regiões. Grupos com 1-4 acessos saem `null` (k-anonimato, K=5) |
 
 ### Search — `/api/search/` ⭐
 | Método | Rota | Acesso |
