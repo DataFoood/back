@@ -35,6 +35,10 @@ A API REST entrega:
 - Restaurantes, cardápio, avaliações, horários, favoritos e endereços.
 - Busca semântica personalizada e ranqueada.
 - Preferências do usuário derivadas do comportamento.
+- Promoções por Telegram, e-mail e WhatsApp para quem salvou o restaurante
+  ([`docs/promotions.md`](docs/promotions.md)), com sugestão de contratar
+  infra só no fim de semana quando a máquina local não der conta
+  ([`docs/weekend-infra.md`](docs/weekend-infra.md)).
 
 Documentação interativa da API em `/api/docs/` (Swagger). Visão de arquitetura e
 módulos na pasta [`docs/`](docs/).
@@ -138,7 +142,7 @@ Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 ## Testes
 
 ```bash
-cd dtfd && uv run python manage.py test      # precisa de Postgres + Redis
+cd dtfd && uv run python manage.py test      # 214 testes; precisa de Postgres + Redis
 uv run python manage.py test ../final-tests  # regressões de segurança (rodada final)
 cd .. && uv run pytest shinzou/tests
 uv run python final-tests/api_smoke.py       # smoke contra a API rodando

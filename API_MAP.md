@@ -149,6 +149,32 @@ recompute automático **para de sobrescrever** aquela linha.
 |---|---|---|---|
 | POST | `reindex/` | 🛡️ | async; `{all: bool}` (default só stale); **202** |
 
+### Promotions — mensageiros (Telegram, e-mail, WhatsApp)
+Gestão aninhada no restaurante — `/api/restaurants/<restaurant_pk>/promotions/`:
+| Método | Rota | Acesso | Nota |
+|---|---|---|---|
+| GET/POST | `` | 👤 dono/admin | lista (sem paginação, com `stats` por status de entrega) / cria **rascunho** |
+| GET | `active/` | 🌐 | vitrine: enviadas e dentro da validade (máx 5), sem dados de envio |
+| GET | `audience/` | 👤 | `{favorites, opted_in, telegram, email, telegram_configured}` (só contagens) |
+| GET/PATCH/DELETE | `<id>/` | 👤 | editar só em `draft`/`scheduled`; DELETE = soft (sai da vitrine) |
+| POST | `<id>/send/` | 👤 | `{}` envia agora (**202**, worker); `{scheduled_for}` agenda (200, 1 min–30 dias) |
+| POST | `<id>/unschedule/` | 👤 | agendada → rascunho |
+
+Cada promoção traz `share_text`, `whatsapp_url` (`wa.me/?text=…`) e
+`public_url`. Limites: `PROMOTIONS_MAX_PER_DAY` por restaurante (400 com
+`detail`) e `PROMOTIONS_USER_DAILY_CAP` por pessoa/24h (entrega `skipped`).
+
+Cliente e operação — `/api/promotions/`:
+| Método | Rota | Acesso | Nota |
+|---|---|---|---|
+| GET/PATCH | `preferences/` | 🔑 | `promotions_opt_in`, `channel_email`, `channel_telegram`; lê `telegram_linked`, `opted_in_at` |
+| POST/DELETE | `preferences/telegram/` | 🔑 | POST → `{url, expires_at}` (deep link do bot, 15 min; **503** sem bot); DELETE desvincula |
+| POST | `unsubscribe/` | 🌐 | `{token}` do e-mail → desliga o opt-in (20/h por IP) |
+| GET | `infra-suggestion/` | 👤 owner/🛡️ | projeção do fim de semana × capacidade local ([docs/weekend-infra.md](docs/weekend-infra.md)) |
+
+Recebe promoção só quem **favoritou o restaurante e deu opt-in**. Detalhes
+em [docs/promotions.md](docs/promotions.md).
+
 ### Search — `/api/search/` ⭐
 | Método | Rota | Acesso |
 |---|---|---|

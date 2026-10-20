@@ -2,6 +2,21 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-20 — promoções por mensageiros + infra de fim de semana
+- App `promotions`: dono cria a promoção no painel; envio por **Telegram**
+  (bot, long polling — funciona local sem URL pública) e **e-mail**, e link
+  `wa.me` pronto para o **WhatsApp** do dono. Recebe só quem favoritou **e**
+  deu opt-in (consentimento próprio, com data). Agendamento (beat/min),
+  envio idempotente por entrega, retomada após queda, limite por
+  restaurante/dia e por pessoa/24h, descadastro por link assinado.
+- `GET /api/promotions/infra-suggestion/`: projeta o pico do fim de semana
+  (4 semanas + agendadas) contra a capacidade local e sugere contratar
+  infra de sexta 17h a domingo 23h com custo estimado. Guia em
+  [[weekend-infra]].
+- `seed_demo --demo-users`: cliente demo salva o Dallas e aceita promoções.
+- 36 testes novos (214 no total); smoke 67/67; E2E do front 48/48 + 16/16
+  (novo `final-tests/promotions.mjs` no front).
+
 ## 2026-09-28 — testes finais de integração e segurança
 - Stack inteiro testado sem Docker (Postgres+pgvector, Redis, shinzou e um
   Ollama falso determinístico) com o front em navegação E2E. Ver

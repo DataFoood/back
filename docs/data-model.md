@@ -67,3 +67,9 @@ o front geralmente só lê pra montar filtros.
 ## Address
 Polimórfico: `content_type` + `object_id` apontam pra Restaurant **ou** User. A
 API recebe `entity_type` (`"restaurant"`/`"user"`) e resolve o ContentType.
+
+## Promoções
+`Promotion` (soft delete) pertence a um `Restaurant`; `PromotionDelivery`
+liga promoção × usuário × canal (único — envio idempotente).
+`MessagingPreference` é 1:1 com `User` (opt-in próprio, criado sob
+demanda). Público = `RestaurantFavorite` ∩ opt-in. Ver [[promotions]].

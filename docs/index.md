@@ -11,6 +11,8 @@ com busca semântica (RAG).
 - [[security]] — JWT, permissões, CORS, throttle, LGPD.
 - [[infrastructure]] — Docker, serviços, portas, env.
 - [[deploy]] — colocar em produção (compose prod + Caddy/HTTPS).
+- [[promotions]] — promoções por Telegram, e-mail e WhatsApp.
+- [[weekend-infra]] — quando e como contratar infra só no fim de semana.
 
 ## Contrato da API
 - [../API_MAP.md](../API_MAP.md) — mapa narrativo de rotas + acesso.
@@ -39,3 +41,5 @@ com busca semântica (RAG).
 | Como autenticação/permissão funcionam | [[security]] |
 | Como subir o ambiente | [[infrastructure]] |
 | Que telas o front precisa | [[frontend]] |
+| Como as promoções chegam aos clientes | [[promotions]] |
+| Se preciso de servidor no fim de semana | [[weekend-infra]] |

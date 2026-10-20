@@ -63,6 +63,19 @@ Geração e armazenamento dos vetores.
 | `views.py` | `ReindexView` (admin, async, 202) |
 | `migrations/0001` | inclui `VectorExtension()` (cria extensão pgvector) |
 
+## App `promotions`
+Promoções por mensageiros + sugestão de infra no fim de semana. Ver [[promotions]].
+| Arquivo | Papel |
+|---|---|
+| `models.py` | `MessagingPreference` (opt-in/canais/vínculo Telegram), `Promotion`, `PromotionDelivery` |
+| `services.py` | público (favoritou + opt-in), texto, link WhatsApp, limites, transições, `deliver` idempotente, token de descadastro |
+| `messengers.py` | clientes Telegram (Bot API) e e-mail; isolados p/ mock |
+| `telegram.py` | deep link de vínculo, `/start`/`/sair`, long polling com offset no cache |
+| `infra.py` | projeção do fim de semana × capacidade local ([[weekend-infra]]) |
+| `tasks.py` | `send_promotion`, `dispatch_scheduled` (beat/min), `poll_telegram` (beat/10 s) |
+| `views.py` / `urls.py` | gestão aninhada no restaurante + `/api/promotions/...` |
+| `permissions.py` | `IsRestaurantManager` (dono/admin, inclusive leitura), `IsOwnerRoleOrAdmin` |
+
 ## App `utils`
 Infra compartilhada.
 | Arquivo | Papel |

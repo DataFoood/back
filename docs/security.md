@@ -84,6 +84,20 @@ Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
 - Sem consentimento: a busca funciona, mas nada é persistido sobre ela.
 - Toggle: `PATCH /api/users/consent/` `{allow_info: bool}` (só o próprio user).
 
+## LGPD — promoções (opt-in próprio)
+- `MessagingPreference.promotions_opt_in` é um consentimento **separado** do
+  `allow_info` (finalidade diferente: marketing). Default desligado;
+  `opted_in_at` registra quando ligou.
+- O dono nunca vê quem recebe: só contagens (`audience/`, `stats`). WhatsApp
+  é por link de compartilhamento do próprio dono — telefone de cliente não
+  sai da plataforma.
+- Saída fácil: link assinado (`django.core.signing`, salt próprio) em todo
+  e-mail + `List-Unsubscribe`; `/sair` no bot; toggle no perfil. A rota
+  pública de descadastro tem throttle (20/h por IP) e só age com clique
+  (leitores de link dos provedores não descadastram ninguém).
+- Telegram: só chat privado vincula; token de vínculo aleatório, uso único,
+  15 min; bot bloqueado desvincula a conta.
+
 ## Validação de entrada
 - Payload inválido é **400**, nunca 500/503. Busca: `query` texto de até 500
   caracteres (vira embedding — custo), `limit` inteiro 1..50. Recompute:

@@ -49,6 +49,12 @@ máquina. Detalhe dos papéis em [[architecture]].
 | `ALLOWED_HOSTS` | separado por `;` | parsing custom no settings |
 | `NUM_PROXIES` | 0 (dev) / 1 (prod, Caddy) | quantos proxies confiáveis ficam na frente — define o IP usado no rate limit ([[security]]) |
 | `SEARCH_RATE` | 30/min | throttle da busca por usuário |
+| `FRONTEND_URL` | http://localhost:3000 | links nas promoções e no descadastro |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | (vazio) | bot do @BotFather; vazio = Telegram desligado |
+| `EMAIL_BACKEND` / `EMAIL_HOST`... | console | e-mail das promoções (console = log do worker) |
+| `PROMOTIONS_MAX_PER_DAY` / `PROMOTIONS_USER_DAILY_CAP` | 3 / 3 | anti-spam ([[promotions]]) |
+| `LOCAL_CAPACITY_MESSAGES_PER_DAY` / `..._SEARCHES_PER_DAY` | 2000 / 3000 | capacidade da máquina local ([[weekend-infra]]) |
+| `WEEKEND_INFRA_HOURLY_COST` | 0.40 | R$/h da VPS na estimativa |
 
 `.env.example` lista o conjunto. Segredos reais ficam fora do git.
 
@@ -80,10 +86,12 @@ pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 |---|---|
 | `embeddings.tasks.reindex_stale` | de hora em hora (minuto 0) |
 | `preferences.tasks.recompute_all` | diário 03:30 |
+| `promotions.tasks.dispatch_scheduled` | todo minuto (agendadas + retomada) |
+| `promotions.tasks.poll_telegram` | a cada `TELEGRAM_POLL_SECONDS` (10 s); no-op sem bot |
 
 ## Qualidade
 - Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (178 Django) + `shinzou/tests` (6).
+  (214 Django) + `shinzou/tests` (6).
 - Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
 - Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (67 checagens).
 - Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**

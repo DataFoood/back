@@ -10,6 +10,7 @@ from decimal import Decimal
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand
 from django.db import transaction
+from django.utils import timezone
 
 from address.models import Address
 from restaurants.models import (
@@ -18,6 +19,7 @@ from restaurants.models import (
     Cuisine,
     PriceRange,
     Restaurant,
+    RestaurantFavorite,
     RestaurantItem,
     TargetAudience,
 )
@@ -209,10 +211,10 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, demo_users=False, **options):
-        owner = None
+        owner = customer = None
         if demo_users:
             owner = self._user("dono@datafood.demo", "Dono Demo", User.Role.OWNER)
-            self._user("cliente@datafood.demo", "Cliente Demo", User.Role.CUSTOMER)
+            customer = self._user("cliente@datafood.demo", "Cliente Demo", User.Role.CUSTOMER)
 
         ct = ContentType.objects.get_for_model(Restaurant)
         created = 0
@@ -254,6 +256,9 @@ class Command(BaseCommand):
                 state="SP", zipcode="17500-000", is_default=True,
             )
 
+        if customer:
+            self._demo_audience(customer)
+
         self.stdout.write(self.style.SUCCESS(
             f"{created} restaurante(s) criado(s); {len(RESTAURANTS) - created} já existia(m). "
             "Gere os embeddings com: python manage.py reindex_restaurants"
@@ -266,3 +271,16 @@ class Command(BaseCommand):
             user.save(update_fields=["password"])
             self.stdout.write(f"conta demo: {email} / {DEMO_PASSWORD}")
         return user
+
+    def _demo_audience(self, customer):
+        """Cliente demo salvou o Dallas e aceitou promoções: o painel do dono
+        demo já mostra 1 pessoa no alcance (e-mail cai no log do worker)."""
+        from promotions.models import MessagingPreference
+
+        dallas = Restaurant.objects.filter(slug="dallas-restaurante").first()
+        if dallas is None:
+            return
+        RestaurantFavorite.objects.get_or_create(user=customer, restaurant=dallas)
+        MessagingPreference.objects.update_or_create(
+            user=customer, defaults={"promotions_opt_in": True, "opted_in_at": timezone.now()}
+        )
