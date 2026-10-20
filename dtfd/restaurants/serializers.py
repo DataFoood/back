@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from address.models import Address
 
@@ -234,6 +235,16 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
         ]
         read_only_fields = ["id"]
+        # all_objects: o CNPJ de um restaurante removido (soft delete) continua
+        # no banco; validar só contra os ativos virava IntegrityError (500)
+        extra_kwargs = {
+            "cnpj": {
+                "validators": [UniqueValidator(
+                    queryset=Restaurant.all_objects.all(),
+                    message="Já existe um restaurante com este CNPJ.",
+                )],
+            },
+        }
 
     def create(self, validated_data):
         validated_data["slug"] = self._unique_slug(validated_data["name"])

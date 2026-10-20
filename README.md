@@ -142,7 +142,7 @@ Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 ## Testes
 
 ```bash
-cd dtfd && uv run python manage.py test      # 214 testes; precisa de Postgres + Redis
+cd dtfd && uv run python manage.py test      # 219 testes; precisa de Postgres + Redis
 uv run python manage.py test ../final-tests  # regressões de segurança (rodada final)
 cd .. && uv run pytest shinzou/tests
 uv run python final-tests/api_smoke.py       # smoke contra a API rodando

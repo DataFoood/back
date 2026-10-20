@@ -91,7 +91,7 @@ pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 
 ## Qualidade
 - Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (214 Django) + `shinzou/tests` (6).
+  (219 Django) + `shinzou/tests` (6).
 - Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
 - Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (67 checagens).
 - Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**

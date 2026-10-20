@@ -2,6 +2,18 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-20 — revisão geral (depois das promoções)
+- Corrigido: cadastrar com e-mail ou CPF de **conta encerrada** dava 500
+  (validador de unicidade via manager que esconde soft-deleted; o banco
+  recusava) → 400; e-mail único sem diferenciar maiúsculas; mesmo bug no
+  **CNPJ** de restaurante removido → 400.
+- CPF validado no servidor (dígitos verificadores, aceita máscara, `""` vira
+  `null` — antes `""` colidia na coluna unique).
+- Front: open redirect no `?next=` do login (`/\evil.com`), corrida no
+  "carregar mais" do `/explorar`, datas `AAAA-MM-DD` mostradas um dia antes.
+- Checklist de deploy: `ALLOWED_HOSTS` precisa de `localhost` (healthcheck).
+- 219 testes Django + 16 regressões + 6 shinzou; smoke 67/67; E2E 48/48 + 16/16.
+
 ## 2026-10-20 — promoções por mensageiros + infra de fim de semana
 - App `promotions`: dono cria a promoção no painel; envio por **Telegram**
   (bot, long polling — funciona local sem URL pública) e **e-mail**, e link
@@ -14,7 +26,7 @@ Registro cronológico (append-only). Mais recente no topo.
   infra de sexta 17h a domingo 23h com custo estimado. Guia em
   [[weekend-infra]].
 - `seed_demo --demo-users`: cliente demo salva o Dallas e aceita promoções.
-- 36 testes novos (214 no total); smoke 67/67; E2E do front 48/48 + 16/16
+- 36 testes novos; smoke 67/67; E2E do front 48/48 + 16/16
   (novo `final-tests/promotions.mjs` no front).
 
 ## 2026-09-28 — testes finais de integração e segurança

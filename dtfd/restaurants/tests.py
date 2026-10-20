@@ -67,6 +67,14 @@ class RestaurantCreateTest(APITestCase):
         r = Restaurant.objects.get(name="Cantina da Nonna")
         self.assertEqual(self.owner, r.owner, "owner do payload deve ser ignorado")
 
+    def test_create_with_cnpj_of_removed_restaurant_is_400(self):
+        removed = make_restaurant(self.owner, name="Antigo", cnpj=self.valid["cnpj"])
+        Restaurant.objects.filter(pk=removed.pk).update(deleted_at="2026-01-01T00:00:00Z")
+        self.client.force_authenticate(self.owner)
+        response = self.client.post(self.URL, data=self.valid, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertIn("cnpj", response.json())
+
     # --- unhappy ---
     def test_create_unauthenticated(self):
         response = self.client.post(self.URL, data=self.valid, format="json")

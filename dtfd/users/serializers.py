@@ -1,6 +1,7 @@
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
+from rest_framework.validators import UniqueValidator
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
     TokenRefreshSerializer,
@@ -33,9 +34,32 @@ def revoke_refresh_tokens(user):
     )
 
 
+# Unicidade contra TODAS as contas: o manager padrão esconde as encerradas
+# (soft delete), mas o e-mail delas continua no banco -> sem isso o
+# cadastro passava na validação e estourava IntegrityError (500).
+# iexact: "Ana@x.com" e "ana@x.com" não viram duas contas.
+UNIQUE_EMAIL = UniqueValidator(
+    queryset=User.all_objects.all(), lookup="iexact",
+    message="Já existe uma conta com este e-mail.",
+)
+
+
+def is_valid_cpf(digits: str) -> bool:
+    """Dígitos verificadores do CPF (mesma regra do front, lib/format.ts)."""
+    if len(digits) != 11 or len(set(digits)) == 1:
+        return False
+    for size in (9, 10):
+        total = sum(int(d) * (size + 1 - i) for i, d in enumerate(digits[:size]))
+        if (total * 10) % 11 % 10 != int(digits[size]):
+            return False
+    return True
+
+
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, validators=[validate_password])
     confirm_password = serializers.CharField(write_only=True)
+    # aceita com máscara (000.000.000-00); validate_cpf normaliza p/ 11 dígitos
+    cpf = serializers.CharField(required=False, allow_null=True, allow_blank=True, max_length=14)
     # Tipo de conta escolhido no cadastro. Só customer/owner — admin nunca
     # nasce pelo register. `role` em si continua ignorado (anti mass-assignment).
     account_type = serializers.ChoiceField(
@@ -48,7 +72,21 @@ class UserCreateSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "name", "email", "cpf", "phone", "password",
                   "confirm_password", "account_type", "allow_info"]
-        extra_kwargs = {"allow_info": {"write_only": True}}
+        extra_kwargs = {
+            "allow_info": {"write_only": True},
+            "email": {"validators": [UNIQUE_EMAIL]},
+        }
+
+    def validate_cpf(self, value):
+        # "" viraria um segundo CPF vazio na coluna unique -> trata como ausente
+        digits = "".join(ch for ch in (value or "") if ch.isdigit())
+        if not digits:
+            return None
+        if not is_valid_cpf(digits):
+            raise serializers.ValidationError("CPF inválido.")
+        if User.all_objects.filter(cpf=digits).exists():
+            raise serializers.ValidationError("Já existe uma conta com este CPF.")
+        return digits
 
     def validate(self, attrs):
         if attrs["password"] != attrs.pop("confirm_password"):
@@ -83,6 +121,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         model = User
         fields = ["name", "email", "phone", "birthday", "gender", "avatar_url",
                   "banner_url", "allow_info"]
+        extra_kwargs = {"email": {"validators": [UNIQUE_EMAIL]}}
 
 
 class LoginSerializer(TokenObtainPairSerializer):
