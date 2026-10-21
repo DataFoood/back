@@ -18,12 +18,3 @@ class IsRestaurantManager(BasePermission):
         restaurant = get_object_or_404(Restaurant, pk=view.kwargs["restaurant_pk"])
         return restaurant.owner == user or user.is_staff
 
-
-class IsOwnerRoleOrAdmin(BasePermission):
-    """Conta de restaurante (role owner) ou admin."""
-
-    def has_permission(self, request, view):
-        if not (request.user and request.user.is_authenticated):
-            return False
-        user = cast(User, request.user)
-        return user.is_staff or user.role in (User.Role.OWNER, User.Role.ADMIN)

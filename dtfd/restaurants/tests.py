@@ -115,7 +115,7 @@ class RestaurantReadTest(APITestCase):
             "id", "owner", "name", "slug", "description", "cnpj", "phone",
             "email", "website", "average_rating", "total_reviews",
             "cover_image", "menu_url", "created_at", "updated_at",
-            "images", "reviews", "business_hours", "items",
+            "images", "has_reviewed", "business_hours", "items",
             "cuisines", "ambients", "service_models", "target_audiences",
             "price_ranges", "business_models", "physical_formats",
             "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",
@@ -519,7 +519,7 @@ class FavoriteTest(APITestCase):
         self.client.force_authenticate(self.user)
         response = self.client.get("/api/restaurants/favorites/")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual(1, len(response.json()))
+        self.assertEqual(1, response.json()["count"])
 
 
 class ViewTrackingTest(APITestCase):
@@ -754,7 +754,7 @@ class RestaurantExtraRoutesTest(APITestCase):
         self.client.force_authenticate(self.owner)
         response = self.client.get("/api/restaurants/mine/")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual(["Cantina"], [r["name"] for r in response.json()])
+        self.assertEqual(["Cantina"], [r["name"] for r in response.json()["results"]])
 
     def test_mine_unauthenticated(self):
         response = self.client.get("/api/restaurants/mine/")
@@ -794,7 +794,7 @@ class RestaurantExtraRoutesTest(APITestCase):
         self.other.save(update_fields=["name"])
         RestaurantReview.objects.create(restaurant=self.restaurant, author=self.other, rating=5)
         response = self.client.get(f"/api/restaurants/{self.restaurant.pk}/reviews/")
-        self.assertEqual("Maria", response.json()[0]["author_name"])
+        self.assertEqual("Maria", response.json()["results"][0]["author_name"])
 
 
 class OpenNowTest(APITestCase):
@@ -864,7 +864,7 @@ class FavoriteListShapeTest(APITestCase):
         RestaurantFavorite.objects.create(user=user, restaurant=restaurant)
         self.client.force_authenticate(user)
         response = self.client.get("/api/restaurants/favorites/")
-        card = response.json()[0]["restaurant"]
+        card = response.json()["results"][0]["restaurant"]
         self.assertEqual("Cantina", card["name"])
         self.assertTrue(card["is_favorited"])
 

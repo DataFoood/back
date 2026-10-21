@@ -63,7 +63,8 @@ Configurar: crie o bot no @BotFather → `TELEGRAM_BOT_TOKEN` e
 web worker beat`. Sem token o canal some do painel e o resto funciona.
 
 ## Sugestão de infra no fim de semana
-`GET /api/promotions/infra-suggestion/` (dono/admin). Ver
+`GET /api/promotions/infra-suggestion/` — **só admin** (números agregados da
+plataforma inteira; dono de restaurante não vê). Ver
 [[weekend-infra]].
 
 ## Modelos

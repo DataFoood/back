@@ -21,6 +21,8 @@ Login por **email** (sem username), soft delete, consentimento LGPD.
 | `serializers.py` | Create (confirm_password), Detail, Update, ChangePassword |
 | `views.py` | register, login (JWT throttled), detail/update, delete (soft), consent, change-password, list/removed (admin) |
 | `permissions.py` | `IsOwnerOrAdmin` |
+| `authentication.py` | `CookieJWTAuthentication` (Bearer ou cookie HttpOnly) + helpers que gravam/apagam os cookies da sessão |
+| `schema.py` | extensão OpenAPI do cookie JWT (Swagger mostra o Bearer) |
 | `urls.py` | rotas `/api/users/...` |
 
 ## App `restaurants`
@@ -74,14 +76,24 @@ Promoções por mensageiros + sugestão de infra no fim de semana. Ver [[promoti
 | `infra.py` | projeção do fim de semana × capacidade local ([[weekend-infra]]) |
 | `tasks.py` | `send_promotion`, `dispatch_scheduled` (beat/min), `poll_telegram` (beat/10 s) |
 | `views.py` / `urls.py` | gestão aninhada no restaurante + `/api/promotions/...` |
-| `permissions.py` | `IsRestaurantManager` (dono/admin, inclusive leitura), `IsOwnerRoleOrAdmin` |
+| `permissions.py` | `IsRestaurantManager` (dono/admin, inclusive leitura) |
+
+## App `chats`
+Conversas da busca semântica (chat do front) guardadas na conta.
+| Arquivo | Papel |
+|---|---|
+| `models.py` | `ChatConversation` (user, title, messages JSON) — sem soft delete: apagar é apagar |
+| `views.py` | lista paginada (`?q=`) / cria; detalhe/PATCH/DELETE só do dono; mantém as 50 mais recentes |
+| `serializers.py` | resumo (sem mensagens) e completo; valida formato e tamanho (200 msgs, 256 KB) |
+
+Encerrar a conta (`users.views.UserDeleteView`) apaga as conversas.
 
 ## App `utils`
 Infra compartilhada.
 | Arquivo | Papel |
 |---|---|
 | `AbstractAudit.py` | `AbstractAudit` (created/updated/deleted_at) + `ActiveManager` |
-| `pagination.py` | `DefaultPagination` (10/pág, máx 50) |
+| `pagination.py` | `DefaultPagination` (10/pág, máx 50) — padrão de **toda** listagem (`DEFAULT_PAGINATION_CLASS`) |
 
 ## Serviço `shinzou/` (FastAPI)
 Busca semântica. Lê o **mesmo** Postgres por SQL cru. Detalhe em

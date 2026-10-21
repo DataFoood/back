@@ -2,6 +2,19 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-21 — sessão em cookie, paginação padrão, conversas na conta
+- **Sessão do navegador em cookies HttpOnly** (`users/authentication.py`):
+  tokens saem do corpo e do `localStorage`; o front só roda o refresh.
+  CSRF por cabeçalho `X-Requested-With` + CORS com credenciais. API (Bearer)
+  segue igual.
+- **Paginação padrão em toda listagem** (`DEFAULT_PAGINATION_CLASS`);
+  detalhe do restaurante troca `reviews` por `has_reviewed`; endereços
+  filtram por `?entity_type=&object_id=`.
+- **App `chats`**: conversas da busca na conta, apagadas ao encerrar a conta.
+- Sugestão de infra do fim de semana **só para admin**; `createsuperuser`
+  nasce com `role=admin`.
+- 240 testes Django + 16 regressões + 6 shinzou; smoke 83/83; E2E 49/49 + 16/16.
+
 ## 2026-10-20 — revisão geral (depois das promoções)
 - Corrigido: cadastrar com e-mail ou CPF de **conta encerrada** dava 500
   (validador de unicidade via manager que esconde soft-deleted; o banco

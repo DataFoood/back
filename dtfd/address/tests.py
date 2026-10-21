@@ -140,7 +140,7 @@ class AddressListTest(APITestCase):
         response = self.client.get(BASE)
         with self.subTest():
             self.assertEqual(status.HTTP_200_OK, response.status_code)
-        ids = {a["id"] for a in response.json()}
+        ids = {a["id"] for a in response.json()["results"]}
         self.assertIn(self.own_user_addr.pk, ids)
         self.assertIn(self.own_rest_addr.pk, ids, "endereço do restaurante do user deve aparecer")
         self.assertNotIn(self.foreign_addr.pk, ids, "endereço alheio não deve vazar")

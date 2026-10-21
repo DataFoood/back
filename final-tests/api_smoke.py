@@ -84,7 +84,7 @@ def main() -> int:
     r = client.get("/api/restaurants/", params={"page_size": 500})
     check(len(r.json()["results"]) <= 50, "page_size limitado a 50")
     detail = client.get(f"/api/restaurants/by-slug/{card['slug']}/").json()
-    check(detail["id"] == card["id"] and "reviews" in detail, "detalhe por slug")
+    check(detail["id"] == card["id"] and "has_reviewed" in detail, "detalhe por slug")
     check(client.get("/api/restaurants/by-slug/nao-existe-xyz/").status_code == 404, "slug inexistente -> 404")
     for method, path in [("get", "/api/users/me/"), ("get", "/api/restaurants/favorites/"),
                          ("post", "/api/search/"), ("get", "/api/preferences/"),
@@ -113,7 +113,7 @@ def main() -> int:
     r1 = client.post(f"/api/restaurants/{rid}/favorite/", headers=h)
     r2 = client.post(f"/api/restaurants/{rid}/favorite/", headers=h)
     check((r1.status_code, r2.status_code) == (201, 200), "favoritar é idempotente", (r1.status_code, r2.status_code))
-    favs = client.get("/api/restaurants/favorites/", headers=h).json()
+    favs = client.get("/api/restaurants/favorites/", headers=h).json()["results"]
     check([f["restaurant"]["id"] for f in favs] == [rid], "lista de favoritos")
     check(client.get(f"/api/restaurants/by-slug/{card['slug']}/", headers=h).json()["is_favorited"], "detalhe marca favorito")
     check(client.delete(f"/api/restaurants/{rid}/favorite/", headers=h).status_code == 204, "desfavoritar")
@@ -122,7 +122,7 @@ def main() -> int:
     if r.status_code == 200:
         res = r.json()["results"]
         check(len(res) <= 6 and all(0 <= (x["match"] or 0) <= 100 for x in res), f"busca semântica ({len(res)} resultados)")
-        hist = client.get("/api/preferences/searches/", headers=h).json()
+        hist = client.get("/api/preferences/searches/", headers=h).json()["results"]
         check(any(x["query"] == "jantar tranquilo com vinho" for x in hist), "com consentimento a busca vai pro histórico")
     else:
         check(r.status_code == 503, "busca indisponível responde 503 (fallback do front)", r.status_code)
@@ -149,7 +149,7 @@ def main() -> int:
     demo = client.post("/api/users/login/", json={"email": "dono@datafood.demo", "password": DEMO_PASSWORD})
     if check(demo.status_code == 200, "login do dono demo", demo.status_code):
         dh = auth(demo.json()["access"])
-        mine = client.get("/api/restaurants/mine/", headers=dh).json()
+        mine = client.get("/api/restaurants/mine/", headers=dh).json()["results"]
         check(len(mine) > 0, "meus restaurantes")
         stats = client.get(f"/api/restaurants/{mine[0]['id']}/stats/", headers=dh).json()
         before = stats["view_count"]
@@ -192,9 +192,34 @@ def main() -> int:
           "URL javascript: rejeitada")
     pub = client.get(f"/api/restaurants/{new_id}/").json()
     check(pub["address"] and pub["address"]["city"] == "Marília" and pub["is_open_now"] is not None, "página pública completa")
-    check(client.get("/api/addresses/", headers=h).json() == [], "endereços de outro dono não vazam")
+    check(client.get("/api/addresses/", headers=h).json()["results"] == [], "endereços de outro dono não vazam")
     check(client.delete(f"/api/restaurants/{new_id}/", headers=oh).status_code == 204, "remover restaurante (soft)")
     check(client.get(f"/api/restaurants/{new_id}/").status_code == 404, "restaurante removido some")
+
+    section("paginação padrão e conversas na conta")
+    for path in ["/api/restaurants/", "/api/restaurants/favorites/", "/api/preferences/searches/", "/api/addresses/",
+                 f"/api/restaurants/{rid}/reviews/", f"/api/restaurants/{rid}/promotions/active/", "/api/chats/"]:
+        body = client.get(path, headers=h, params={"page_size": 2}).json()
+        check(set(body) == {"count", "next", "previous", "results"}, f"paginado: {path}")
+    chat = client.post("/api/chats/", headers=h, json={"title": "smoke", "messages": [{"role": "user", "text": "pizza"}]})
+    check(chat.status_code == 201, "conversa salva na conta")
+    chat_id = chat.json()["id"]
+    check(client.get(f"/api/chats/{chat_id}/", headers=oh).status_code == 404, "conversa de outro usuário -> 404")
+
+    section("sessão do navegador (cookies HttpOnly)")
+    browser = httpx.Client(base_url=API, timeout=30, headers={"X-Requested-With": "datafood"})
+    r = browser.post("/api/users/login/", json={"email": email, "password": PASSWORD})
+    set_cookie = " ".join(r.headers.get_list("set-cookie"))
+    check(r.status_code == 200 and "access" not in r.json() and "refresh" not in r.json(), "login do navegador sem tokens no corpo")
+    check("datafood_access=" in set_cookie and "datafood_refresh=" in set_cookie and set_cookie.lower().count("httponly") >= 2,
+          "tokens em cookies HttpOnly")
+    check(browser.get("/api/users/me/").status_code == 200, "cookie autentica")
+    check(httpx.patch(f"{API}/api/users/me/", cookies=browser.cookies, json={"name": "x"}).status_code == 403,
+          "escrita via cookie sem X-Requested-With -> 403 (CSRF)")
+    r = browser.post("/api/users/login/refresh/", json={})
+    check(r.status_code == 200 and set(r.json()) == {"access_expires_in"}, "refresh pelo cookie (tokens fora do corpo)")
+    check(browser.post("/api/users/logout/", json={}).status_code == 204, "logout do navegador")
+    check(browser.get("/api/users/me/").status_code == 401, "sem sessão após logout")
 
     section("sessão e conta")
     other_device = client.post("/api/users/login/", json={"email": email, "password": PASSWORD}).json()

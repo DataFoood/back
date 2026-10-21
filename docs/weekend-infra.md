@@ -17,6 +17,9 @@ prevista passa do que a máquina local aguenta.
 4. **Utilização** = pico ÷ capacidade local (`LOCAL_CAPACITY_MESSAGES_PER_DAY`,
    `LOCAL_CAPACITY_SEARCHES_PER_DAY`), pegando a pior das duas.
 
+O aviso aparece no topo do painel só para contas **admin** (é decisão de
+operação da plataforma, não do restaurante).
+
 | Utilização | `level` | Painel |
 |---|---|---|
 | < 70% | `ok` | linha discreta: "fim de semana tranquilo" |

@@ -49,6 +49,8 @@ máquina. Detalhe dos papéis em [[architecture]].
 | `ALLOWED_HOSTS` | separado por `;` | parsing custom no settings |
 | `NUM_PROXIES` | 0 (dev) / 1 (prod, Caddy) | quantos proxies confiáveis ficam na frente — define o IP usado no rate limit ([[security]]) |
 | `SEARCH_RATE` | 30/min | throttle da busca por usuário |
+| `AUTH_COOKIE_SECURE` | False (dev) / True (prod) | cookies da sessão só por HTTPS (padrão: `not DEBUG`) |
+| `AUTH_COOKIE_SAMESITE` / `AUTH_COOKIE_DOMAIN` | Lax / (vazio) | vazio = só o host da API ([[security]]) |
 | `FRONTEND_URL` | http://localhost:3000 | links nas promoções e no descadastro |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_BOT_USERNAME` | (vazio) | bot do @BotFather; vazio = Telegram desligado |
 | `EMAIL_BACKEND` / `EMAIL_HOST`... | console | e-mail das promoções (console = log do worker) |
@@ -91,9 +93,9 @@ pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 
 ## Qualidade
 - Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (219 Django) + `shinzou/tests` (6).
+  (240 Django) + `shinzou/tests` (6).
 - Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
-- Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (67 checagens).
+- Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (83 checagens).
 - Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**
   de stubs (`request.user` tipado como `_User`/`AnonymousUser`, mixins sem
   base tipada); nenhum novo. Zerar é item do [[backlog]].

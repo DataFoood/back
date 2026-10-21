@@ -11,11 +11,12 @@ from users.models import User
 
 from .models import Address
 from .permissions import IsEntityOwnerOrAdmin, owns_entity
-from .serializers import AddressSerializer
+from .serializers import ENTITY_MODELS, AddressSerializer
 
 
 class AddressListCreateView(ListCreateAPIView):
-    """GET — endereços que o usuário pode ver (próprios + dos seus restaurantes).
+    """GET — endereços que o usuário pode ver (próprios + dos seus restaurantes),
+       paginado; filtra por ?entity_type=&object_id=.
        POST — cria endereço para entidade que o usuário possui."""
     serializer_class = AddressSerializer
     permission_classes = [IsEntityOwnerOrAdmin]
@@ -23,14 +24,27 @@ class AddressListCreateView(ListCreateAPIView):
     def get_queryset(self):
         user = cast(User, self.request.user)
         if user.is_staff:
-            return Address.objects.all()
+            return self._filter_entity(Address.objects.all())
         user_ct = ContentType.objects.get_for_model(User)
         rest_ct = ContentType.objects.get_for_model(Restaurant)
         owned_rest_ids = Restaurant.objects.filter(owner=user).values_list("id", flat=True)
-        return Address.objects.filter(
+        qs = Address.objects.filter(
             Q(content_type=user_ct, object_id=user.pk)
             | Q(content_type=rest_ct, object_id__in=owned_rest_ids)
         )
+        return self._filter_entity(qs)
+
+    def _filter_entity(self, qs):
+        """?entity_type=restaurant&object_id=5 — endereços de uma entidade."""
+        params = self.request.query_params
+        entity_type = params.get("entity_type")
+        if entity_type in ENTITY_MODELS:
+            app_label, model = ENTITY_MODELS[entity_type]
+            qs = qs.filter(content_type__app_label=app_label, content_type__model=model)
+        object_id = params.get("object_id", "")
+        if object_id.isdigit():
+            qs = qs.filter(object_id=int(object_id))
+        return qs.order_by("-is_default", "id")
 
     def perform_create(self, serializer):
         content_type = serializer.validated_data["content_type"]

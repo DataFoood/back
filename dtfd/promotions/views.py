@@ -5,7 +5,7 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.throttling import ScopedRateThrottle
@@ -15,7 +15,7 @@ from restaurants.models import Restaurant
 
 from . import infra, messengers, services, telegram
 from .models import MessagingPreference, Promotion, PromotionDelivery
-from .permissions import IsOwnerRoleOrAdmin, IsRestaurantManager
+from .permissions import IsRestaurantManager
 from .serializers import (
     MessagingPreferenceSerializer,
     PromotionSerializer,
@@ -130,12 +130,10 @@ class PromotionAudienceView(APIView):
 
 
 class ActivePromotionsView(ListAPIView):
-    """GET /api/restaurants/<restaurant_pk>/promotions/active/ — público:
-    promoções enviadas e dentro da validade (vitrine do restaurante)."""
+    """GET /api/restaurants/<restaurant_pk>/promotions/active/ — público,
+    paginado: promoções enviadas e dentro da validade (vitrine)."""
     serializer_class = PublicPromotionSerializer
     permission_classes = [AllowAny]
-    pagination_class = None
-    MAX = 5
 
     def get_queryset(self):
         today = timezone.localdate()
@@ -146,7 +144,7 @@ class ActivePromotionsView(ListAPIView):
                 status=Promotion.Status.SENT,
             )
             .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=today))
-            .order_by("-sent_at")[: self.MAX]
+            .order_by("-sent_at", "-id")
         )
 
 
@@ -226,8 +224,9 @@ class UnsubscribeView(APIView):
 # ---------------------------------------------------------------------------
 class InfraSuggestionView(APIView):
     """GET /api/promotions/infra-suggestion/ — projeção de carga do próximo
-    fim de semana x capacidade local. Só agregados (dono/admin)."""
-    permission_classes = [IsOwnerRoleOrAdmin]
+    fim de semana x capacidade local. Decisão de operação da plataforma: só
+    admin (números agregados da plataforma inteira)."""
+    permission_classes = [IsAdminUser]
 
     @extend_schema(responses=inline_serializer("InfraSuggestion", {"level": serializers.CharField()}))
     def get(self, request):

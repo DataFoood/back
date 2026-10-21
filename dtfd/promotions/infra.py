@@ -94,16 +94,19 @@ def suggestion() -> dict:
     reasons = []
     if util_msgs >= ATTENTION_AT:
         reasons.append(
-            f"promoções: pico previsto de {round(projected_msgs)} mensagens/dia "
+            f"Promoções: pico previsto de {round(projected_msgs)} mensagens/dia "
             f"({round(util_msgs * 100)}% da capacidade local de {cap_msgs})."
         )
     if util_searches >= ATTENTION_AT:
         reasons.append(
-            f"busca: pico previsto de {round(projected_searches)} buscas/dia "
+            f"Busca: pico previsto de {round(projected_searches)} buscas/dia "
             f"({round(util_searches * 100)}% da capacidade local de {cap_searches})."
         )
     if scheduled_count:
-        reasons.append(f"{scheduled_count} promoção(ões) já agendada(s) para o fim de semana.")
+        reasons.append(
+            f"{scheduled_count} promoção já agendada para o fim de semana." if scheduled_count == 1
+            else f"{scheduled_count} promoções já agendadas para o fim de semana."
+        )
 
     level = "hire" if utilization >= 1 else "attention" if utilization >= ATTENTION_AT else "ok"
 

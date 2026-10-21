@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -7,15 +8,17 @@ from rest_framework.generics import (
     ListAPIView,
     RetrieveUpdateAPIView,
 )
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from utils.pagination import DefaultPagination
 
+
+from .authentication import clear_auth_cookies, is_browser, to_cookie_session
 from .models import User
 from .permissions import IsOwnerOrAdmin
 from .serializers import (
@@ -42,20 +45,41 @@ AuthResponse = inline_serializer(
 
 class LoginView(TokenObtainPairView):
     """POST /api/users/login/ — JWT com rate limit (anti brute-force).
-    Retorna {access, refresh, user}."""
+    Navegador (X-Requested-With): grava a sessão em cookies HttpOnly e
+    responde {user, access_expires_in}. API: {access, refresh, user}."""
     serializer_class = LoginSerializer
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "login"
 
     @extend_schema(responses=AuthResponse)
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        response = super().post(request, *args, **kwargs)
+        if is_browser(request) and response.status_code == status.HTTP_200_OK:
+            to_cookie_session(response)
+        return response
 
 
 class RefreshView(TokenRefreshView):
-    """POST /api/users/login/refresh/ — {refresh} -> {access, refresh}.
-    Rotaciona o refresh; conta removida/inativa -> 401."""
+    """POST /api/users/login/refresh/ — rotaciona o refresh; conta
+    removida/inativa -> 401. Navegador: sem corpo, lê o refresh do cookie e
+    devolve os novos em cookie (tokens nunca no corpo — um XSS que chame o
+    refresh não leva nada). API: {refresh} -> {access, refresh}."""
     serializer_class = RefreshSerializer
+
+    def post(self, request, *args, **kwargs):
+        cookie_mode = is_browser(request) and not request.data.get("refresh")
+        if not cookie_mode:
+            return super().post(request, *args, **kwargs)
+        raw = request.COOKIES.get(settings.AUTH_COOKIE_REFRESH)
+        if not raw:
+            return clear_auth_cookies(Response({"detail": "Sem sessão."}, status=status.HTTP_401_UNAUTHORIZED))
+        serializer = self.get_serializer(data={"refresh": raw})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (TokenError, InvalidToken, AuthenticationFailed):
+            # refresh revogado/expirado: apaga os cookies junto com o 401
+            return clear_auth_cookies(Response({"detail": "Sessão expirada."}, status=status.HTTP_401_UNAUTHORIZED))
+        return to_cookie_session(Response(dict(serializer.validated_data)))
 
 
 class LogoutView(APIView):
@@ -68,14 +92,16 @@ class LogoutView(APIView):
         responses={204: None},
     )
     def post(self, request):
-        token = request.data.get("refresh")
+        token = request.data.get("refresh") or request.COOKIES.get(settings.AUTH_COOKIE_REFRESH)
         if not token:
+            if is_browser(request):  # sem sessão: só garante os cookies limpos
+                return clear_auth_cookies(Response(status=status.HTTP_204_NO_CONTENT))
             return Response({"refresh": "Campo obrigatório."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             RefreshToken(token).blacklist()
         except TokenError:
             pass  # já inválido/expirado: logout é idempotente
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return clear_auth_cookies(Response(status=status.HTTP_204_NO_CONTENT))
 
 
 class MeView(RetrieveUpdateAPIView):
@@ -110,10 +136,11 @@ class UserCreateView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         # já autentica: o front entra direto após o cadastro
-        return Response(
+        response = Response(
             {**tokens_for(user), "user": UserDetailSerializer(user).data},
             status=status.HTTP_201_CREATED,
         )
+        return to_cookie_session(response) if is_browser(request) else response
 
 
 class UserListView(ListAPIView):
@@ -121,7 +148,6 @@ class UserListView(ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserDetailSerializer
     permission_classes = [IsAdminUser]
-    pagination_class = DefaultPagination
 
 
 class UserDetailView(RetrieveUpdateAPIView):
@@ -149,19 +175,29 @@ class UserDeleteView(DestroyAPIView):
     serializer_class = UserDetailSerializer
     permission_classes = [IsOwnerOrAdmin]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        # encerrou a própria conta: apaga a sessão deste navegador também
+        return clear_auth_cookies(response) if instance.pk == request.user.pk else response
+
     def perform_destroy(self, instance):
+        from chats.models import ChatConversation
+
         instance.deleted_at = timezone.now()
         instance.is_active = False  # bloqueia login imediatamente
         instance.save(update_fields=["deleted_at", "is_active"])
         # derruba as sessões abertas em outros dispositivos
         revoke_refresh_tokens(instance)
+        # conversas da busca pertencem à conta: saem junto com ela
+        ChatConversation.objects.filter(user=instance).delete()
 
 
 class UserRemovedListView(ListAPIView):
     """GET /api/users/removed/ — lista soft-deleted, só admin"""
     serializer_class = UserDetailSerializer
     permission_classes = [IsAdminUser]
-    pagination_class = DefaultPagination
 
     def get_queryset(self):
         return User.all_objects.filter(deleted_at__isnull=False)
@@ -217,4 +253,6 @@ class UserChangePasswordView(APIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         revoke_refresh_tokens(user)
-        return Response({"detail": "Senha alterada com sucesso.", **tokens_for(user)})
+        response = Response({"detail": "Senha alterada com sucesso.", **tokens_for(user)})
+        # sessão atual continua: navegador recebe o par novo em cookie
+        return to_cookie_session(response) if is_browser(request) else response

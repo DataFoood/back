@@ -47,6 +47,7 @@ urlpatterns = [
     path("api/restaurants/", include("restaurants.urls")),
     path("api/restaurants/", include(promotion_restaurant_urls)),
     path("api/promotions/", include("promotions.urls")),
+    path("api/chats/", include("chats.urls")),
     path("api/addresses/", include("address.urls")),
     path("api/preferences/", include("preferences.urls")),
     path("api/embeddings/", include("embeddings.urls")),

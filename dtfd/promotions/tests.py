@@ -105,17 +105,17 @@ class PromotionCrudTest(Base):
         self.assertEqual(status.HTTP_204_NO_CONTENT, self.client.delete(f"{self.base}{promo.pk}/").status_code)
         self.assertTrue(Promotion.all_objects.filter(pk=promo.pk, deleted_at__isnull=False).exists())
         self.client.force_authenticate(None)
-        self.assertEqual([], self.client.get(f"{self.base}active/").json())
+        self.assertEqual([], self.client.get(f"{self.base}active/").json()["results"])
 
     def test_list_stats_without_n_plus_one(self):
         for i in range(5):
             self.make_promo(title=f"p{i}")
         self.client.force_authenticate(self.owner)
-        # permissão (restaurante + dono) + lista com as contagens anotadas;
-        # não cresce com o número de promoções
-        with self.assertNumQueries(3):
+        # permissão (restaurante + dono) + count + página com as contagens
+        # anotadas; não cresce com o número de promoções
+        with self.assertNumQueries(4):
             response = self.client.get(self.base)
-        self.assertEqual(5, len(response.json()))
+        self.assertEqual(5, response.json()["count"])
 
 
 class ActivePromotionsTest(Base):
@@ -126,8 +126,9 @@ class ActivePromotionsTest(Base):
         self.make_promo(title="ativa", status=Promotion.Status.SENT, sent_at=timezone.now(), valid_until=today)
         response = self.client.get(f"{self.base}active/")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
-        self.assertEqual(["ativa"], [p["title"] for p in response.json()])
-        self.assertNotIn("stats", response.json()[0])
+        results = response.json()["results"]
+        self.assertEqual(["ativa"], [p["title"] for p in results])
+        self.assertNotIn("stats", results[0])
 
 
 # ---------------------------------------------------------------------------
@@ -374,5 +375,8 @@ class InfraSuggestionTest(TestCase):
         url = "/api/promotions/infra-suggestion/"
         self.client.force_login(make_user("c@dtfd.com"))
         self.assertEqual(status.HTTP_403_FORBIDDEN, self.client.get(url).status_code)
+        # números da plataforma inteira: dono de restaurante não vê
         self.client.force_login(self.owner)
+        self.assertEqual(status.HTTP_403_FORBIDDEN, self.client.get(url).status_code)
+        self.client.force_login(User.objects.create_superuser(email="adm@dtfd.com", password="SenhaForte123", name="Adm"))
         self.assertEqual(status.HTTP_200_OK, self.client.get(url).status_code)

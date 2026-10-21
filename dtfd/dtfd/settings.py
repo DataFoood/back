@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "preferences",
     "embeddings",
     "promotions",
+    "chats",
 ]
 
 MIDDLEWARE = [
@@ -113,10 +114,24 @@ _DEV_ORIGINS = [
 ]
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS") or (_DEV_ORIGINS if DEBUG else [])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+# sessão do navegador vai em cookie: o fetch do front manda com credentials
+CORS_ALLOW_CREDENTIALS = True
+
+# --- Sessão por cookie (users/authentication.py) ---------------------------
+AUTH_COOKIE_ACCESS = "datafood_access"
+AUTH_COOKIE_REFRESH = "datafood_refresh"
+AUTH_COOKIE_REFRESH_PATH = "/api/users/"
+# Secure em produção (HTTPS); em dev o http://localhost precisa sem
+AUTH_COOKIE_SECURE = os.environ.get("AUTH_COOKIE_SECURE", str(not DEBUG)) == "True"
+# Lax: app.x.com -> api.x.com é o mesmo site, então o cookie vai; terceiros não
+AUTH_COOKIE_SAMESITE = os.environ.get("AUTH_COOKIE_SAMESITE", "Lax")
+# vazio = só o host da API (o recomendado)
+AUTH_COOKIE_DOMAIN = os.environ.get("AUTH_COOKIE_DOMAIN") or None
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Bearer (API) ou cookie HttpOnly (navegador) — users/authentication.py
+        "users.authentication.CookieJWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -127,6 +142,8 @@ REST_FRAMEWORK = {
     # cliente forja) e o limite de login vira bypassável. 0 = sem proxy (usa
     # REMOTE_ADDR); 1 = atrás do Caddy (docker-compose.prod.yml).
     "NUM_PROXIES": int(os.environ.get("NUM_PROXIES", "0")),
+    # toda listagem pagina igual: ?page=N&page_size=M (máx 50) -> {count, next, previous, results}
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.DefaultPagination",
     # rates por escopo, aplicados via ScopedRateThrottle nas views sensiveis
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",

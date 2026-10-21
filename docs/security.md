@@ -44,12 +44,29 @@ mesmo contador.
 Access de 15 min, refresh de 7 dias com **rotação** (cada refresh gera outro e
 o antigo vai pra blacklist). `POST /api/users/logout/` invalida o refresh.
 
+**Navegador: sessão em cookie HttpOnly** (`users/authentication.py`). Com o
+cabeçalho `X-Requested-With`, login/cadastro/refresh/troca de senha gravam
+`datafood_access` (path `/`) e `datafood_refresh` (path `/api/users/`) como
+HttpOnly + SameSite=Lax (+ Secure em produção) e **tiram os tokens do
+corpo** — um XSS não lê tokens, nem chamando o refresh. O front renova
+sozinho antes do access vencer (Web Locks entre abas, para duas abas não
+gastarem o mesmo refresh rotacionado).
+- `CookieJWTAuthentication`: Bearer quando houver; senão o cookie. Cookie
+  inválido/vencido = visitante (rota protegida → 401 → front renova).
+- **CSRF:** escrita via cookie sem `X-Requested-With` → 403. Cabeçalho
+  customizado exige preflight; o CORS (`CORS_ALLOW_CREDENTIALS`) só libera a
+  origem do front.
+- API/Postman/Swagger seguem com Bearer e tokens no corpo.
+- `AUTH_COOKIE_SECURE`, `AUTH_COOKIE_SAMESITE`, `AUTH_COOKIE_DOMAIN` no env
+  (padrões seguros; domínio vazio = só o host da API).
+
 **Revogação em massa** (`users.serializers.revoke_refresh_tokens`): blacklista
 todos os refresh emitidos para o usuário.
 - **Troca de senha** revoga tudo e responde com um par novo
   (`{detail, access, refresh}`) para a sessão atual seguir — quem roubou um
   refresh perde o acesso na hora.
-- **Encerrar conta** (soft delete) revoga tudo.
+- **Encerrar conta** (soft delete) revoga tudo, apaga as conversas do chat
+  (`chats.ChatConversation`, sem soft delete) e os cookies da sessão.
 - Access tokens já emitidos continuam válidos até expirar (≤ 15 min) — é o
   custo do JWT stateless; o soft delete também põe `is_active=False`, que o
   `JWTAuthentication` recusa na hora.
@@ -88,7 +105,8 @@ Bearer JWT do usuário validado com a `SECRET_KEY` compartilhada. O shinzou
 - `MessagingPreference.promotions_opt_in` é um consentimento **separado** do
   `allow_info` (finalidade diferente: marketing). Default desligado;
   `opted_in_at` registra quando ligou.
-- O dono nunca vê quem recebe: só contagens (`audience/`, `stats`). WhatsApp
+- O dono nunca vê quem recebe: só contagens (`audience/`, `stats`). A
+  sugestão de infra (números da plataforma inteira) é só para admin. WhatsApp
   é por link de compartilhamento do próprio dono — telefone de cliente não
   sai da plataforma.
 - Saída fácil: link assinado (`django.core.signing`, salt próprio) em todo

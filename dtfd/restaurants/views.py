@@ -25,9 +25,8 @@ from rest_framework.response import Response
 from rest_framework.serializers import ValidationError
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-from rest_framework_simplejwt.authentication import JWTAuthentication
+from users.authentication import CookieJWTAuthentication
 from users.models import User
-from utils.pagination import DefaultPagination
 
 from .models import (
     Ambient,
@@ -69,7 +68,7 @@ MAX_ITEMS = 6
 
 DETAIL_PREFETCH = [
     *CARD_PREFETCH, "images", "items", "service_models", "target_audiences",
-    "business_models", "physical_formats", "reviews__author",
+    "business_models", "physical_formats",
 ]
 
 # query param -> campo M2M (filtros por taxonomia; ids separados por vírgula)
@@ -122,7 +121,6 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
          ?target_audience=  ?city=  ?delivery=true  ?ordering=recent|rating|name
        POST /api/restaurants/ — autenticado, vira owner"""
     permission_classes = [IsAuthenticatedOrReadOnly]
-    pagination_class = DefaultPagination
 
     def get_serializer_class(self):
         return RestaurantWriteSerializer if self.request.method == "POST" else RestaurantCardSerializer
@@ -517,8 +515,8 @@ class FavoriteListView(ListAPIView):
 class SearchView(APIView):
     """POST /api/search/ — repassa a query pro shinzou com service token +
     o JWT do usuário. Frontend fala só com o Django; shinzou fica interno.
-    Só JWT (não sessão) — o Bearer precisa existir pra repassar ao shinzou."""
-    authentication_classes = [JWTAuthentication]
+    Só JWT (Bearer ou cookie, não sessão do admin) — o token é repassado ao shinzou."""
+    authentication_classes = [CookieJWTAuthentication]
     permission_classes = [IsAuthenticated]
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "search"
@@ -577,7 +575,8 @@ class SearchView(APIView):
         payload = {"query": query, "limit": limit}
         headers = {
             "X-Service-Token": settings.SHINZOU_SERVICE_TOKEN,
-            "Authorization": request.headers.get("Authorization", ""),
+            # request.auth = access validado (veio do Bearer ou do cookie)
+            "Authorization": f"Bearer {request.auth}",
         }
         try:
             resp = httpx.post(
