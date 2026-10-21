@@ -6,7 +6,7 @@ criado ou descoberto nela fica aqui.
 | Arquivo | O quê |
 |---|---|
 | `test_security_regressions.py` | 16 testes Django: um por achado + varredura de autorização. **Falham no código anterior, passam no atual.** |
-| `api_smoke.py` | 67 checagens contra a API **rodando** (sem mocks): visitante, cliente, dono, sessão, CORS, limpeza |
+| `api_smoke.py` | 83 checagens contra a API **rodando** (sem mocks): visitante, cliente, dono, paginação, conversas, sessão por cookie e Bearer, CORS, limpeza |
 | `fake_ollama.py` | Ollama falso (`POST /api/embeddings`) para rodar a busca semântica sem GPU/modelo |
 
 ## Como rodar
@@ -33,7 +33,7 @@ cd dtfd
 uv run python manage.py test               # 178 testes da suíte
 uv run python manage.py test ../final-tests  # 16 regressões
 cd .. && uv run pytest shinzou/tests        # 6 do shinzou
-uv run python final-tests/api_smoke.py      # 67 checagens (API em :8000)
+uv run python final-tests/api_smoke.py      # 83 checagens (API em :8000)
 ```
 
 Observações:
@@ -54,7 +54,7 @@ Observações:
 | shinzou (`pytest`) | 6/6 |
 | Smoke (`api_smoke.py`) | 67/67 |
 | Schema OpenAPI (`spectacular --validate --fail-on-warn`) | ok |
-| Navegação E2E do front (`front-end/final-tests`) | 48/48 |
+| Navegação E2E do front (`front-end/final-tests`) | 48/48 (49/49 e promoções 16/16 na rodada de 2026-10-21) |
 
 ## Achados e correções
 

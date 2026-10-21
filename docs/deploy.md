@@ -34,7 +34,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec web python m
 
 ## Checklist
 - [ ] `DEBUG=False`, `SECRET_KEY` e `SHINZOU_SERVICE_TOKEN` longos e aleatórios.
-- [ ] `ALLOWED_HOSTS` = domínio da API (+ `web`, usado internamente).
+- [ ] `ALLOWED_HOSTS` = domínio da API + `web` (chamadas internas) + `localhost` (healthcheck do container).
 - [ ] `CORS_ALLOWED_ORIGINS` = `https://<APP_DOMAIN>`; `CSRF_TRUSTED_ORIGINS` = `https://<API_DOMAIN>`.
 - [ ] `DB_PASS` forte; backups do volume `postgres_data` (ex.: `pg_dump` diário).
 - [ ] `NUM_PROXIES=1` (o compose já define para o `web`): sem isso o rate

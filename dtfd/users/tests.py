@@ -25,7 +25,7 @@ class UserRegisterTest(APITestCase):
         cls.valid = {
             "name": "Lucira Buster",
             "email": "lucira@dtfd.com",
-            "cpf": "12345678901",
+            "cpf": "52998224725",
             "phone": "11999998888",
             "password": "SenhaForte123",
             "confirm_password": "SenhaForte123",
@@ -74,6 +74,31 @@ class UserRegisterTest(APITestCase):
         user = User.objects.get(email="lucira@dtfd.com")
         self.assertNotEqual(user.password, "SenhaForte123", "Senha deve ser hasheada")
         self.assertTrue(user.check_password("SenhaForte123"))
+
+    # --- revisão 2026-10-20 ---
+    def test_register_email_of_closed_account_is_400_not_500(self):
+        user = User.objects.create_user(email="fechada@dtfd.com", password="SenhaForte123", name="F")
+        self.client.force_authenticate(user)
+        self.client.delete(f"/api/users/{user.pk}/delete/")
+        self.client.force_authenticate(None)
+        response = self.client.post(self.URL, data={**self.valid, "email": "Fechada@dtfd.com", "cpf": None}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertIn("email", response.json())
+
+    def test_register_invalid_cpf(self):
+        response = self.client.post(self.URL, data={**self.valid, "cpf": "12345678901"}, format="json")
+        self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
+        self.assertIn("cpf", response.json())
+
+    def test_register_blank_cpf_is_null(self):
+        for i in range(2):
+            data = {**self.valid, "email": f"semcpf{i}@dtfd.com", "cpf": ""}
+            self.assertEqual(status.HTTP_201_CREATED, self.client.post(self.URL, data=data, format="json").status_code)
+        self.assertEqual(2, User.objects.filter(email__startswith="semcpf", cpf__isnull=True).count())
+
+    def test_register_masked_cpf_is_normalized(self):
+        self.client.post(self.URL, data={**self.valid, "cpf": "529.982.247-25"}, format="json")
+        self.assertEqual("52998224725", User.objects.get(email=self.valid["email"]).cpf)
 
     # --- unhappy ---
     def test_register_without_required_fields(self):

@@ -2,7 +2,8 @@ from rest_framework.pagination import PageNumberPagination
 
 
 class DefaultPagination(PageNumberPagination):
-    """Paginação dos models de maior volume (users, restaurants)."""
+    """Paginação padrão de TODA listagem (DEFAULT_PAGINATION_CLASS):
+    ?page=N&page_size=M -> {count, next, previous, results}."""
 
     page_size = 10
     page_size_query_param = "page_size"

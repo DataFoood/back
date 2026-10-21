@@ -23,6 +23,7 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from promotions.urls import restaurant_urlpatterns as promotion_restaurant_urls
 from restaurants.views import SearchView
 
 def health(request):
@@ -44,6 +45,9 @@ urlpatterns = [
     path("api/search/", SearchView.as_view(), name="search"),
     path("api/users/", include("users.urls")),
     path("api/restaurants/", include("restaurants.urls")),
+    path("api/restaurants/", include(promotion_restaurant_urls)),
+    path("api/promotions/", include("promotions.urls")),
+    path("api/chats/", include("chats.urls")),
     path("api/addresses/", include("address.urls")),
     path("api/preferences/", include("preferences.urls")),
     path("api/embeddings/", include("embeddings.urls")),

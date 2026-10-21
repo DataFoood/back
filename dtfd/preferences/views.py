@@ -69,7 +69,8 @@ class SearchHistoryView(ListAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return SearchHistory.objects.filter(user=self.request.user)[:50]
+        # já podado em 50 na escrita (SearchView.HISTORY_KEEP)
+        return SearchHistory.objects.filter(user=self.request.user)
 
 
 class RecomputeView(APIView):

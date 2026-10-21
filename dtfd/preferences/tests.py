@@ -163,8 +163,8 @@ class SearchHistoryTest(APITestCase):
         response = self.client.get("/api/preferences/searches/")
         self.assertEqual(status.HTTP_200_OK, response.status_code)
         data = response.json()
-        self.assertEqual(1, len(data))
-        self.assertEqual("feijoada", data[0]["query"])
+        self.assertEqual(1, data["count"])
+        self.assertEqual("feijoada", data["results"][0]["query"])
 
     def test_list_unauthenticated(self):
         response = self.client.get("/api/preferences/searches/")

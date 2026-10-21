@@ -2,6 +2,46 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-10-21 — sessão em cookie, paginação padrão, conversas na conta
+- **Sessão do navegador em cookies HttpOnly** (`users/authentication.py`):
+  tokens saem do corpo e do `localStorage`; o front só roda o refresh.
+  CSRF por cabeçalho `X-Requested-With` + CORS com credenciais. API (Bearer)
+  segue igual.
+- **Paginação padrão em toda listagem** (`DEFAULT_PAGINATION_CLASS`);
+  detalhe do restaurante troca `reviews` por `has_reviewed`; endereços
+  filtram por `?entity_type=&object_id=`.
+- **App `chats`**: conversas da busca na conta, apagadas ao encerrar a conta.
+- Sugestão de infra do fim de semana **só para admin**; `createsuperuser`
+  nasce com `role=admin`.
+- 240 testes Django + 16 regressões + 6 shinzou; smoke 83/83; E2E 49/49 + 16/16.
+
+## 2026-10-20 — revisão geral (depois das promoções)
+- Corrigido: cadastrar com e-mail ou CPF de **conta encerrada** dava 500
+  (validador de unicidade via manager que esconde soft-deleted; o banco
+  recusava) → 400; e-mail único sem diferenciar maiúsculas; mesmo bug no
+  **CNPJ** de restaurante removido → 400.
+- CPF validado no servidor (dígitos verificadores, aceita máscara, `""` vira
+  `null` — antes `""` colidia na coluna unique).
+- Front: open redirect no `?next=` do login (`/\evil.com`), corrida no
+  "carregar mais" do `/explorar`, datas `AAAA-MM-DD` mostradas um dia antes.
+- Checklist de deploy: `ALLOWED_HOSTS` precisa de `localhost` (healthcheck).
+- 219 testes Django + 16 regressões + 6 shinzou; smoke 67/67; E2E 48/48 + 16/16.
+
+## 2026-10-20 — promoções por mensageiros + infra de fim de semana
+- App `promotions`: dono cria a promoção no painel; envio por **Telegram**
+  (bot, long polling — funciona local sem URL pública) e **e-mail**, e link
+  `wa.me` pronto para o **WhatsApp** do dono. Recebe só quem favoritou **e**
+  deu opt-in (consentimento próprio, com data). Agendamento (beat/min),
+  envio idempotente por entrega, retomada após queda, limite por
+  restaurante/dia e por pessoa/24h, descadastro por link assinado.
+- `GET /api/promotions/infra-suggestion/`: projeta o pico do fim de semana
+  (4 semanas + agendadas) contra a capacidade local e sugere contratar
+  infra de sexta 17h a domingo 23h com custo estimado. Guia em
+  [[weekend-infra]].
+- `seed_demo --demo-users`: cliente demo salva o Dallas e aceita promoções.
+- 36 testes novos; smoke 67/67; E2E do front 48/48 + 16/16
+  (novo `final-tests/promotions.mjs` no front).
+
 ## 2026-09-28 — testes finais de integração e segurança
 - Stack inteiro testado sem Docker (Postgres+pgvector, Redis, shinzou e um
   Ollama falso determinístico) com o front em navegação E2E. Ver

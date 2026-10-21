@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     "restaurants",
     "preferences",
     "embeddings",
+    "promotions",
+    "chats",
 ]
 
 MIDDLEWARE = [
@@ -112,10 +114,24 @@ _DEV_ORIGINS = [
 ]
 CORS_ALLOWED_ORIGINS = env_list("CORS_ALLOWED_ORIGINS") or (_DEV_ORIGINS if DEBUG else [])
 CSRF_TRUSTED_ORIGINS = env_list("CSRF_TRUSTED_ORIGINS")
+# sessão do navegador vai em cookie: o fetch do front manda com credentials
+CORS_ALLOW_CREDENTIALS = True
+
+# --- Sessão por cookie (users/authentication.py) ---------------------------
+AUTH_COOKIE_ACCESS = "datafood_access"
+AUTH_COOKIE_REFRESH = "datafood_refresh"
+AUTH_COOKIE_REFRESH_PATH = "/api/users/"
+# Secure em produção (HTTPS); em dev o http://localhost precisa sem
+AUTH_COOKIE_SECURE = os.environ.get("AUTH_COOKIE_SECURE", str(not DEBUG)) == "True"
+# Lax: app.x.com -> api.x.com é o mesmo site, então o cookie vai; terceiros não
+AUTH_COOKIE_SAMESITE = os.environ.get("AUTH_COOKIE_SAMESITE", "Lax")
+# vazio = só o host da API (o recomendado)
+AUTH_COOKIE_DOMAIN = os.environ.get("AUTH_COOKIE_DOMAIN") or None
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        # Bearer (API) ou cookie HttpOnly (navegador) — users/authentication.py
+        "users.authentication.CookieJWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
@@ -126,12 +142,16 @@ REST_FRAMEWORK = {
     # cliente forja) e o limite de login vira bypassável. 0 = sem proxy (usa
     # REMOTE_ADDR); 1 = atrás do Caddy (docker-compose.prod.yml).
     "NUM_PROXIES": int(os.environ.get("NUM_PROXIES", "0")),
+    # toda listagem pagina igual: ?page=N&page_size=M (máx 50) -> {count, next, previous, results}
+    "DEFAULT_PAGINATION_CLASS": "utils.pagination.DefaultPagination",
     # rates por escopo, aplicados via ScopedRateThrottle nas views sensiveis
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "register": "10/hour",
         # busca é cara (embedding + kNN): limita por usuário
         "search": os.environ.get("SEARCH_RATE", "30/min"),
+        # descadastro é público (link do e-mail): barra força bruta de token
+        "unsubscribe": "20/hour",
     },
     # OpenAPI/Swagger (handoff frontend)
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
@@ -215,7 +235,41 @@ CELERY_BEAT_SCHEDULE = {
         "task": "preferences.tasks.recompute_all",
         "schedule": crontab(minute=30, hour=3),  # 03:30
     },
+    "dispatch-scheduled-promotions": {
+        "task": "promotions.tasks.dispatch_scheduled",
+        "schedule": crontab(),  # todo minuto
+    },
+    "poll-telegram": {
+        "task": "promotions.tasks.poll_telegram",
+        # no-op sem TELEGRAM_BOT_TOKEN
+        "schedule": timedelta(seconds=int(os.environ.get("TELEGRAM_POLL_SECONDS", "10"))),
+    },
 }
+
+# --- Promoções por mensageiros ---------------------------------------------
+# Links nas mensagens (página do restaurante, descadastro) apontam pro front.
+FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000").rstrip("/")
+# Bot do Telegram (crie com o @BotFather). Vazio = canal desligado.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_BOT_USERNAME = os.environ.get("TELEGRAM_BOT_USERNAME", "").lstrip("@")
+# E-mail: console (imprime no log do worker) até configurar um SMTP.
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+EMAIL_TIMEOUT = 15
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "DataFood <promocoes@datafood.local>")
+# anti-spam: promoções por restaurante/dia e por pessoa/24h (todos os restaurantes)
+PROMOTIONS_MAX_PER_DAY = int(os.environ.get("PROMOTIONS_MAX_PER_DAY", "3"))
+PROMOTIONS_USER_DAILY_CAP = int(os.environ.get("PROMOTIONS_USER_DAILY_CAP", "3"))
+# Capacidade da máquina local (por dia). Acima de 70% do pico previsto do fim
+# de semana, o painel sugere contratar infra de sexta 17h a domingo 23h.
+LOCAL_CAPACITY_MESSAGES_PER_DAY = int(os.environ.get("LOCAL_CAPACITY_MESSAGES_PER_DAY", "2000"))
+LOCAL_CAPACITY_SEARCHES_PER_DAY = int(os.environ.get("LOCAL_CAPACITY_SEARCHES_PER_DAY", "3000"))
+# custo/hora estimado de uma VPS de 4 GB (R$) — só para a estimativa
+WEEKEND_INFRA_HOURLY_COST = float(os.environ.get("WEEKEND_INFRA_HOURLY_COST", "0.40"))
 
 # --- Seguranca de producao -------------------------------------------------
 # Em dev (DEBUG=True) fica tudo desligado. Em prod (DEBUG=False via env)

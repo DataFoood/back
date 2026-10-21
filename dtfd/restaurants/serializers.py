@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
+from rest_framework.validators import UniqueValidator
 
 from address.models import Address
 
@@ -193,7 +194,8 @@ CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_
 
 class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
     images = RestaurantImageSerializer(many=True, read_only=True)
-    reviews = RestaurantReviewSerializer(many=True, read_only=True)
+    # avaliações não vêm embutidas (lista sem limite): GET .../reviews/ paginado
+    has_reviewed = serializers.SerializerMethodField()
     business_hours = BusinessHourSerializer(many=True, read_only=True)
     items = RestaurantItemSerializer(many=True, read_only=True)
 
@@ -211,10 +213,16 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "owner", "name", "slug", "description", "cnpj", "phone",
             "email", "website", "average_rating", "total_reviews",
             "cover_image", "menu_url", "created_at", "updated_at",
-            "images", "reviews", "business_hours", "items",
+            "images", "has_reviewed", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
             "address", "is_open_now", "is_favorited",
         ]
+
+    def get_has_reviewed(self, obj) -> bool:
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return RestaurantReview.objects.filter(restaurant=obj, author=request.user).exists()
 
 
 class RestaurantWriteSerializer(serializers.ModelSerializer):
@@ -234,6 +242,16 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
         ]
         read_only_fields = ["id"]
+        # all_objects: o CNPJ de um restaurante removido (soft delete) continua
+        # no banco; validar só contra os ativos virava IntegrityError (500)
+        extra_kwargs = {
+            "cnpj": {
+                "validators": [UniqueValidator(
+                    queryset=Restaurant.all_objects.all(),
+                    message="Já existe um restaurante com este CNPJ.",
+                )],
+            },
+        }
 
     def create(self, validated_data):
         validated_data["slug"] = self._unique_slug(validated_data["name"])

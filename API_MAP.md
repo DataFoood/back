@@ -16,7 +16,24 @@ vence.
 
 ## 1. Autenticação (JWT)
 
-Login por **email** (não tem username). Fluxo:
+Login por **email** (não tem username). Dois jeitos de carregar a sessão,
+com o mesmo JWT por trás:
+
+| Cliente | Como | Tokens |
+|---|---|---|
+| **Navegador (o front)** | manda `X-Requested-With: datafood` + `credentials: include` | em **cookies HttpOnly** (`datafood_access`, path `/`; `datafood_refresh`, path `/api/users/`). Nunca no corpo — o JS não os vê |
+| API (Postman, Swagger, scripts) | sem o cabeçalho | no corpo; mande `Authorization: Bearer <access>` |
+
+Navegador, em resumo: login/cadastro respondem `{user, access_expires_in}` e
+gravam os cookies; o front chama `POST /api/users/login/refresh/` com corpo
+vazio antes do access vencer (e ao receber 401) — o back lê o refresh do
+cookie, rotaciona e grava os novos; `POST /api/users/logout/` blacklista e
+apaga os cookies. **CSRF:** escrita autenticada por cookie exige o cabeçalho
+`X-Requested-With` (403 sem ele); site de terceiro não consegue mandá-lo sem
+passar pelo CORS, que só libera a origem do front. Cookies `SameSite=Lax`,
+`Secure` em produção.
+
+Fluxo da API (Bearer):
 
 1. `POST /api/users/register/` — cadastro aberto (rate limit 10/hora por IP).
    Body: `name, email, password, confirm_password` + opcionais `cpf, phone,
@@ -38,7 +55,9 @@ tente reusar refresh como access.
 
 **Revogação:** trocar a senha ou encerrar a conta invalida **todos** os
 refresh tokens do usuário (todas as sessões). A troca de senha responde com
-um par novo — guarde-o, senão a sessão atual cai no próximo refresh.
+um par novo (no navegador, em cookie) — guarde-o, senão a sessão atual cai no
+próximo refresh. Encerrar a conta apaga também as conversas do chat e os
+cookies.
 
 No Postman, rode **"Login (salva tokens)"** primeiro: um script guarda
 `access_token`/`refresh_token` nas variáveis da coleção automaticamente.
@@ -55,7 +74,8 @@ No Postman, rode **"Login (salva tokens)"** primeiro: um script guarda
 
 ## 2. Paginação
 
-Listagens (`users`, `restaurants`) paginam com **10 itens/página**:
+**Toda** listagem pagina igual (`DEFAULT_PAGINATION_CLASS` =
+`utils.pagination.DefaultPagination`), **10 itens/página** por padrão:
 
 ```
 GET /api/restaurants/?page=2&page_size=20      # page_size máx = 50
@@ -66,8 +86,12 @@ Resposta:
 { "count": 137, "next": "...?page=3", "previous": "...?page=1", "results": [ ... ] }
 ```
 
-Listagens aninhadas curtas (items, reviews, images, hours de um restaurante;
-preferences; searches) **não** paginam — retornam array direto.
+Vale para users, restaurants, mine, favorites, items/reviews/images/hours de
+um restaurante, addresses, searches, promoções (gestão e vitrine) e chats. O
+detalhe do restaurante **não** embute mais as avaliações (lista sem limite):
+traz `has_reviewed` e as avaliações vêm de `GET .../reviews/` paginado.
+Não paginam só respostas que não são listas: taxonomias (dicionário),
+afinidades (`/api/preferences/`, 3 dimensões) e a busca semântica (top N).
 
 ---
 
@@ -148,6 +172,41 @@ recompute automático **para de sobrescrever** aquela linha.
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
 | POST | `reindex/` | 🛡️ | async; `{all: bool}` (default só stale); **202** |
+
+### Promotions — mensageiros (Telegram, e-mail, WhatsApp)
+Gestão aninhada no restaurante — `/api/restaurants/<restaurant_pk>/promotions/`:
+| Método | Rota | Acesso | Nota |
+|---|---|---|---|
+| GET/POST | `` | 👤 dono/admin | lista paginada (com `stats` por status de entrega) / cria **rascunho** |
+| GET | `active/` | 🌐 | vitrine paginada: enviadas e dentro da validade, sem dados de envio |
+| GET | `audience/` | 👤 | `{favorites, opted_in, telegram, email, telegram_configured}` (só contagens) |
+| GET/PATCH/DELETE | `<id>/` | 👤 | editar só em `draft`/`scheduled`; DELETE = soft (sai da vitrine) |
+| POST | `<id>/send/` | 👤 | `{}` envia agora (**202**, worker); `{scheduled_for}` agenda (200, 1 min–30 dias) |
+| POST | `<id>/unschedule/` | 👤 | agendada → rascunho |
+
+Cada promoção traz `share_text`, `whatsapp_url` (`wa.me/?text=…`) e
+`public_url`. Limites: `PROMOTIONS_MAX_PER_DAY` por restaurante (400 com
+`detail`) e `PROMOTIONS_USER_DAILY_CAP` por pessoa/24h (entrega `skipped`).
+
+Cliente e operação — `/api/promotions/`:
+| Método | Rota | Acesso | Nota |
+|---|---|---|---|
+| GET/PATCH | `preferences/` | 🔑 | `promotions_opt_in`, `channel_email`, `channel_telegram`; lê `telegram_linked`, `opted_in_at` |
+| POST/DELETE | `preferences/telegram/` | 🔑 | POST → `{url, expires_at}` (deep link do bot, 15 min; **503** sem bot); DELETE desvincula |
+| POST | `unsubscribe/` | 🌐 | `{token}` do e-mail → desliga o opt-in (20/h por IP) |
+| GET | `infra-suggestion/` | 🛡️ | projeção do fim de semana × capacidade local — números da plataforma inteira, só admin ([docs/weekend-infra.md](docs/weekend-infra.md)) |
+
+Recebe promoção só quem **favoritou o restaurante e deu opt-in**. Detalhes
+em [docs/promotions.md](docs/promotions.md).
+
+### Chats — `/api/chats/` (conversas da busca, na conta)
+| Método | Rota | Acesso | Nota |
+|---|---|---|---|
+| GET/POST | `` | 🔑 | lista paginada sem mensagens (`?q=` no título) / cria `{title, messages}` |
+| GET/PATCH/DELETE | `<id>/` | 🔑 (só as próprias; outras → 404) | DELETE apaga de verdade |
+
+`messages`: lista de `{role: "user"|"assistant", ...}` (até 200, 256 KB). São
+mantidas as 50 mais recentes por conta; encerrar a conta apaga todas.
 
 ### Search — `/api/search/` ⭐
 | Método | Rota | Acesso |
