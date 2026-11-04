@@ -66,3 +66,9 @@ pelo dono/admin somente quando esse número realmente recebe mensagens.
 A importação OSM não preenche WhatsApp a partir de um telefone. Cadastros
 anteriores precisam confirmar o canal no painel; não há migração presumindo
 que todo telefone já era WhatsApp.
+
+O Django Admin lista restaurantes, fontes pendentes de revisão e execuções de
+importação. Atribuição e dados de origem são somente leitura; a exclusão direta
+de uma fonte é bloqueada para não retirar atribuição de conteúdo publicado.
+Somente admin autorizado pode revisar a associação da fonte ou atribuir dono,
+após verificar a titularidade. Não há reivindicação automática por place ID.
