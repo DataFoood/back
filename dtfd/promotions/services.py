@@ -14,7 +14,7 @@ from restaurants.models import Restaurant, RestaurantFavorite
 from users.models import User
 
 from . import messengers
-from .models import MessagingPreference, Promotion, PromotionDelivery
+from .models import MessagingPreference, Promotion, PromotionDelivery, PromotionReservation
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +218,29 @@ def claim_due() -> list[int]:
 
 
 # --- envio -----------------------------------------------------------------
+def reserve_recipient(promotion: Promotion, user_id: int) -> bool:
+    """Serializa a cota de todas as campanhas sem lock durante I/O externo."""
+    with transaction.atomic():
+        if not User.objects.select_for_update().filter(pk=user_id, is_active=True).first():
+            return False
+        now = timezone.now()
+        active = set(PromotionReservation.objects.filter(user_id=user_id, expires_at__gt=now).values_list("promotion_id", flat=True))
+        # Compatibilidade com entregas anteriores à introdução das reservas.
+        active.update(PromotionDelivery.objects.filter(
+            user_id=user_id, status=PromotionDelivery.Status.SENT,
+            sent_at__gte=now - timedelta(hours=24),
+        ).values_list("promotion_id", flat=True))
+        if promotion.pk in active:
+            return True
+        if len(active) >= settings.PROMOTIONS_USER_DAILY_CAP:
+            return False
+        PromotionReservation.objects.update_or_create(
+            promotion=promotion, user_id=user_id,
+            defaults={"expires_at": now + timedelta(hours=24)},
+        )
+        return True
+
+
 def deliver(promotion_id: int) -> dict:
     """Envia a promoção para o público atual. Idempotente por (promoção,
     usuário, canal); falha num destinatário não interrompe os outros."""
@@ -234,22 +257,10 @@ def deliver(promotion_id: int) -> dict:
     subject = f"{promotion.restaurant.name}: {promotion.title}"[:150]
     recipients = list(recipients_for(promotion.restaurant))
 
-    # anti-spam: cada pessoa recebe no máximo N promoções (de qualquer
-    # restaurante) por 24h
-    since = timezone.now() - timedelta(hours=24)
-    received = dict(
-        PromotionDelivery.objects.filter(
-            user__in=recipients, status=PromotionDelivery.Status.SENT, sent_at__gte=since
-        )
-        .exclude(promotion=promotion)
-        .values("user")
-        .annotate(n=Count("promotion", distinct=True))
-        .values_list("user", "n")
-    )
-    cap = settings.PROMOTIONS_USER_DAILY_CAP
-
     for user in recipients:
-        capped = received.get(user.pk, 0) >= cap
+        if not channels_for(promotion, user):
+            continue
+        capped = not reserve_recipient(promotion, user.pk)
         for channel in channels_for(promotion, user):
             delivery, _ = PromotionDelivery.objects.get_or_create(
                 promotion=promotion, user=user, channel=channel
@@ -262,9 +273,15 @@ def deliver(promotion_id: int) -> dict:
             if capped:
                 _finish(delivery, PromotionDelivery.Status.SKIPPED, "limite diário de promoções")
                 continue
+            # Não usar o opt-in fotografado no começo do lote: o cliente pode
+            # ter saído ou desativado um canal enquanto outros recebiam.
+            fresh_user = recipients_for(promotion.restaurant).filter(pk=user.pk).first()
+            if fresh_user is None or channel not in channels_for(promotion, fresh_user):
+                _finish(delivery, PromotionDelivery.Status.SKIPPED, "consentimento ou canal desativado")
+                continue
             try:
                 if channel == PromotionDelivery.Channel.TELEGRAM:
-                    messengers.send_telegram(preference_of(user).telegram_chat_id, text)
+                    messengers.send_telegram(preference_of(fresh_user).telegram_chat_id, text)
                 else:
                     footer = f"\n\n--\nNão quer mais receber? {unsubscribe_url(user)}"
                     messengers.send_email(user.email, subject, text + footer, unsubscribe_url(user))

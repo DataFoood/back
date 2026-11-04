@@ -73,3 +73,13 @@ plataforma inteira; dono de restaurante não vê). Ver
 | `MessagingPreference` | user (1:1), promotions_opt_in, opted_in_at, channel_email, channel_telegram, telegram_chat_id, telegram_link_token/expires_at |
 | `Promotion` (AbstractAudit) | restaurant, created_by, title, message, coupon_code, valid_until, send_telegram, send_email, status, scheduled_for, dispatched_at, sent_at |
 | `PromotionDelivery` | promotion, user, channel, status (pending/sending/sent/failed/skipped), error, sent_at |
+
+## Cota concorrente e validade
+
+O envio/agendamento valida a data local da validade; campanhas agendadas ou
+em processamento que venceram expiram na retomada. Cada campanha reserva a
+cota de uma pessoa por 24 horas móveis, compartilhada por todos os canais.
+A reserva é feita sob lock transacional do usuário e confirmada antes do I/O.
+Tentativas com erro também mantêm a reserva: é uma proteção conservadora
+contra excesso de mensagens em falhas, retries e resultados desconhecidos.
+O worker revalida opt-in e canal antes de cada tentativa.

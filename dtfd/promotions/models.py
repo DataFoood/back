@@ -107,3 +107,18 @@ class PromotionDelivery(models.Model):
 
     def __str__(self):
         return f"{self.channel} {self.status}"
+
+
+class PromotionReservation(models.Model):
+    """Cota compartilhada por canais: uma campanha por pessoa por 24h.
+
+    A tentativa reserva a cota, inclusive em falha/resultado desconhecido,
+    evitando que retries ou campanhas paralelas produzam spam.
+    """
+    promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    expires_at = models.DateTimeField()
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["promotion", "user"], name="unique_promotion_reservation")]
+        indexes = [models.Index(fields=["user", "expires_at"])]
