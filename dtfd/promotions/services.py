@@ -34,6 +34,21 @@ def check_validity(promotion: Promotion, when: datetime) -> None:
         raise LimitExceeded("O envio não pode ocorrer após a validade da promoção.")
 
 
+def expire_pending() -> None:
+    """Expiração encerra também tentativas e intenções, sem órfãos na fila."""
+    Promotion.objects.filter(
+        status__in=[Promotion.Status.SCHEDULED, Promotion.Status.SENDING],
+        valid_until__lt=timezone.localdate(),
+    ).update(status=Promotion.Status.EXPIRED, processing_until=None)
+    PromotionDelivery.objects.filter(promotion__status=Promotion.Status.EXPIRED, status=PromotionDelivery.Status.PENDING).update(
+        status=PromotionDelivery.Status.SKIPPED, error="promoção expirada", next_attempt_at=None,
+    )
+    PromotionDelivery.objects.filter(promotion__status=Promotion.Status.EXPIRED, status=PromotionDelivery.Status.SENDING).update(
+        status=PromotionDelivery.Status.UNKNOWN, error="promoção expirada com aceitação não confirmada", next_attempt_at=None,
+    )
+    PromotionOutbox.objects.filter(promotion__status=Promotion.Status.EXPIRED).delete()
+
+
 # --- público ---------------------------------------------------------------
 def recipients_for(restaurant: Restaurant):
     """Quem favoritou o restaurante E deu opt-in. Mesmo filter() = mesmo JOIN
@@ -198,10 +213,7 @@ def claim_due() -> list[int]:
     """Agendadas vencidas -> enviando (update condicional: dois beats não
     pegam a mesma). Inclui as travadas em 'enviando' para retomar."""
     now = timezone.now()
-    Promotion.objects.filter(
-        status__in=[Promotion.Status.SCHEDULED, Promotion.Status.SENDING],
-        valid_until__lt=timezone.localdate(now),
-    ).update(status=Promotion.Status.EXPIRED)
+    expire_pending()
     due = list(
         Promotion.objects.filter(
             status=Promotion.Status.SCHEDULED, scheduled_for__lte=now
@@ -270,7 +282,7 @@ def deliver(promotion_id: int) -> dict:
     if promotion is None or promotion.status != Promotion.Status.SENDING:
         return {}
     if promotion.valid_until and promotion.valid_until < timezone.localdate():
-        Promotion.objects.filter(pk=promotion.pk).update(status=Promotion.Status.EXPIRED)
+        expire_pending()
         return {}
 
     now = timezone.now()

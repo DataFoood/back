@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import transaction
 from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -61,6 +62,23 @@ class PromotionDetailView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return _managed_promotions(self)
+
+    def _lock_for_edit(self):
+        # Mesma ordem de locks de schedule/dispatch_now. Reconsultar a
+        # instância depois do lock evita editar/remover um rascunho que
+        # outro request já começou a enviar.
+        get_object_or_404(Restaurant.objects.select_for_update(), pk=self.kwargs['restaurant_pk'])
+        get_object_or_404(Promotion.objects.select_for_update(), pk=self.kwargs['pk'], restaurant_id=self.kwargs['restaurant_pk'])
+
+    @transaction.atomic
+    def update(self, request, *args, **kwargs):
+        self._lock_for_edit()
+        return super().update(request, *args, **kwargs)
+
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        self._lock_for_edit()
+        return super().destroy(request, *args, **kwargs)
 
     def perform_destroy(self, instance):
         if instance.status == Promotion.Status.SENDING:

@@ -107,3 +107,14 @@ class RecoveryTest(TestCase):
         with patch("promotions.messengers.send_email") as send:
             services.deliver(self.p.pk)
         self.assertEqual(1, send.call_count)
+
+    def test_expiration_closes_pending_retry_and_outbox(self):
+        self.p.valid_until = timezone.localdate()-timedelta(days=1)
+        self.p.save()
+        PromotionDelivery.objects.create(promotion=self.p, user=self.user, channel='email', status='pending', next_attempt_at=timezone.now())
+        PromotionDelivery.objects.create(promotion=self.p, user=self.user, channel='telegram', status='sending')
+        PromotionOutbox.objects.create(promotion=self.p)
+        self.assertEqual([], services.claim_due())
+        self.assertEqual('skipped', PromotionDelivery.objects.get(channel='email').status)
+        self.assertEqual('unknown', PromotionDelivery.objects.get(channel='telegram').status)
+        self.assertFalse(PromotionOutbox.objects.filter(promotion=self.p).exists())
