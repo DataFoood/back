@@ -37,6 +37,7 @@ class User(AbstractUser, AbstractAudit):
     level = models.PositiveSmallIntegerField(default=1)
     # LGPD: só guarda histórico de busca/sinais se o usuário consentir.
     allow_info = models.BooleanField(default=False)
+    choice_mode = models.BooleanField(default=False)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["name"]

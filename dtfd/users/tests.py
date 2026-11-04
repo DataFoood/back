@@ -211,7 +211,7 @@ class UserDetailTest(APITestCase):
             self.assertEqual(status.HTTP_200_OK, response.status_code)
         expected = {"id", "name", "email", "cpf", "phone", "birthday", "gender",
                     "avatar_url", "banner_url", "role", "level", "allow_info",
-                    "is_active", "created_at"}
+                    "is_active", "created_at", "choice_mode"}
         self.assertSetEqual(expected, set(response.json().keys()))
 
     def test_detail_another_user_readable(self):

@@ -103,7 +103,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "name", "email", "cpf", "phone", "birthday", "gender",
                   "avatar_url", "banner_url", "role", "level", "allow_info",
-                  "is_active", "created_at"]
+                  "is_active", "created_at", "choice_mode"]
         read_only_fields = ["id", "role", "level", "is_active", "created_at"]
 
 
@@ -120,7 +120,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["name", "email", "phone", "birthday", "gender", "avatar_url",
-                  "banner_url", "allow_info"]
+                  "banner_url", "allow_info", "choice_mode"]
         extra_kwargs = {"email": {"validators": [UNIQUE_EMAIL]}}
 
 

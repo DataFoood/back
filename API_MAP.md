@@ -284,3 +284,12 @@ docker compose up -d --build      # sobe db, redis, ollama, web, worker, beat, s
 Django em `http://localhost:8000`. Swagger em `/api/docs/`. A 1ª subida puxa o
 modelo de embedding no Ollama (pode demorar). Só a porta 8000 (Django) é pra
 consumo do front; o shinzou (8001) é interno.
+
+## Preferência de modo escolha
+
+`GET/PATCH /api/users/me/` expõe `choice_mode` (booleano, padrão False) apenas
+para a própria conta/admin. Login também devolve a preferência no objeto `user`.
+Ela não aparece no perfil público de outra pessoa. O campo não modifica
+`allow_info`, consentimento de promoções ou afinidades. Escolhas usam o POST
+idempotente de favoritos; recusas não são persistidas como sinal negativo.
+Aplicar `python manage.py migrate` antes de iniciar a versão nova do front.
