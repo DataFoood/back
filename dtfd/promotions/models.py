@@ -37,6 +37,7 @@ class Promotion(AbstractAudit):
         SCHEDULED = "scheduled", "Agendada"
         SENDING = "sending", "Enviando"
         SENT = "sent", "Enviada"
+        EXPIRED = "expired", "Expirada"
 
     restaurant = models.ForeignKey(
         "restaurants.Restaurant", on_delete=models.CASCADE, related_name="promotions"

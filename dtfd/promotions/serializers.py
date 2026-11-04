@@ -70,6 +70,10 @@ class PromotionSerializer(serializers.ModelSerializer):
             Promotion.Status.DRAFT, Promotion.Status.SCHEDULED
         ):
             raise serializers.ValidationError("Promoção já enviada não pode ser editada.")
+        valid_until = attrs.get("valid_until", self.instance.valid_until if self.instance else None)
+        when = self.instance.scheduled_for if self.instance else None
+        if valid_until and when and timezone.localtime(when).date() > valid_until:
+            raise serializers.ValidationError({"valid_until": "A validade deve incluir o dia do envio agendado."})
         return attrs
 
 

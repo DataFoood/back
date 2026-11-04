@@ -252,6 +252,43 @@ class PromotionSendTest(Base):
         response, _ = self.send(self.make_promo(), scheduled_for=timezone.now().isoformat())
         self.assertEqual(status.HTTP_400_BAD_REQUEST, response.status_code)
 
+    def test_cannot_schedule_after_validity(self):
+        promo = self.make_promo(valid_until=timezone.localdate())
+        response, tg = self.send(promo, scheduled_for=(timezone.now() + timedelta(days=2)).isoformat())
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(0, tg.call_count)
+        promo.refresh_from_db()
+        self.assertEqual("draft", promo.status)
+
+    def test_cannot_shorten_validity_before_scheduled_day(self):
+        promo = self.make_promo(status="scheduled", scheduled_for=timezone.now() + timedelta(days=2))
+        self.client.force_authenticate(self.owner)
+        response = self.client.patch(f"{self.base}{promo.pk}/", {"valid_until": timezone.localdate().isoformat()}, format="json")
+        self.assertEqual(400, response.status_code)
+        self.assertIn("valid_until", response.json())
+
+    def test_expired_draft_cannot_send(self):
+        promo = self.make_promo(valid_until=timezone.localdate() - timedelta(days=1))
+        response, tg = self.send(promo)
+        self.assertEqual(400, response.status_code)
+        self.assertEqual(0, tg.call_count)
+
+    def test_restart_expires_overdue_campaigns(self):
+        for state in ("scheduled", "sending"):
+            promo = self.make_promo(status=state, valid_until=timezone.localdate() - timedelta(days=1), scheduled_for=timezone.now() - timedelta(days=1))
+            self.assertNotIn(promo.pk, services.claim_due())
+            promo.refresh_from_db()
+            self.assertEqual("expired", promo.status)
+
+    def test_worker_does_not_send_expired_offer(self):
+        promo = self.make_promo(status="sending", valid_until=timezone.localdate() - timedelta(days=1))
+        with patch("promotions.messengers.telegram_call") as tg:
+            services.deliver(promo.pk)
+        self.assertFalse(tg.called)
+        self.assertEqual([], mail.outbox)
+        promo.refresh_from_db()
+        self.assertEqual("expired", promo.status)
+
     def test_unschedule(self):
         promo = self.make_promo(status=Promotion.Status.SCHEDULED, scheduled_for=timezone.now() + timedelta(hours=1))
         self.client.force_authenticate(self.owner)

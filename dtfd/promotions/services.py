@@ -28,6 +28,11 @@ class LimitExceeded(Exception):
     pass
 
 
+def check_validity(promotion: Promotion, when: datetime) -> None:
+    if promotion.valid_until and timezone.localtime(when).date() > promotion.valid_until:
+        raise LimitExceeded("O envio não pode ocorrer após a validade da promoção.")
+
+
 # --- público ---------------------------------------------------------------
 def recipients_for(restaurant: Restaurant):
     """Quem favoritou o restaurante E deu opt-in. Mesmo filter() = mesmo JOIN
@@ -161,6 +166,7 @@ def dispatch_now(promotion: Promotion) -> Promotion:
         if promotion.status not in (Promotion.Status.DRAFT, Promotion.Status.SCHEDULED):
             raise LimitExceeded("Esta promoção já foi enviada.")
         now = timezone.now()
+        check_validity(promotion, now)
         check_daily_limit(promotion.restaurant, now, exclude_pk=promotion.pk)
         promotion.status = Promotion.Status.SENDING
         promotion.dispatched_at = now
@@ -176,6 +182,7 @@ def schedule(promotion: Promotion, when: datetime) -> Promotion:
         promotion = Promotion.objects.select_for_update().get(pk=promotion.pk)
         if promotion.status not in (Promotion.Status.DRAFT, Promotion.Status.SCHEDULED):
             raise LimitExceeded("Esta promoção já foi enviada.")
+        check_validity(promotion, when)
         check_daily_limit(promotion.restaurant, when, exclude_pk=promotion.pk)
         promotion.status = Promotion.Status.SCHEDULED
         promotion.scheduled_for = when
@@ -187,6 +194,10 @@ def claim_due() -> list[int]:
     """Agendadas vencidas -> enviando (update condicional: dois beats não
     pegam a mesma). Inclui as travadas em 'enviando' para retomar."""
     now = timezone.now()
+    Promotion.objects.filter(
+        status__in=[Promotion.Status.SCHEDULED, Promotion.Status.SENDING],
+        valid_until__lt=timezone.localdate(now),
+    ).update(status=Promotion.Status.EXPIRED)
     due = list(
         Promotion.objects.filter(
             status=Promotion.Status.SCHEDULED, scheduled_for__lte=now
@@ -214,6 +225,9 @@ def deliver(promotion_id: int) -> dict:
         Promotion.objects.select_related("restaurant").filter(pk=promotion_id).first()
     )
     if promotion is None or promotion.status != Promotion.Status.SENDING:
+        return {}
+    if promotion.valid_until and promotion.valid_until < timezone.localdate():
+        Promotion.objects.filter(pk=promotion.pk).update(status=Promotion.Status.EXPIRED)
         return {}
 
     text = render_text(promotion)
