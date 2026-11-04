@@ -96,3 +96,14 @@ class RecoveryTest(TestCase):
             services.deliver(self.p.pk)
         self.p.refresh_from_db()
         self.assertEqual("partial", self.p.status)
+
+    def test_active_campaign_lease_prevents_duplicate_worker(self):
+        self.p.processing_until = timezone.now() + timedelta(minutes=15)
+        self.p.save()
+        with patch("promotions.messengers.send_email") as send:
+            services.deliver(self.p.pk)
+        self.assertFalse(send.called)
+        Promotion.objects.filter(pk=self.p.pk).update(processing_until=timezone.now()-timedelta(seconds=1))
+        with patch("promotions.messengers.send_email") as send:
+            services.deliver(self.p.pk)
+        self.assertEqual(1, send.call_count)

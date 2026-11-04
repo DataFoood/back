@@ -274,9 +274,10 @@ def deliver(promotion_id: int) -> dict:
         return {}
 
     now = timezone.now()
+    lease_until = now + STUCK_AFTER
     claimed = Promotion.objects.filter(pk=promotion.pk, status=Promotion.Status.SENDING).filter(
         Q(processing_until__isnull=True) | Q(processing_until__lte=now)
-    ).update(processing_until=now + STUCK_AFTER)
+    ).update(processing_until=lease_until)
     if not claimed:
         return {}
     # Se o processo caiu após chamar o provedor, não é seguro reenviar.
@@ -288,6 +289,10 @@ def deliver(promotion_id: int) -> dict:
     recipients = list(recipients_for(promotion.restaurant))
 
     for user in recipients:
+        next_lease = timezone.now() + STUCK_AFTER
+        if not Promotion.objects.filter(pk=promotion.pk, status=Promotion.Status.SENDING, processing_until=lease_until).update(processing_until=next_lease):
+            return {}  # outro processo retomou o lote; este não o finaliza
+        lease_until = next_lease
         if not channels_for(promotion, user):
             continue
         capped = not reserve_recipient(promotion, user.pk)
@@ -355,14 +360,15 @@ def deliver(promotion_id: int) -> dict:
     if stats[PromotionDelivery.Status.PENDING]:
         next_at = PromotionDelivery.objects.filter(promotion=promotion, status="pending").aggregate(at=Min("next_attempt_at"))["at"] or timezone.now()
         PromotionOutbox.objects.update_or_create(promotion=promotion, defaults={"available_at": next_at})
-        Promotion.objects.filter(pk=promotion.pk).update(processing_until=None)
+        Promotion.objects.filter(pk=promotion.pk, status=Promotion.Status.SENDING, processing_until=lease_until).update(processing_until=None)
         return stats
     failures = stats[PromotionDelivery.Status.FAILED] + stats[PromotionDelivery.Status.UNKNOWN]
     result = (Promotion.Status.PARTIAL if stats[PromotionDelivery.Status.SENT] else Promotion.Status.FAILED) if failures else Promotion.Status.SENT
-    Promotion.objects.filter(pk=promotion.pk).update(
+    finalized = Promotion.objects.filter(pk=promotion.pk, status=Promotion.Status.SENDING, processing_until=lease_until).update(
         status=result, sent_at=timezone.now(), processing_until=None,
     )
-    PromotionOutbox.objects.filter(promotion=promotion).delete()
+    if finalized:
+        PromotionOutbox.objects.filter(promotion=promotion).delete()
     return stats
 
 
