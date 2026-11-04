@@ -90,24 +90,28 @@ def estimated_messages(promotion: Promotion) -> int:
 
 
 # --- texto -----------------------------------------------------------------
-def public_url(restaurant: Restaurant) -> str:
-    return f"{settings.FRONTEND_URL}/restaurante/{restaurant.slug}"
+def public_url(restaurant: Restaurant, promotion=None, channel="shared") -> str:
+    url = f"{settings.FRONTEND_URL}/restaurante/{restaurant.slug}"
+    if promotion is not None:
+        token = signing.dumps({"promotion": promotion.pk, "channel": channel}, salt="campaign-attribution")
+        url += "?campaign=" + quote(token)
+    return url
 
 
-def render_text(promotion: Promotion) -> str:
+def render_text(promotion: Promotion, channel="shared") -> str:
     lines = [f"{promotion.restaurant.name}: {promotion.title}", "", promotion.message.strip()]
     if promotion.coupon_code:
         lines.append(f"\nCupom: {promotion.coupon_code}")
     if promotion.valid_until:
         lines.append(f"Válido até {promotion.valid_until.strftime('%d/%m/%Y')}")
-    lines.append(f"\n{public_url(promotion.restaurant)}")
+    lines.append(f"\n{public_url(promotion.restaurant, promotion, channel)}")
     return "\n".join(lines).strip()
 
 
 def whatsapp_url(promotion: Promotion) -> str:
     """Link de compartilhamento: abre o WhatsApp do dono com o texto pronto
     para lista de transmissão, grupo ou status. Não expõe telefone de cliente."""
-    return f"https://wa.me/?text={quote(render_text(promotion))}"
+    return f"https://wa.me/?text={quote(render_text(promotion, "whatsapp"))}"
 
 
 def unsubscribe_token(user: User) -> str:
@@ -312,6 +316,7 @@ def deliver(promotion_id: int) -> dict:
                 continue
             delivery.refresh_from_db()
             try:
+                text = render_text(promotion, channel)
                 if channel == PromotionDelivery.Channel.TELEGRAM:
                     messengers.send_telegram(preference_of(fresh_user).telegram_chat_id, text)
                 else:

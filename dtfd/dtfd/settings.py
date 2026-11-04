@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "preferences",
     "embeddings",
     "promotions",
+    "insights",
     "chats",
 ]
 
@@ -151,6 +152,7 @@ REST_FRAMEWORK = {
         # busca é cara (embedding + kNN): limita por usuário
         "search": os.environ.get("SEARCH_RATE", "30/min"),
         # descadastro é público (link do e-mail): barra força bruta de token
+        "analytics": "120/min",
         "unsubscribe": "20/hour",
     },
     # OpenAPI/Swagger (handoff frontend)
@@ -289,3 +291,8 @@ if not DEBUG:
 
 # Registros do protótipo não são catálogo verificado de produção.
 SHOW_DEMO_RESTAURANTS = os.environ.get("SHOW_DEMO_RESTAURANTS", str(DEBUG)) == "True"
+
+CELERY_BEAT_SCHEDULE['refresh-insights-daily'] = {
+    'task': 'insights.tasks.refresh_insights',
+    'schedule': crontab(minute=15, hour=4),
+}

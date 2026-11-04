@@ -25,6 +25,7 @@ from drf_spectacular.views import (
 
 from promotions.urls import restaurant_urlpatterns as promotion_restaurant_urls
 from restaurants.views import SearchView
+from insights.urls import restaurant_urlpatterns as insights_restaurant_urls
 
 def health(request):
     """GET /api/health/ — liveness + banco (usado pelo healthcheck do compose)."""
@@ -47,6 +48,8 @@ urlpatterns = [
     path("api/restaurants/", include("restaurants.urls")),
     path("api/restaurants/", include(promotion_restaurant_urls)),
     path("api/promotions/", include("promotions.urls")),
+    path("api/insights/", include("insights.urls")),
+    path("api/restaurants/", include(insights_restaurant_urls)),
     path("api/chats/", include("chats.urls")),
     path("api/addresses/", include("address.urls")),
     path("api/preferences/", include("preferences.urls")),
