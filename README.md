@@ -155,3 +155,10 @@ testes finais e o passo a passo: [`final-tests/README.md`](final-tests/README.md
 
 `postman_collection.json` na raiz: importe no Postman, rode **"Login (salva
 tokens)"** e o token é injetado automaticamente nas demais requisições.
+
+## Catálogo real, campanhas e resultados
+
+A implementação incremental de catálogo OpenStreetMap de Marília, busca por
+proximidade, recuperação de envios, BI e operação está descrita em
+[docs/implementation-status.md](docs/implementation-status.md). A página distingue
+código entregue, testes locais e pré-requisitos para um piloto com dados reais.
