@@ -102,3 +102,38 @@ class InsightsTest(TestCase):
         self.assertEqual(1, AnalyticsDaily.objects.count())
         self.assertEqual(1, AnalyticsDaily.objects.get().count)
         self.assertFalse(AnalyticsEvent.objects.filter(pk=old.pk).exists())
+
+
+class OperationalTest(TestCase):
+    def test_search_request_records_only_aggregate_histogram(self):
+        from .models import OperationalBucket
+        client = APIClient()
+        self.assertEqual(401, client.post('/api/search/', {'query': 'not stored'}, format='json').status_code)
+        bucket = OperationalBucket.objects.get()
+        self.assertEqual(1, bucket.count)
+        self.assertEqual(1, sum(getattr(bucket, f) for f in ['le100', 'le500', 'le1000', 'le3000', 'over3000']))
+        self.assertNotIn('query', [field.name for field in OperationalBucket._meta.fields])
+
+    def test_uncalibrated_capacity_does_not_recommend_purchase(self):
+        from .models import OperationalBucket
+        from promotions.infra import suggestion
+        from django.test import override_settings
+        OperationalBucket.objects.create(minute=timezone.now()-timedelta(days=3), count=10000, le100=10000)
+        with override_settings(LOCAL_CAPACITY_CALIBRATED=False, LOCAL_CAPACITY_SEARCHES_PER_DAY=1):
+            result = suggestion()
+        self.assertEqual('insufficient', result['level'])
+        self.assertFalse(result['recommend'])
+
+    def test_observed_slow_requests_trigger_attention_not_automatic_purchase(self):
+        from .models import OperationalBucket
+        from promotions.infra import suggestion
+        OperationalBucket.objects.create(minute=timezone.now(), count=30, over3000=30)
+        result = suggestion()
+        self.assertEqual('attention', result['level'])
+        self.assertTrue(result['telemetry']['p95_above_3000'])
+
+    def test_resource_snapshot_reports_missing_support_without_guessing(self):
+        from unittest.mock import patch
+        from .operations import resource_snapshot
+        with patch('insights.operations.Path.read_text', side_effect=FileNotFoundError):
+            self.assertEqual({'available': False, 'scope': 'api_container'}, resource_snapshot())

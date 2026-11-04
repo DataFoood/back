@@ -4,7 +4,7 @@ from django.db import connection, transaction
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from django.utils import timezone
-from insights.models import AnalyticsEvent, AnalyticsDaily
+from insights.models import AnalyticsEvent, AnalyticsDaily, OperationalBucket
 from promotions.models import PromotionReservation, PromotionOutbox, PromotionDelivery
 
 
@@ -18,6 +18,7 @@ class Command(BaseCommand):
         with connection.cursor() as cursor:
             cursor.execute('SELECT pg_advisory_xact_lock(%s)', [314159265])
         AnalyticsEvent.objects.filter(created_at__lt=cutoff).delete()
+        OperationalBucket.objects.filter(minute__lt=now-timedelta(days=28)).delete()
         rows = AnalyticsEvent.objects.annotate(day=TruncDate('created_at')).values('restaurant_id', 'day', 'kind').annotate(n=Count('id'))
         aggregates = [AnalyticsDaily(restaurant_id=r['restaurant_id'], day=r['day'], kind=r['kind'], count=r['n']) for r in rows]
         AnalyticsDaily.objects.all().delete()

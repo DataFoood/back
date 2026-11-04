@@ -56,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "insights.middleware.OperationalMetricsMiddleware",
 ]
 
 ROOT_URLCONF = "dtfd.urls"
@@ -296,3 +297,6 @@ CELERY_BEAT_SCHEDULE['refresh-insights-daily'] = {
     'task': 'insights.tasks.refresh_insights',
     'schedule': crontab(minute=15, hour=4),
 }
+
+# Só marque True após benchmark da instalação e do modelo reais.
+LOCAL_CAPACITY_CALIBRATED = os.environ.get("LOCAL_CAPACITY_CALIBRATED", "False") == "True"

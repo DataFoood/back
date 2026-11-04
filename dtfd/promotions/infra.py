@@ -10,11 +10,13 @@ from collections import defaultdict
 from datetime import datetime, time, timedelta
 
 from django.conf import settings
-from django.db.models import Count
-from django.db.models.functions import ExtractIsoWeekDay
+from django.db.models import Count, Sum
+from django.db.models.functions import ExtractIsoWeekDay, TruncDate
 from django.utils import timezone
 
-from preferences.models import SearchHistory
+from insights.models import OperationalBucket
+from insights.operations import resource_snapshot
+from .models import PromotionOutbox
 
 from .models import Promotion, PromotionDelivery
 from .services import estimated_messages
@@ -27,13 +29,13 @@ WINDOW_START = (4, time(17, 0))
 WINDOW_END = (6, time(23, 0))
 
 
-def _per_weekday(qs, field, since, until):
+def _per_weekday(qs, field, since, until, count_field=None):
     """Média por dia da semana (0=seg) no intervalo [since, until)."""
     rows = (
         qs.filter(**{f"{field}__gte": since, f"{field}__lt": until})
         .annotate(wd=ExtractIsoWeekDay(field))
         .values("wd")
-        .annotate(n=Count("id"))
+        .annotate(n=Sum(count_field) if count_field else Count("id"))
     )
     totals = {row["wd"] - 1: row["n"] for row in rows}
     return [totals.get(d, 0) / HISTORY_WEEKS for d in range(7)]
@@ -59,7 +61,7 @@ def suggestion() -> dict:
         PromotionDelivery.objects.filter(status=PromotionDelivery.Status.SENT),
         "sent_at", since, until,
     )
-    searches = _per_weekday(SearchHistory.objects.all(), "created_at", since, until)
+    searches = _per_weekday(OperationalBucket.objects.filter(component="search"), "minute", since, until, "count")
 
     friday = upcoming_weekend(today)
     weekend_start = _aware(friday, time.min)
@@ -108,7 +110,34 @@ def suggestion() -> dict:
             else f"{scheduled_count} promoções já agendadas para o fim de semana."
         )
 
-    level = "hire" if utilization >= 1 else "attention" if utilization >= ATTENTION_AT else "ok"
+    measured = OperationalBucket.objects.filter(component="search", minute__gte=since)
+    observed_days = measured.annotate(day=TruncDate("minute")).values("day").distinct().count()
+    recent = measured.filter(minute__gte=timezone.now()-timedelta(hours=24)).aggregate(
+        requests=Sum("count"), errors=Sum("errors"), le100=Sum("le100"), le500=Sum("le500"),
+        le1000=Sum("le1000"), le3000=Sum("le3000"), over3000=Sum("over3000"),
+    )
+    requests = recent['requests'] or 0
+    pending = PromotionOutbox.objects.filter(promotion__status="sending", available_at__lt=timezone.now()-timedelta(minutes=2)).count()
+    p95_upper = None
+    cumulative = 0
+    for bound in (100, 500, 1000, 3000):
+        cumulative += recent[f'le{bound}'] or 0
+        if requests and cumulative >= requests * .95:
+            p95_upper = bound
+            break
+    slow = bool(requests >= 20 and p95_upper is None)
+    calibrated = settings.LOCAL_CAPACITY_CALIBRATED
+    level = ("hire" if utilization >= 1 else "attention" if utilization >= ATTENTION_AT else "ok") if calibrated else "insufficient"
+    if not observed_days and not scheduled_count and not any(messages):
+        level = "insufficient"
+    if pending or slow:
+        reasons.append(f"{pending} lote(s) com publicação atrasada na fila." if pending else "Latência p95 observada acima de 3 segundos.")
+        if level != "hire":
+            level = "attention"
+    if not calibrated:
+        reasons.append("Capacidade local ainda não calibrada. Faça um benchmark antes de contratar infraestrutura.")
+    if observed_days < 7:
+        reasons.append("Histórico operacional insuficiente para caracterizar uma semana completa.")
 
     window_start = _aware(friday + timedelta(days=WINDOW_START[0] - 4), WINDOW_START[1])
     window_end = _aware(friday + timedelta(days=WINDOW_END[0] - 4), WINDOW_END[1])
@@ -117,7 +146,9 @@ def suggestion() -> dict:
 
     return {
         "level": level,
-        "recommend": level != "ok",
+        "recommend": level in ("attention", "hire"),
+        "calibrated": calibrated, "observed_days": observed_days,
+        "telemetry": {"requests_24h": requests, "errors_24h": recent["errors"] or 0, "p95_upper_ms": p95_upper, "p95_above_3000": bool(requests and p95_upper is None), "outbox_overdue": pending, "resources": resource_snapshot()},
         "reasons": reasons,
         "weekend": {"start": weekend_start.isoformat(), "end": weekend_end.isoformat()},
         "projected": {

@@ -9,7 +9,7 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from preferences.models import SearchHistory
+from insights.models import OperationalBucket
 from restaurants.models import Restaurant, RestaurantFavorite
 from users.models import User
 
@@ -387,14 +387,13 @@ class InfraSuggestionTest(TestCase):
         self.assertEqual(date(2026, 10, 23), infra.upcoming_weekend(date(2026, 10, 20)))  # terça
         self.assertEqual(date(2026, 10, 23), infra.upcoming_weekend(date(2026, 10, 25)))  # domingo
 
-    @override_settings(LOCAL_CAPACITY_SEARCHES_PER_DAY=10)
+    @override_settings(LOCAL_CAPACITY_SEARCHES_PER_DAY=10, LOCAL_CAPACITY_CALIBRATED=True)
     def test_recommends_when_weekend_peak_exceeds_capacity(self):
         user = make_user("c@dtfd.com")
         today = timezone.localdate()
         last_saturday = today - timedelta(days=(today.weekday() - 5) % 7 or 7)
         at = timezone.make_aware(datetime.combine(last_saturday, time(20, 0)))
-        rows = SearchHistory.objects.bulk_create(SearchHistory(user=user, query="pizza") for _ in range(60))
-        SearchHistory.objects.filter(pk__in=[r.pk for r in rows]).update(created_at=at)
+        OperationalBucket.objects.create(minute=at, count=60, le100=60)
 
         data = infra.suggestion()
         self.assertEqual("hire", data["level"])  # 60/4 semanas = 15/dia > 10
@@ -405,7 +404,7 @@ class InfraSuggestionTest(TestCase):
 
     def test_quiet_platform_is_ok(self):
         data = infra.suggestion()
-        self.assertEqual("ok", data["level"])
+        self.assertEqual("insufficient", data["level"])
         self.assertFalse(data["recommend"])
 
     def test_endpoint_permissions(self):

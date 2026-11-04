@@ -1,57 +1,70 @@
-# Weekend infra
+# Operação local e infraestrutura temporária
 
-O DataFood roda **local** (`docker compose` numa máquina do restaurante ou
-do operador). Restaurante tem pico no fim de semana: mais buscas e mais
-promoções. Em vez de pagar servidor o mês inteiro, a plataforma **sugere
-contratar infraestrutura só de sexta à noite a domingo** quando a carga
-prevista passa do que a máquina local aguenta.
+A aplicação pode rodar localmente. Isso não torna localhost acessível aos
+clientes: antes de divulgar links, configure um endereço público controlado e
+`FRONTEND_URL`, com HTTPS, origens CORS/CSRF e cookies adequados.
 
-## Como a sugestão é calculada (`promotions/infra.py`)
-1. **Histórico:** média por dia da semana nas últimas 4 semanas de
-   mensagens enviadas (`PromotionDelivery` `sent`) e de buscas
-   (`SearchHistory` — só de quem consentiu, então é um piso da demanda real).
-2. **Agendado:** promoções `scheduled` para o próximo fim de semana × o
-   alcance atual de cada uma (pessoas × canais).
-3. **Pico previsto** = maior dia de sex/sáb/dom: `max(histórico, agendado)`
-   para mensagens; histórico para buscas.
-4. **Utilização** = pico ÷ capacidade local (`LOCAL_CAPACITY_MESSAGES_PER_DAY`,
-   `LOCAL_CAPACITY_SEARCHES_PER_DAY`), pegando a pior das duas.
+## Medir antes de recomendar
 
-O aviso aparece no topo do painel só para contas **admin** (é decisão de
-operação da plataforma, não do restaurante).
+POST `/api/search/` registra contagem, erros 5xx e histograma de latência por
+minuto em `OperationalBucket`, sem texto da busca, usuário ou IP. O histórico
+usado na projeção não é mais `SearchHistory` (consentido, limitado e incompleto).
+O p95 exibido é um limite superior por faixa, não uma medição exata do percentil.
+São 28 dias de retenção operacional; quantidade de dias observados é informada.
+Dias sem observação não comprovam ausência de demanda.
 
-| Utilização | `level` | Painel |
-|---|---|---|
-| < 70% | `ok` | linha discreta: "fim de semana tranquilo" |
-| 70–99% | `attention` | aviso terracota com os motivos |
-| ≥ 100% | `hire` | aviso vermelho: contratar |
+`LOCAL_CAPACITY_CALIBRATED=False` é o padrão. Sem calibração, o painel não
+apresenta máquina local como suficiente nem recomenda compra automaticamente.
+Fila atrasada ou latência alta acionam atenção, pedindo diagnóstico. Mesmo com
+calibração, a projeção por dia da semana é uma heurística, não previsão garantida.
+Limite de SMTP/Bot API não é corrigido com VPS maior.
 
-Janela sugerida: **sexta 17h → domingo 23h** (54 h). Custo estimado =
-54 × `WEEKEND_INFRA_HOURLY_COST` (R$/h de uma VPS de 4 GB; ajuste ao seu
-provedor). O endpoint só devolve agregados — nenhum dado pessoal.
+```bash
+cd dtfd
+uv run python manage.py benchmark_search --user-email CONTA_CONTROLADA --samples 10
+```
 
-### Calibrar a capacidade
-Os defaults (2000 mensagens e 3000 buscas/dia) são conservadores para um
-notebook com Ollama em CPU. Meça na sua máquina: rode o smoke
-(`final-tests/api_smoke.py`) e uma busca em loop e veja a latência do
-shinzou; com e-mail, o limite costuma ser do provedor SMTP (ex.: contas
-gratuitas limitam centenas/dia) — use o menor.
+Esse comando usa a autenticação normal da API e o motor configurado, sem
+imprimir tokens. No máximo 20 amostras para respeitar o throttle padrão. Mede
+latência da instalação, sem simular concorrência ou calibrar automaticamente a
+capacidade. Em desenvolvimento com Ollama falso, os números **não** estimam
+produção. Use modelo real e carga concorrente representativa antes de editar
+`LOCAL_CAPACITY_CALIBRATED` e as capacidades diárias nas configurações.
 
-## Quando o painel sugerir: passo a passo
-1. **Sexta, até 17h** — suba uma VPS (≥ 4 GB RAM) e siga
-   [[deploy]] (`docker-compose.prod.yml` + Caddy/HTTPS).
-2. **Dados:** a VPS precisa do banco local. Na máquina local:
-   ```bash
-   docker compose exec db pg_dump -U dtfd -Fc dtfd > fim-de-semana.dump
-   ```
-   Copie e restaure na VPS (`pg_restore -U dtfd -d dtfd --clean`), depois
-   `reindex_restaurants` só se mudou o modelo de embeddings.
-3. **Tráfego:** aponte o DNS (ou o link compartilhado) para a VPS. Desligue
-   `worker`/`beat` locais para não haver dois disparando promoções e dois
-   bots lendo o Telegram (o `getUpdates` só aceita um leitor).
-4. **Segunda** — volte: `pg_dump` na VPS → `pg_restore` local, religue
-   worker/beat locais, aponte o DNS de volta e **destrua a VPS** (é aí que
-   a conta fica barata).
+## Backup com restauração verificada
 
-> Dica: promoções agendadas para o fim de semana entram na projeção. Agende
-> cedo e o aviso chega com antecedência.
+```bash
+# Na raiz do back, escolha destino novo fora do Git:
+bash scripts/verify-backup.sh docker-compose.yml /caminho/privado/backup.dump PROJETO_COMPOSE
+```
+
+O script não sobrescreve arquivos e não restaura no banco ativo. Cria um dump,
+restaura em banco temporário com checagem de erro e remove somente esse banco
+criado pelo ensaio. A conta do banco precisa poder criar banco temporário.
+Proteja o dump (pode conter dados pessoais); defina retenção e armazenamento
+seguro. Isso testa o banco, não mídia externa nem configuração/segredos: inclua
+os demais itens na política de backup. Meça tempos e recuperação aceitáveis.
+
+## Transferência de fim de semana
+
+1. Escolher provedor, região e orçamento, incluindo banco, armazenamento,
+   transferência e APIs. O cálculo horário do painel cobre só o valor configurado
+   de compute; 54 horas não representam necessariamente a conta total.
+2. Preparar a stack de destino e o backup restaurável, com a mesma versão e
+   extensões. Ensaiar antes de trocar o tráfego real.
+3. No MVP, pausar escritas e workers, transferir/restaurar, verificar integridade
+   e só então mudar o endereço público. Não deixar dois bancos graváveis e
+   tentar reconciliá-los depois por dump.
+4. Garantir uma única instância de beat/polling de Telegram. Banco/outbox são
+   a fonte das tarefas; reconstituir trabalho pendente após restaurar.
+5. Fazer o retorno com a mesma disciplina. Desligar infraestrutura paga apenas
+   após verificar dados e acesso no destino de retorno.
+
+Contratação automática e migração sem pausa não estão implementadas. Exigem
+provedor e estratégia de replicação/fonte de verdade definidos. Não mover
+apenas por calendário sem comprovar gargalo e benefício da expansão.
+
+Em Linux com cgroup v2, o endpoint também informa um snapshot opcional de CPU
+e memória do contêiner da API. Não cobre automaticamente worker, banco ou
+Ollama em outros contêineres. Sem suporte, os recursos ficam indisponíveis;
+ausência de medição não é interpretada como capacidade livre.
