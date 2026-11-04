@@ -39,3 +39,20 @@ class LocationTest(TestCase):
         self.assertEqual([self.near.pk], [r['restaurant']['id'] for r in data['results']])
         self.assertIsNone(data['results'][0]['match'])
         self.assertEqual([self.near.pk], remote.call_args.kwargs['json']['candidate_ids'])
+
+    def test_numeric_zero_radius_is_not_treated_as_default(self):
+        from rest_framework.exceptions import ValidationError
+        from .location import apply_location
+        with self.assertRaises(ValidationError):
+            apply_location(Restaurant.objects.all(), {'lat': 0, 'lon': 0, 'radius_km': 0})
+
+    @patch('restaurants.views.httpx.post')
+    def test_malformed_search_response_uses_text_recovery(self, remote):
+        user = User.objects.create_user(email='malformed@test.example', name='Search', password='Testing12345')
+        self.client.force_authenticate(user)
+        remote.return_value.status_code = 200
+        remote.return_value.json.return_value = []
+        response = self.client.post('/api/search/', {'query': 'pizza'}, format='json')
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('text', response.json()['mode'])
+        self.assertEqual(2, len(response.json()['results']))

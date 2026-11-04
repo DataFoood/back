@@ -17,7 +17,7 @@ def apply_location(qs, params):
     try:
         if isinstance(lat, bool) or isinstance(lon, bool) or isinstance(radius, bool):
             raise ValueError
-        lat, lon, radius = float(lat), float(lon), float(radius or 10)
+        lat, lon, radius = float(lat), float(lon), float(10 if radius in (None, '') else radius)
         if not all(math.isfinite(v) for v in (lat, lon, radius)) or not (-90 <= lat <= 90 and -180 <= lon <= 180 and 0 < radius <= 100):
             raise ValueError
     except (TypeError, ValueError):

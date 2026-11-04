@@ -1,4 +1,5 @@
 import logging
+import math
 from datetime import timedelta
 from typing import cast
 
@@ -593,7 +594,7 @@ class SearchView(APIView):
 
         candidates = apply_location(public_catalog(), request.data)
         city = request.data.get("city")
-        if city:
+        if city not in (None, ""):
             if not isinstance(city, str) or len(city) > 100:
                 raise ValidationError({"city": "Cidade inválida."})
             candidates = candidates.filter(addresses__city__iexact=city, addresses__deleted_at__isnull=True)
@@ -619,7 +620,11 @@ class SearchView(APIView):
             logger.warning("shinzou respondeu %s", resp.status_code)
             return self._fallback(request, candidates, query, limit)
         try:
-            raw_results = resp.json().get("results", [])
+            payload = resp.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("results"), list):
+                raise ValueError("resposta de busca inválida")
+            raw_results = [row for row in payload['results'] if isinstance(row, dict) and isinstance(row.get('restaurant'), dict)
+                           and isinstance(row['restaurant'].get('id'), int) and not isinstance(row['restaurant']['id'], bool)]
         except ValueError:
             return self._fallback(request, candidates, query, limit)
 
@@ -665,7 +670,7 @@ class SearchView(APIView):
                 continue
             similarity = row.get("similarity")
             match = None
-            if isinstance(similarity, (int, float)):
+            if isinstance(similarity, (int, float)) and math.isfinite(similarity):
                 match = max(0, min(100, round(similarity * 100)))
             results.append({
                 "restaurant": RestaurantCardSerializer(restaurant, context=context).data,
