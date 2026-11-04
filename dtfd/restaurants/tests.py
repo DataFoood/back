@@ -120,7 +120,7 @@ class RestaurantReadTest(APITestCase):
             "price_ranges", "business_models", "physical_formats",
             "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",
             "has_reservation", "accepts_vale_refeicao", "accepts_online_order",
-            "address", "is_open_now", "is_favorited", "is_demo", "sources",
+            "address", "is_open_now", "is_favorited", "is_demo", "sources", "distance_km",
         }
         self.assertSetEqual(expected, set(response.json().keys()))
 
@@ -615,20 +615,22 @@ class SearchBridgeTest(APITestCase):
         self.assertEqual("feijoada", kwargs["json"]["query"])
 
     @patch("restaurants.views.httpx.post")
-    def test_shinzou_error_becomes_503(self, mock_post):
+    def test_shinzou_error_falls_back_to_text(self, mock_post):
         fake = MagicMock()
         fake.status_code = 500
         fake.json.side_effect = ValueError("not json")
         mock_post.return_value = fake
         self.client.force_authenticate(self.user)
         response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
-        self.assertEqual(status.HTTP_503_SERVICE_UNAVAILABLE, response.status_code)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual("text", response.json()["mode"])
 
     @patch("restaurants.views.httpx.post", side_effect=httpx.RequestError("down"))
     def test_shinzou_unavailable(self, _mock):
         self.client.force_authenticate(self.user)
         response = self.client.post(self.URL, data={"query": "feijoada"}, format="json")
-        self.assertEqual(status.HTTP_503_SERVICE_UNAVAILABLE, response.status_code)
+        self.assertEqual(status.HTTP_200_OK, response.status_code)
+        self.assertEqual("text", response.json()["mode"])
 
     @staticmethod
     def _ok_mock():

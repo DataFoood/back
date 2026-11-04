@@ -7,7 +7,7 @@ Pipeline:
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import db, embeddings
 from .auth import get_user_id, verify_service_token
@@ -20,6 +20,7 @@ app = FastAPI(title="shinzou", description="Busca semântica de restaurantes")
 class SearchRequest(BaseModel):
     query: str
     limit: int | None = None
+    candidate_ids: list[int] | None = Field(default=None, max_length=10000)
 
 
 def _preference_score(rid: int, signals: dict, affinities: dict) -> float:
@@ -44,7 +45,7 @@ def search(req: SearchRequest, user_id: int = Depends(get_user_id), conn=Depends
     except httpx.HTTPError:
         raise HTTPException(status_code=503, detail="Serviço de embedding indisponível.")
 
-    knn = db.knn_candidates(conn, vector, settings.CANDIDATE_POOL)
+    knn = db.knn_candidates(conn, vector, settings.CANDIDATE_POOL, req.candidate_ids)
     if not knn:
         return {"results": []}
 

@@ -34,7 +34,7 @@ def _vec_literal(vector: list[float]) -> str:
     return "[" + ",".join(str(x) for x in vector) + "]"
 
 
-def knn_candidates(conn, vector: list[float], pool: int) -> list[tuple[int, float]]:
+def knn_candidates(conn, vector: list[float], pool: int, candidate_ids: list[int] | None = None) -> list[tuple[int, float]]:
     """kNN no pgvector. Retorna [(restaurant_id, similaridade 0..1)].
     Ignora restaurantes soft-deleted."""
     vec = _vec_literal(vector)
@@ -43,11 +43,12 @@ def knn_candidates(conn, vector: list[float], pool: int) -> list[tuple[int, floa
         FROM embeddings_restaurantembedding e
         JOIN restaurants_restaurant r ON r.id = e.restaurant_id
         WHERE r.deleted_at IS NULL AND (%s OR NOT r.is_demo)
+          AND (%s::bigint[] IS NULL OR r.id = ANY(%s::bigint[]))
         ORDER BY e.embedding <=> %s::vector
         LIMIT %s
     """
     with conn.cursor() as cur:
-        cur.execute(sql, (vec, settings.SHOW_DEMO_RESTAURANTS, vec, pool))
+        cur.execute(sql, (vec, settings.SHOW_DEMO_RESTAURANTS, candidate_ids, candidate_ids, vec, pool))
         return [(row[0], float(row[1])) for row in cur.fetchall()]
 
 

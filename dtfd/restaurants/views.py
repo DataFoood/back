@@ -44,6 +44,7 @@ from .models import (
     ServiceModel,
     TargetAudience,
 )
+from .location import apply_location
 from .permissions import (
     IsAuthorOrAdmin,
     IsParentRestaurantOwnerOrAdmin,
@@ -149,7 +150,10 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
         if params.get("delivery") == "true":
             qs = qs.filter(has_delivery=True)
 
+        qs = apply_location(qs, params)
         ordering = ORDERINGS.get(params.get("ordering", ""), ORDERINGS["recent"])
+        if params.get("ordering") == "distance" and params.get("lat") is not None:
+            ordering = ["distance_km", "id"]
         return qs.distinct().order_by(*ordering).prefetch_related(*CARD_PREFETCH)
 
     @transaction.atomic
@@ -587,7 +591,17 @@ class SearchView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        payload = {"query": query, "limit": limit}
+        candidates = apply_location(public_catalog(), request.data)
+        city = request.data.get("city")
+        if city:
+            if not isinstance(city, str) or len(city) > 100:
+                raise ValidationError({"city": "Cidade inválida."})
+            candidates = candidates.filter(addresses__city__iexact=city, addresses__deleted_at__isnull=True)
+        narrowed = any(request.data.get(k) not in (None, "") for k in ("lat", "lon", "radius_km", "city"))
+        allowed_ids = list(candidates.values_list("pk", flat=True).distinct()[:10001]) if narrowed else None
+        if allowed_ids is not None and len(allowed_ids) > 10000:
+            raise ValidationError({"location": "Reduza o raio ou especifique uma região menor."})
+        payload = {"query": query, "limit": limit, "candidate_ids": allowed_ids}
         headers = {
             "X-Service-Token": settings.SHINZOU_SERVICE_TOKEN,
             # request.auth = access validado (veio do Bearer ou do cookie)
@@ -599,37 +613,48 @@ class SearchView(APIView):
             )
         except httpx.RequestError:
             logger.warning("shinzou inacessível", exc_info=True)
-            return self._unavailable()
+            return self._fallback(request, candidates, query, limit)
 
         if resp.status_code != status.HTTP_200_OK:
             logger.warning("shinzou respondeu %s", resp.status_code)
-            return self._unavailable()
+            return self._fallback(request, candidates, query, limit)
         try:
             raw_results = resp.json().get("results", [])
         except ValueError:
-            return self._unavailable()
+            return self._fallback(request, candidates, query, limit)
 
         # loga só com 200 E consentimento LGPD (allow_info). Poda além de N.
         if request.user.allow_info:
             self._log_search(request.user, query)
 
-        return Response({"results": self._hydrate(request, raw_results)})
+        return Response({"results": self._hydrate(request, raw_results, allowed_ids), "mode": "semantic"})
 
     @staticmethod
-    def _unavailable():
-        return Response(
-            {"detail": "Serviço de busca indisponível."},
-            status=status.HTTP_503_SERVICE_UNAVAILABLE,
-        )
+    def _fallback(request, candidates, query, limit):
+        import re
+        tokens = re.findall(r"[\wÀ-ÿ]+", query, flags=re.UNICODE)[:12]
+        qs = candidates
+        if tokens:
+            terms = Q()
+            for token in tokens:
+                if len(token) >= 3:
+                    terms |= Q(name__icontains=token) | Q(description__icontains=token) | Q(cuisines__name__icontains=token)
+            qs = qs.filter(terms) if terms else qs.none()
+        rows = list(qs.distinct().order_by("name", "id").prefetch_related(*CARD_PREFETCH)[:limit or 15])
+        context = {"request": request, "favorited_ids": favorited_ids(request, rows)}
+        return Response({"results": [{"restaurant": RestaurantCardSerializer(r, context=context).data, "score": 0, "match": None} for r in rows],
+                         "mode": "text", "notice": "Busca inteligente indisponível. Resultados por texto e filtros, sem avaliação de afinidade."})
 
     @staticmethod
-    def _hydrate(request, raw_results):
+    def _hydrate(request, raw_results, allowed_ids=None):
         """Troca o restaurante mínimo do shinzou pelo card completo, mantendo
         a ordem do ranking. Restaurante sumido (soft-deleted) é descartado."""
         ids = [
             (row.get("restaurant") or {}).get("id") for row in raw_results
         ]
-        restaurants = public_catalog().filter(pk__in=[i for i in ids if i]).prefetch_related(*CARD_PREFETCH)
+        restaurants = apply_location(public_catalog(), request.data).filter(pk__in=[i for i in ids if i]).prefetch_related(*CARD_PREFETCH)
+        if allowed_ids is not None:
+            restaurants = restaurants.filter(pk__in=allowed_ids)
         by_id = {r.pk: r for r in restaurants}
         context = {"request": request, "favorited_ids": favorited_ids(request, restaurants)}
 

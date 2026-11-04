@@ -157,6 +157,7 @@ class RestaurantSourceSerializer(serializers.ModelSerializer):
 
 
 class _RestaurantComputedMixin(serializers.Serializer):
+    distance_km = serializers.FloatField(read_only=True, allow_null=True, default=None)
     sources = RestaurantSourceSerializer(many=True, read_only=True)
     address = serializers.SerializerMethodField()
     is_open_now = serializers.SerializerMethodField()
@@ -193,7 +194,7 @@ class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "name", "slug", "description", "cover_image",
             "average_rating", "total_reviews", "cuisines", "ambients",
             "price_ranges", "address", "is_open_now", "is_favorited",
-            "has_delivery", "has_reservation", "is_demo", "sources",
+            "has_delivery", "has_reservation", "is_demo", "sources", "distance_km",
         ]
         read_only_fields = fields
 
@@ -224,7 +225,7 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "cover_image", "menu_url", "created_at", "updated_at",
             "images", "has_reviewed", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
-            "address", "is_open_now", "is_favorited", "is_demo", "sources",
+            "address", "is_open_now", "is_favorited", "is_demo", "sources", "distance_km",
         ]
 
     def get_has_reviewed(self, obj) -> bool:

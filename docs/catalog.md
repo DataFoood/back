@@ -44,3 +44,17 @@ em produção. Catálogo real não deve herdar os preços e descrições do seed
 O importador é uma operação administrativa; não há endpoint público que cause
 consultas externas/custo. `CatalogImport` registra status e contagens para
 acompanhamento. Uma falha parcial pode ser retomada reexecutando o mesmo lote.
+
+## Localização e recuperação de busca
+
+A listagem aceita `city`, `lat`, `lon`, `radius_km` (0 < raio ≤ 100 km) e
+`ordering=distance`. Coordenadas precisam vir em par; valores não finitos são
+recusados. Distância é geodésica aproximada em km, calculada antes de ordenar
+e paginar. Registros sem coordenadas não entram em buscas por raio.
+
+POST `/api/search/` aceita os mesmos campos de localização. O Django limita
+os candidatos e o shinzou aplica esse conjunto antes do kNN; a hidratação
+revalida os IDs permitidos. Se o motor estiver indisponível, a API responde
+200 com `mode=text`, `notice` e resultados textuais sem `match`, preservando
+localização e filtros. `mode=semantic` continua usando o motor de embeddings.
+Não interpretar similaridade como probabilidade de satisfação.
