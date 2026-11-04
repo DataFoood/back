@@ -120,7 +120,7 @@ class RestaurantReadTest(APITestCase):
             "price_ranges", "business_models", "physical_formats",
             "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",
             "has_reservation", "accepts_vale_refeicao", "accepts_online_order",
-            "address", "is_open_now", "is_favorited", "is_demo", "sources", "distance_km",
+            "address", "is_open_now", "is_favorited", "is_demo", "sources", "distance_km", "whatsapp_number",
         }
         self.assertSetEqual(expected, set(response.json().keys()))
 

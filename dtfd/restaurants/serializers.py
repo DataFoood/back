@@ -221,7 +221,7 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
         model = Restaurant
         fields = [
             "id", "owner", "name", "slug", "description", "cnpj", "phone",
-            "email", "website", "average_rating", "total_reviews",
+            "email", "website", "average_rating", "total_reviews", "whatsapp_number",
             "cover_image", "menu_url", "created_at", "updated_at",
             "images", "has_reviewed", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
@@ -248,7 +248,7 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
         model = Restaurant
         fields = [
             "id", "name", "description", "cnpj", "phone", "email",
-            "website", "cover_image", "menu_url",
+            "website", "cover_image", "menu_url", "whatsapp_number",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
         ]
         read_only_fields = ["id"]
@@ -262,6 +262,13 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
                 )],
             },
         }
+
+    def validate_whatsapp_number(self, value):
+        import re
+        digits = re.sub(r"[\s()+-]", "", value)
+        if digits and (not digits.isascii() or not digits.isdigit() or not 10 <= len(digits) <= 15):
+            raise serializers.ValidationError("Informe um número WhatsApp confirmado, com DDD e até 15 dígitos.")
+        return digits
 
     def create(self, validated_data):
         validated_data["slug"] = self._unique_slug(validated_data["name"])

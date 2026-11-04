@@ -67,6 +67,7 @@ class Restaurant(AbstractAudit):
     description = models.TextField(blank=True)
     cnpj = models.CharField(max_length=14, unique=True, null=True, blank=True)
     phone = models.CharField(max_length=20, blank=True)
+    whatsapp_number = models.CharField(max_length=20, blank=True)
     email = models.EmailField(blank=True)
     website = models.URLField(blank=True)
     # denormalizados: cache de agregação das reviews, NÃO fonte da verdade.

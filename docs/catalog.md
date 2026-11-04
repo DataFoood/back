@@ -58,3 +58,11 @@ revalida os IDs permitidos. Se o motor estiver indisponível, a API responde
 200 com `mode=text`, `notice` e resultados textuais sem `match`, preservando
 localização e filtros. `mode=semantic` continua usando o motor de embeddings.
 Não interpretar similaridade como probabilidade de satisfação.
+
+## Contato confirmado
+
+`phone` é telefone público. `whatsapp_number` é opcional e deve ser informado
+pelo dono/admin somente quando esse número realmente recebe mensagens.
+A importação OSM não preenche WhatsApp a partir de um telefone. Cadastros
+anteriores precisam confirmar o canal no painel; não há migração presumindo
+que todo telefone já era WhatsApp.

@@ -64,3 +64,9 @@ class CatalogTest(TestCase):
             call_command('import_osm', file=path, dry_run=True, stdout=StringIO())
         self.assertFalse(Restaurant.objects.exists())
         self.assertEqual('preview', CatalogImport.objects.get().status)
+
+    def test_imported_phone_does_not_imply_whatsapp(self):
+        osm.upsert(self.record(phone='1433334444'))
+        restaurant = Restaurant.objects.get()
+        self.assertEqual('1433334444', restaurant.phone)
+        self.assertEqual('', restaurant.whatsapp_number)
