@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 from utils import AbstractAudit
 
@@ -38,6 +39,8 @@ class Promotion(AbstractAudit):
         SENDING = "sending", "Enviando"
         SENT = "sent", "Enviada"
         EXPIRED = "expired", "Expirada"
+        PARTIAL = "partial", "Falha parcial"
+        FAILED = "failed", "Falha no envio"
 
     restaurant = models.ForeignKey(
         "restaurants.Restaurant", on_delete=models.CASCADE, related_name="promotions"
@@ -61,6 +64,7 @@ class Promotion(AbstractAudit):
     # dispatched_at = começou a enviar (conta no limite diário); sent_at = terminou
     dispatched_at = models.DateTimeField(null=True, blank=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+    processing_until = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ["-created_at", "id"]
@@ -86,6 +90,7 @@ class PromotionDelivery(models.Model):
         SENT = "sent", "Enviada"
         FAILED = "failed", "Falhou"
         SKIPPED = "skipped", "Ignorada"
+        UNKNOWN = "unknown", "Resultado desconhecido"
 
     promotion = models.ForeignKey(Promotion, on_delete=models.CASCADE, related_name="deliveries")
     user = models.ForeignKey(
@@ -96,6 +101,8 @@ class PromotionDelivery(models.Model):
     error = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     sent_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    next_attempt_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
@@ -122,3 +129,9 @@ class PromotionReservation(models.Model):
     class Meta:
         constraints = [models.UniqueConstraint(fields=["promotion", "user"], name="unique_promotion_reservation")]
         indexes = [models.Index(fields=["user", "expires_at"])]
+
+
+class PromotionOutbox(models.Model):
+    """Intenção persistida no mesmo commit da transição de envio."""
+    promotion = models.OneToOneField(Promotion, on_delete=models.CASCADE)
+    available_at = models.DateTimeField(default=timezone.now, db_index=True)

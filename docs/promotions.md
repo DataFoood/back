@@ -83,3 +83,22 @@ A reserva é feita sob lock transacional do usuário e confirmada antes do I/O.
 Tentativas com erro também mantêm a reserva: é uma proteção conservadora
 contra excesso de mensagens em falhas, retries e resultados desconhecidos.
 O worker revalida opt-in e canal antes de cada tentativa.
+
+## Recuperação e significado dos estados
+
+A transição para envio grava `PromotionOutbox` na mesma transação. O callback
+tenta publicar na fila; se o broker falhar, a intenção fica no banco. O beat
+(`dispatch_scheduled`, a cada minuto) drena a outbox e retoma workers parados.
+Mantenha beat e worker em execução; modo eager é apenas desenvolvimento.
+
+Falhas transitórias têm até três tentativas, com backoff e respeito à pausa do
+provedor. O opt-in e a validade são revalidados. Timeout após conexão ou queda
+do worker durante uma entrega produzem `unknown`: não há retry automático,
+pois o provedor pode ter aceitado. Não se promete exactly-once em SMTP/Bot API.
+A reserva de processamento evita que tarefas duplicadas executem juntas.
+
+A campanha termina como `failed` se todas as tentativas falharam, `partial` se
+houve aceitação e falha, e `sent` se o processamento terminou sem falhas
+(inclusive publicação só na vitrine, sem destinatários). `sent` não comprova
+entrega, leitura ou compra; o front apresenta “Publicada” e contagens de
+aceitação pelo provedor. Pendências e resultados desconhecidos são separados.

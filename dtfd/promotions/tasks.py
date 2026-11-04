@@ -14,7 +14,7 @@ def dispatch_scheduled() -> int:
     """Cron de minuto: dispara as agendadas que venceram (e retoma travadas)."""
     pks = services.claim_due()
     for pk in pks:
-        send_promotion.delay(pk)
+        services.enqueue(pk)
     return len(pks)
 
 

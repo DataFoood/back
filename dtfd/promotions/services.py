@@ -1,20 +1,21 @@
 """Regras de envio de promoções: público, texto, limites e disparo."""
 
 import logging
+import random
 from datetime import datetime, time, timedelta
 from urllib.parse import quote
 
 from django.conf import settings
 from django.core import signing
 from django.db import transaction
-from django.db.models import Count, Q
+from django.db.models import Count, Q, F, Min
 from django.utils import timezone
 
 from restaurants.models import Restaurant, RestaurantFavorite
 from users.models import User
 
 from . import messengers
-from .models import MessagingPreference, Promotion, PromotionDelivery, PromotionReservation
+from .models import MessagingPreference, Promotion, PromotionDelivery, PromotionReservation, PromotionOutbox
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +159,6 @@ def _lock_restaurant(promotion: Promotion) -> None:
 
 def dispatch_now(promotion: Promotion) -> Promotion:
     """rascunho/agendada -> enviando. Enfileira o envio após o commit."""
-    from .tasks import send_promotion
-
     with transaction.atomic():
         _lock_restaurant(promotion)
         promotion = Promotion.objects.select_for_update().get(pk=promotion.pk)
@@ -172,7 +171,8 @@ def dispatch_now(promotion: Promotion) -> Promotion:
         promotion.dispatched_at = now
         promotion.scheduled_for = None
         promotion.save(update_fields=["status", "dispatched_at", "scheduled_for", "updated_at"])
-        transaction.on_commit(lambda pk=promotion.pk: send_promotion.delay(pk))
+        PromotionOutbox.objects.update_or_create(promotion=promotion, defaults={"available_at": now})
+        transaction.on_commit(lambda pk=promotion.pk: enqueue(pk))
     return promotion
 
 
@@ -214,7 +214,23 @@ def claim_due() -> list[int]:
             status=Promotion.Status.SENDING, dispatched_at__lt=now - STUCK_AFTER
         ).values_list("pk", flat=True)
     )
-    return claimed + stuck
+    for pk in claimed + stuck:
+        PromotionOutbox.objects.get_or_create(promotion_id=pk, defaults={"available_at": now})
+    ready = PromotionOutbox.objects.filter(available_at__lte=now, promotion__status=Promotion.Status.SENDING, promotion__deleted_at__isnull=True)
+    return list(ready.values_list("promotion_id", flat=True))
+
+
+def enqueue(promotion_id: int) -> None:
+    """Falha de broker não desfaz o commit; beat drena a intenção persistida."""
+    from .tasks import send_promotion
+    try:
+        send_promotion.delay(promotion_id)
+    except Exception:
+        logger.warning("Fila indisponível para promoção %s; outbox preservada.", promotion_id)
+        return
+    PromotionOutbox.objects.filter(promotion_id=promotion_id, available_at__lte=timezone.now()).update(
+        available_at=timezone.now() + STUCK_AFTER
+    )
 
 
 # --- envio -----------------------------------------------------------------
@@ -253,6 +269,16 @@ def deliver(promotion_id: int) -> dict:
         Promotion.objects.filter(pk=promotion.pk).update(status=Promotion.Status.EXPIRED)
         return {}
 
+    now = timezone.now()
+    claimed = Promotion.objects.filter(pk=promotion.pk, status=Promotion.Status.SENDING).filter(
+        Q(processing_until__isnull=True) | Q(processing_until__lte=now)
+    ).update(processing_until=now + STUCK_AFTER)
+    if not claimed:
+        return {}
+    # Se o processo caiu após chamar o provedor, não é seguro reenviar.
+    PromotionDelivery.objects.filter(promotion=promotion, status=PromotionDelivery.Status.SENDING).update(
+        status=PromotionDelivery.Status.UNKNOWN, error="Worker interrompido; aceitação não confirmada."
+    )
     text = render_text(promotion)
     subject = f"{promotion.restaurant.name}: {promotion.title}"[:150]
     recipients = list(recipients_for(promotion.restaurant))
@@ -267,7 +293,9 @@ def deliver(promotion_id: int) -> dict:
             )
             claimed = PromotionDelivery.objects.filter(
                 pk=delivery.pk, status=PromotionDelivery.Status.PENDING
-            ).update(status=PromotionDelivery.Status.SENDING)
+            ).filter(Q(next_attempt_at__isnull=True) | Q(next_attempt_at__lte=timezone.now())).update(
+                status=PromotionDelivery.Status.SENDING, attempts=F("attempts") + 1, next_attempt_at=None
+            )
             if not claimed:
                 continue
             if capped:
@@ -279,28 +307,58 @@ def deliver(promotion_id: int) -> dict:
             if fresh_user is None or channel not in channels_for(promotion, fresh_user):
                 _finish(delivery, PromotionDelivery.Status.SKIPPED, "consentimento ou canal desativado")
                 continue
+            if promotion.valid_until and promotion.valid_until < timezone.localdate():
+                _finish(delivery, PromotionDelivery.Status.SKIPPED, "promoção expirada")
+                continue
+            delivery.refresh_from_db()
             try:
                 if channel == PromotionDelivery.Channel.TELEGRAM:
                     messengers.send_telegram(preference_of(fresh_user).telegram_chat_id, text)
                 else:
                     footer = f"\n\n--\nNão quer mais receber? {unsubscribe_url(user)}"
-                    messengers.send_email(user.email, subject, text + footer, unsubscribe_url(user))
+                    messengers.send_email(fresh_user.email, subject, text + footer, unsubscribe_url(user))
             except messengers.RecipientGone as exc:
                 # bloqueou o bot: desvincula para não tentar de novo
                 MessagingPreference.objects.filter(user=user).update(
                     telegram_chat_id="", telegram_linked_at=None
                 )
                 _finish(delivery, PromotionDelivery.Status.FAILED, str(exc))
+            except messengers.UnknownDeliveryError as exc:
+                _finish(delivery, PromotionDelivery.Status.UNKNOWN, str(exc))
+            except messengers.TransientDeliveryError as exc:
+                delay = max(float(exc.retry_after), 60 * (2 ** (delivery.attempts - 1))) + random.uniform(0, 15)
+                retry_at = timezone.now() + timedelta(seconds=delay)
+                if delivery.attempts < 3 and (not promotion.valid_until or timezone.localtime(retry_at).date() <= promotion.valid_until):
+                    PromotionDelivery.objects.filter(pk=delivery.pk).update(
+                        status=PromotionDelivery.Status.PENDING, error=str(exc)[:255], next_attempt_at=retry_at,
+                    )
+                else:
+                    _finish(delivery, PromotionDelivery.Status.FAILED, str(exc))
             except messengers.DeliveryError as exc:
                 logger.warning("promoção %s: falha em %s", promotion.pk, channel)
                 _finish(delivery, PromotionDelivery.Status.FAILED, str(exc))
             else:
                 _finish(delivery, PromotionDelivery.Status.SENT)
 
+    # Um destinatário removido do público não entra no loop acima. Suas
+    # tentativas pendentes precisam terminar, em vez de manter a outbox viva.
+    for pending in PromotionDelivery.objects.filter(promotion=promotion, status="pending"):
+        fresh = recipients_for(promotion.restaurant).filter(pk=pending.user_id).first()
+        if fresh is None or pending.channel not in channels_for(promotion, fresh):
+            _finish(pending, PromotionDelivery.Status.SKIPPED, "consentimento ou canal desativado")
+    stats = delivery_stats(promotion)
+    if stats[PromotionDelivery.Status.PENDING]:
+        next_at = PromotionDelivery.objects.filter(promotion=promotion, status="pending").aggregate(at=Min("next_attempt_at"))["at"] or timezone.now()
+        PromotionOutbox.objects.update_or_create(promotion=promotion, defaults={"available_at": next_at})
+        Promotion.objects.filter(pk=promotion.pk).update(processing_until=None)
+        return stats
+    failures = stats[PromotionDelivery.Status.FAILED] + stats[PromotionDelivery.Status.UNKNOWN]
+    result = (Promotion.Status.PARTIAL if stats[PromotionDelivery.Status.SENT] else Promotion.Status.FAILED) if failures else Promotion.Status.SENT
     Promotion.objects.filter(pk=promotion.pk).update(
-        status=Promotion.Status.SENT, sent_at=timezone.now()
+        status=result, sent_at=timezone.now(), processing_until=None,
     )
-    return delivery_stats(promotion)
+    PromotionOutbox.objects.filter(promotion=promotion).delete()
+    return stats
 
 
 def _finish(delivery, status, error=""):

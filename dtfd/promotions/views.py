@@ -141,7 +141,7 @@ class ActivePromotionsView(ListAPIView):
             Promotion.objects.filter(
                 restaurant_id=self.kwargs["restaurant_pk"],
                 restaurant__deleted_at__isnull=True,
-                status=Promotion.Status.SENT,
+                status__in=[Promotion.Status.SENT, Promotion.Status.PARTIAL],
             )
             .filter(Q(valid_until__isnull=True) | Q(valid_until__gte=today))
             .order_by("-sent_at", "-id")
