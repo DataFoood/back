@@ -50,6 +50,7 @@ class Restaurant(AbstractAudit):
     class Origin(models.TextChoices):
         MANUAL = "manual", "Manual (site)"
         GOOGLE = "google", "Google Places"
+        OSM = "osm", "OpenStreetMap"
 
     # owner: adicionado (não estava na lista). Nullable pra não travar criação.
     owner = models.ForeignKey(
@@ -61,6 +62,7 @@ class Restaurant(AbstractAudit):
     )
 
     name = models.CharField(max_length=200)
+    is_demo = models.BooleanField(default=False, db_index=True)
     slug = models.SlugField(max_length=220, unique=True)
     description = models.TextField(blank=True)
     cnpj = models.CharField(max_length=14, unique=True, null=True, blank=True)
@@ -122,6 +124,31 @@ class Restaurant(AbstractAudit):
         self.average_rating = round(agg["avg"] or 0, 2)
         self.total_reviews = reviews.count()
         self.save(update_fields=["average_rating", "total_reviews"])
+
+
+class RestaurantSource(models.Model):
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name="sources")
+    provider = models.CharField(max_length=30)
+    external_id = models.CharField(max_length=100)
+    url = models.URLField()
+    attribution = models.CharField(max_length=255)
+    license = models.CharField(max_length=80)
+    fetched_at = models.DateTimeField()
+    data = models.JSONField(default=dict)
+    needs_review = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["provider", "external_id"], name="unique_restaurant_source")]
+
+
+class CatalogImport(models.Model):
+    provider = models.CharField(max_length=30, default="osm")
+    region_code = models.CharField(max_length=7)
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True)
+    status = models.CharField(max_length=20, default="running")
+    counts = models.JSONField(default=dict)
+    error = models.CharField(max_length=255, blank=True)
 
 
 class RestaurantImage(AbstractAudit):

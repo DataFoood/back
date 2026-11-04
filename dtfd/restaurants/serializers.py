@@ -22,6 +22,7 @@ from .models import (
     RestaurantReview,
     ServiceModel,
     TargetAudience,
+    RestaurantSource,
 )
 
 
@@ -148,7 +149,15 @@ TAXONOMY_FIELDS = [
 ]
 
 
+class RestaurantSourceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RestaurantSource
+        fields = ["provider", "url", "attribution", "license", "fetched_at"]
+        read_only_fields = fields
+
+
 class _RestaurantComputedMixin(serializers.Serializer):
+    sources = RestaurantSourceSerializer(many=True, read_only=True)
     address = serializers.SerializerMethodField()
     is_open_now = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
@@ -184,12 +193,12 @@ class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "name", "slug", "description", "cover_image",
             "average_rating", "total_reviews", "cuisines", "ambients",
             "price_ranges", "address", "is_open_now", "is_favorited",
-            "has_delivery", "has_reservation",
+            "has_delivery", "has_reservation", "is_demo", "sources",
         ]
         read_only_fields = fields
 
 
-CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours"]
+CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours", "sources"]
 
 
 class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
@@ -215,7 +224,7 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "cover_image", "menu_url", "created_at", "updated_at",
             "images", "has_reviewed", "business_hours", "items",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
-            "address", "is_open_now", "is_favorited",
+            "address", "is_open_now", "is_favorited", "is_demo", "sources",
         ]
 
     def get_has_reviewed(self, obj) -> bool:

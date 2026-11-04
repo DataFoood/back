@@ -31,6 +31,8 @@ def reindex_all(only_stale: bool = True) -> int:
     """Reindexa restaurantes. only_stale=True processa só os marcados;
     False refaz todos. Retorna a quantidade processada."""
     qs = Restaurant.objects.all()
+    if not settings.SHOW_DEMO_RESTAURANTS:
+        qs = qs.filter(is_demo=False)
     if only_stale:
         qs = qs.filter(embedding_stale=True)
     count = 0

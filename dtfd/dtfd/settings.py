@@ -286,3 +286,6 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# Registros do protótipo não são catálogo verificado de produção.
+SHOW_DEMO_RESTAURANTS = os.environ.get("SHOW_DEMO_RESTAURANTS", str(DEBUG)) == "True"

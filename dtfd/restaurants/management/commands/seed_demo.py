@@ -222,11 +222,13 @@ class Command(BaseCommand):
             restaurant, was_created = Restaurant.objects.get_or_create(
                 slug=data["slug"],
                 defaults={
-                    "name": data["name"], "description": data["description"],
+                    "name": data["name"], "description": data["description"], "is_demo": True,
                     "phone": data["phone"], **data["flags"],
                 },
             )
             if not was_created:
+                if restaurant.description == data["description"] and restaurant.name == data["name"]:
+                    Restaurant.objects.filter(pk=restaurant.pk).update(is_demo=True)
                 continue
             created += 1
             # dono demo fica com o Dallas (painel do restaurante)

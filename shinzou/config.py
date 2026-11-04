@@ -23,6 +23,7 @@ class Settings:
     EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 
     # Pipeline
+    SHOW_DEMO_RESTAURANTS = os.environ.get("SHOW_DEMO_RESTAURANTS", os.environ.get("DEBUG", "False")) == "True"
     CANDIDATE_POOL = int(os.environ.get("SHINZOU_CANDIDATE_POOL", "50"))
     RESULT_LIMIT = int(os.environ.get("SHINZOU_RESULT_LIMIT", "15"))
     MAX_LIMIT = int(os.environ.get("SHINZOU_MAX_LIMIT", "50"))

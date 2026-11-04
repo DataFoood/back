@@ -43,4 +43,10 @@ def build_restaurant_document(restaurant) -> str:
     if channels:
         parts.append(f"Canais: {', '.join(channels)}")
 
+    for source in restaurant.sources.filter(provider="osm"):
+        tags = source.data.get("tags", {})
+        if tags.get("cuisine"):
+            parts.append(f"Cozinha informada no OpenStreetMap: {tags['cuisine']}")
+    for address in restaurant.addresses.all():
+        parts.append(f"Localização: {address.neighborhood}, {address.city}")
     return "\n".join(parts)

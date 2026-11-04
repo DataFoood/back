@@ -87,6 +87,11 @@ ORDERINGS = {
 }
 
 
+def public_catalog():
+    qs = Restaurant.objects.all()
+    return qs if settings.SHOW_DEMO_RESTAURANTS else qs.filter(is_demo=False)
+
+
 def _int_list(raw):
     return [int(v) for v in raw.split(",") if v.strip().isdigit()]
 
@@ -127,7 +132,7 @@ class RestaurantListCreateView(_CardListMixin, ListCreateAPIView):
 
     def get_queryset(self):
         params = self.request.query_params
-        qs = Restaurant.objects.all()
+        qs = public_catalog()
 
         q = (params.get("q") or "").strip()
         if q:
@@ -202,6 +207,15 @@ class RestaurantDetailView(RetrieveUpdateDestroyAPIView):
     Também atende GET /api/restaurants/by-slug/<slug>/."""
     queryset = Restaurant.objects.prefetch_related(*DETAIL_PREFETCH)
     permission_classes = [IsRestaurantOwnerOrAdmin]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        if not settings.SHOW_DEMO_RESTAURANTS and not self.request.user.is_staff:
+            allowed = Q(is_demo=False)
+            if self.request.user.is_authenticated:
+                allowed |= Q(owner=self.request.user)
+            qs = qs.filter(allowed)
+        return qs
 
     def get_serializer_class(self):
         return RestaurantWriteSerializer if self.request.method in ("PUT", "PATCH") else RestaurantReadSerializer
@@ -495,7 +509,8 @@ class FavoriteListView(ListAPIView):
     def get_queryset(self):
         return (
             RestaurantFavorite.objects.filter(
-                user=self.request.user, restaurant__deleted_at__isnull=True
+                user=self.request.user, restaurant__deleted_at__isnull=True,
+                restaurant__in=public_catalog(),
             )
             .select_related("restaurant")
             .prefetch_related(*[f"restaurant__{p}" for p in CARD_PREFETCH])
@@ -614,7 +629,7 @@ class SearchView(APIView):
         ids = [
             (row.get("restaurant") or {}).get("id") for row in raw_results
         ]
-        restaurants = Restaurant.objects.filter(pk__in=[i for i in ids if i]).prefetch_related(*CARD_PREFETCH)
+        restaurants = public_catalog().filter(pk__in=[i for i in ids if i]).prefetch_related(*CARD_PREFETCH)
         by_id = {r.pk: r for r in restaurants}
         context = {"request": request, "favorited_ids": favorited_ids(request, restaurants)}
 

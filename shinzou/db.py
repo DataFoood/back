@@ -42,12 +42,12 @@ def knn_candidates(conn, vector: list[float], pool: int) -> list[tuple[int, floa
         SELECT e.restaurant_id, 1 - (e.embedding <=> %s::vector) AS similarity
         FROM embeddings_restaurantembedding e
         JOIN restaurants_restaurant r ON r.id = e.restaurant_id
-        WHERE r.deleted_at IS NULL
+        WHERE r.deleted_at IS NULL AND (%s OR NOT r.is_demo)
         ORDER BY e.embedding <=> %s::vector
         LIMIT %s
     """
     with conn.cursor() as cur:
-        cur.execute(sql, (vec, vec, pool))
+        cur.execute(sql, (vec, settings.SHOW_DEMO_RESTAURANTS, vec, pool))
         return [(row[0], float(row[1])) for row in cur.fetchall()]
 
 
