@@ -40,3 +40,9 @@ celerybeat.pid
 .DS_Store
 Thumbs.db
 dump.rdb
+
+# graphify
+graphify-out
+
+# claude
+CLAUDE.md
