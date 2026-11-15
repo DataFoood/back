@@ -21,6 +21,10 @@ class Settings:
     # Ollama (mesmo modelo do Django -> vetores compativeis)
     OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
     EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
+    EMBEDDING_KEEP_ALIVE = os.environ.get("EMBEDDING_KEEP_ALIVE", "5m")
+    EMBEDDING_NUM_CTX = int(os.environ.get("EMBEDDING_NUM_CTX", "2048"))
+    EMBEDDING_NUM_BATCH = int(os.environ.get("EMBEDDING_NUM_BATCH", "32"))
+    EMBEDDING_NUM_THREAD = int(os.environ.get("EMBEDDING_NUM_THREAD", "1"))
 
     # Pipeline
     SHOW_DEMO_RESTAURANTS = os.environ.get("SHOW_DEMO_RESTAURANTS", os.environ.get("DEBUG", "False")) == "True"

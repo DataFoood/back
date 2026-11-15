@@ -12,7 +12,7 @@ As regressões do comando Gunicorn ficam em `deploy/tests`.
 |---|---|
 | `test_security_regressions.py` | 16 testes Django: um por achado + varredura de autorização. **Falham no código anterior, passam no atual.** |
 | `api_smoke.py` | 83 checagens contra a API **rodando** (sem mocks): visitante, cliente, dono, paginação, conversas, sessão por cookie e Bearer, CORS, limpeza |
-| `fake_ollama.py` | Ollama falso (`POST /api/embeddings`) para rodar a busca semântica sem GPU/modelo |
+| `fake_ollama.py` | Ollama falso (`POST /api/embed`, com compatibilidade legada) para rodar a busca semântica sem GPU/modelo |
 
 ## Como rodar
 

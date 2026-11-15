@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.conf import settings
 
 from restaurants.models import Restaurant
 
@@ -20,6 +21,8 @@ def reindex_all_task() -> int:
 @shared_task
 def reindex_one(restaurant_id: int) -> bool:
     """Reindexa um restaurante específico."""
+    if not settings.SEMANTIC_SEARCH_ENABLED:
+        return False
     restaurant = Restaurant.objects.filter(pk=restaurant_id).first()
     if restaurant is None:
         return False

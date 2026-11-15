@@ -79,7 +79,7 @@ cd dtfd && uv run python manage.py migrate && uv run python manage.py seed_demo 
   && uv run python manage.py reindex_restaurants && uv run python manage.py runserver
 ```
 
-O `fake_ollama.py` responde `POST /api/embeddings` com bag-of-words hasheado
+O `fake_ollama.py` responde `POST /api/embed` (e a rota legada) com bag-of-words hasheado
 (768 dims): não é semântico, mas exercita o pipeline inteiro (reindex →
 pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 

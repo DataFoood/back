@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from embeddings.services import reindex_all
@@ -13,6 +14,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        if not settings.SEMANTIC_SEARCH_ENABLED:
+            self.stdout.write("Busca semântica desativada; indexação não executada.")
+            return
         only_stale = not options["all"]
         count = reindex_all(only_stale=only_stale)
         scope = "stale" if only_stale else "todos"

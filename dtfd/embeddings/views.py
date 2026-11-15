@@ -1,3 +1,4 @@
+from django.conf import settings
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
 from rest_framework.permissions import IsAdminUser
@@ -27,6 +28,11 @@ class ReindexView(APIView):
         ),
     )
     def post(self, request):
+        if not settings.SEMANTIC_SEARCH_ENABLED:
+            return Response(
+                {"detail": "Busca semântica desativada nesta instalação."},
+                status=status.HTTP_409_CONFLICT,
+            )
         if bool(request.data.get("all", False)):
             task = reindex_all_task.delay()
             scope = "todos"

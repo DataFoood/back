@@ -1,7 +1,7 @@
 from unittest.mock import patch
 import httpx
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 from address.models import Address
 from users.models import User
@@ -27,6 +27,18 @@ class LocationTest(TestCase):
     def test_invalid_location_is_rejected(self):
         for params in [{'lat': 'NaN', 'lon': 0}, {'lat': 0}, {'radius_km': 10}, {'lat': 0, 'lon': 0, 'radius_km': 500}]:
             self.assertEqual(400, self.client.get('/api/restaurants/', params).status_code)
+
+    @override_settings(SEMANTIC_SEARCH_ENABLED=False)
+    @patch('restaurants.views.httpx.post')
+    def test_text_only_mode_skips_remote_and_preserves_filters(self, remote):
+        user = User.objects.create_user(email='text@test.example', name='Search', password='Testing12345')
+        self.client.force_authenticate(user)
+        response = self.client.post('/api/search/', {'query': 'pizza', 'lat': -22.217, 'lon': -49.95, 'radius_km': 5}, format='json')
+        self.assertEqual(200, response.status_code)
+        self.assertEqual('text', response.json()['mode'])
+        self.assertEqual([self.near.pk], [row['restaurant']['id'] for row in response.json()['results']])
+        self.assertEqual(400, self.client.post('/api/search/', {'query': 'pizza', 'lat': 0}, format='json').status_code)
+        remote.assert_not_called()
 
     @patch('restaurants.views.httpx.post', side_effect=httpx.ConnectError('offline'))
     def test_text_recovery_respects_location(self, remote):

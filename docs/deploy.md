@@ -5,6 +5,10 @@ Postgres+pgvector, Redis, Ollama, frontend Next.js e **Caddy** na frente com
 HTTPS automático (Let's Encrypt). Só as portas 80/443 ficam expostas.
 
 ## Pré-requisitos
+
+Para EC2 t3.small (2 GiB), use [deploy-small.md](deploy-small.md) e o Compose
+específico. A configuração abaixo é a stack geral, com mais processos.
+
 - Servidor Linux com Docker + Compose v2 (≥ 4 GB RAM — o Ollama usa ~1 GB).
 - Dois domínios apontando (DNS A/AAAA) para o servidor, ex.:
   `app.seudominio.com.br` (front) e `api.seudominio.com.br` (API).

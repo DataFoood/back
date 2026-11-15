@@ -212,9 +212,14 @@ LOGGING = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Embeddings / Ollama ---------------------------------------------------
+SEMANTIC_SEARCH_ENABLED = os.environ.get("SEMANTIC_SEARCH_ENABLED", "True") == "True"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))
+EMBEDDING_KEEP_ALIVE = os.environ.get("EMBEDDING_KEEP_ALIVE", "5m")
+EMBEDDING_NUM_CTX = int(os.environ.get("EMBEDDING_NUM_CTX", "2048"))
+EMBEDDING_NUM_BATCH = int(os.environ.get("EMBEDDING_NUM_BATCH", "32"))
+EMBEDDING_NUM_THREAD = int(os.environ.get("EMBEDDING_NUM_THREAD", "1"))
 
 # --- Ponte B2B com o shinzou (busca semântica) -----------------------------
 SHINZOU_URL = os.environ.get("SHINZOU_URL", "http://shinzou:8001")
@@ -248,6 +253,9 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(seconds=int(os.environ.get("TELEGRAM_POLL_SECONDS", "10"))),
     },
 }
+
+if not SEMANTIC_SEARCH_ENABLED:
+    CELERY_BEAT_SCHEDULE.pop("reindex-stale-hourly")
 
 # --- Promoções por mensageiros ---------------------------------------------
 # Links nas mensagens (página do restaurante, descadastro) apontam pro front.

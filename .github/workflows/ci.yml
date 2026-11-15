@@ -61,6 +61,13 @@ jobs:
         run: uv run python manage.py test ../final-tests --noinput
       - name: Ranking and production startup regressions
         run: uv run pytest shinzou/tests deploy/tests
+      - name: Validate small-instance Compose
+        env:
+          BACKEND_IMAGE: datafood-ci
+          FRONTEND_IMAGE: datafood-front-ci
+        run: |
+          cp .env.prod.example .env.prod
+          docker compose -f docker-compose.small.yml --env-file .env.prod config --quiet
       - name: Migration consistency and fresh database
         working-directory: dtfd
         run: |
@@ -79,4 +86,4 @@ jobs:
         run: >-
           docker run --rm -e DEBUG=False -e SECRET_KEY -e SHINZOU_SERVICE_TOKEN -e ALLOWED_HOSTS
           datafood-ci sh -c
-          'python manage.py check --deploy --fail-level WARNING && python manage.py collectstatic --noinput'
+          'python manage.py check --deploy --fail-level WARNING && python manage.py collectstatic --noinput && celery -A dtfd report > /dev/null'

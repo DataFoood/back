@@ -139,6 +139,10 @@ docker compose down -v         # apaga os volumes (zera o banco)
 Postgres, Redis, Ollama, frontend) atrás do Caddy com HTTPS automático.
 Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 
+Para Ubuntu em EC2 t3.small (2 GiB), há uma configuração com processos e
+memória limitados, imagens prontas e embeddings sob demanda:
+[`docs/deploy-small.md`](docs/deploy-small.md).
+
 ## Testes
 
 ```bash

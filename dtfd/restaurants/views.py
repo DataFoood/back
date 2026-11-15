@@ -602,6 +602,11 @@ class SearchView(APIView):
         allowed_ids = list(candidates.values_list("pk", flat=True).distinct()[:10001]) if narrowed else None
         if allowed_ids is not None and len(allowed_ids) > 10000:
             raise ValidationError({"location": "Reduza o raio ou especifique uma região menor."})
+        if not settings.SEMANTIC_SEARCH_ENABLED:
+            return self._fallback(
+                request, candidates, query, limit,
+                notice="Resultados por texto e filtros, sem avaliação de afinidade.",
+            )
         payload = {"query": query, "limit": limit, "candidate_ids": allowed_ids}
         headers = {
             "X-Service-Token": settings.SHINZOU_SERVICE_TOKEN,
@@ -635,7 +640,7 @@ class SearchView(APIView):
         return Response({"results": self._hydrate(request, raw_results, allowed_ids), "mode": "semantic"})
 
     @staticmethod
-    def _fallback(request, candidates, query, limit):
+    def _fallback(request, candidates, query, limit, notice=None):
         import re
         tokens = re.findall(r"[\wÀ-ÿ]+", query, flags=re.UNICODE)[:12]
         qs = candidates
@@ -648,7 +653,7 @@ class SearchView(APIView):
         rows = list(qs.distinct().order_by("name", "id").prefetch_related(*CARD_PREFETCH)[:limit or 15])
         context = {"request": request, "favorited_ids": favorited_ids(request, rows)}
         return Response({"results": [{"restaurant": RestaurantCardSerializer(r, context=context).data, "score": 0, "match": None} for r in rows],
-                         "mode": "text", "notice": "Busca inteligente indisponível. Resultados por texto e filtros, sem avaliação de afinidade."})
+                         "mode": "text", "notice": notice or "Busca inteligente indisponível. Resultados por texto e filtros, sem avaliação de afinidade."})
 
     @staticmethod
     def _hydrate(request, raw_results, allowed_ids=None):
