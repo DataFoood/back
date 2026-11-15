@@ -86,4 +86,4 @@ jobs:
         run: >-
           docker run --rm -e DEBUG=False -e SECRET_KEY -e SHINZOU_SERVICE_TOKEN -e ALLOWED_HOSTS
           datafood-ci sh -c
-          'python manage.py check --deploy --fail-level WARNING && python manage.py collectstatic --noinput'
+          'python manage.py check --deploy --fail-level WARNING && python manage.py collectstatic --noinput && celery -A dtfd report > /dev/null'
