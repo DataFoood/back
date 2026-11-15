@@ -33,6 +33,9 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec web python m
 > `seed_demo --demo-users` cria contas com senha conhecida — **não use em produção**.
 
 ## Checklist
+- [ ] CI do commit aprovado: testes, auditoria de dependências, migrações,
+      OpenAPI, checks Django e imagem Docker. Localmente: `uv sync --frozen`,
+      `uv run pip-audit` e os comandos de teste do README.
 - [ ] `DEBUG=False`, `SECRET_KEY` e `SHINZOU_SERVICE_TOKEN` longos e aleatórios.
 - [ ] `ALLOWED_HOSTS` = domínio da API + `web` (chamadas internas) + `localhost` (healthcheck do container).
 - [ ] `CORS_ALLOWED_ORIGINS` = `https://<APP_DOMAIN>`; `CSRF_TRUSTED_ORIGINS` = `https://<API_DOMAIN>`.
@@ -42,6 +45,18 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod exec web python m
 - [ ] `https://<API_DOMAIN>/api/health/` responde `{"status": "ok"}`.
 - [ ] O frontend é buildado com `NEXT_PUBLIC_API_URL=https://<API_DOMAIN>`
       (o compose já passa isso); mudou o domínio → rebuild do `frontend`.
+- [ ] Conferir os workers reais no log de inicialização do Gunicorn; o comando
+      usa `exec` para entregar sinais de parada ao processo do servidor e
+      mantém `--workers`, `--timeout` e `--access-logfile` na mesma chamada.
+- [ ] Validar em homologação: login/refresh por cookie, busca com catálogo e
+      modelo reais, envio para contas controladas nos canais habilitados,
+      backup restaurável e procedimento de retorno.
+- [ ] Medir capacidade na instalação de destino antes de definir
+      `LOCAL_CAPACITY_CALIBRATED=True`; manter `SHOW_DEMO_RESTAURANTS=False`.
+
+Checks locais e CI não comprovam DNS, certificados públicos, credenciais de
+canais, qualidade do catálogo ou capacidade do servidor. Os critérios do
+piloto real continuam em [implementation-status.md](implementation-status.md).
 
 ## Atualizar
 ```bash

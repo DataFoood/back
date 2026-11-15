@@ -134,7 +134,7 @@ class ActivePromotionsTest(Base):
 # ---------------------------------------------------------------------------
 # Envio
 # ---------------------------------------------------------------------------
-@override_settings(**TELEGRAM_ON)
+@override_settings(CELERY_TASK_ALWAYS_EAGER=True, **TELEGRAM_ON)
 class PromotionSendTest(Base):
     def setUp(self):
         super().setUp()

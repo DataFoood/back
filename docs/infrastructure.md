@@ -92,11 +92,16 @@ pgvector → kNN → ranking). Detalhes em `final-tests/README.md`.
 | `promotions.tasks.poll_telegram` | a cada `TELEGRAM_POLL_SECONDS` (10 s); no-op sem bot |
 
 ## Qualidade
-- Testes: `docker compose exec -w /app/dtfd web uv run python manage.py test`
-  (240 Django) + `shinzou/tests` (6).
+- Testes: `cd dtfd && uv run python manage.py test` (Postgres + Redis) e
+  `uv run pytest shinzou/tests deploy/tests` na raiz. A classe de envio de
+  promoções habilita o Celery síncrono localmente, sem configuração global.
 - Regressões de segurança: `cd dtfd && uv run python manage.py test ../final-tests` (16).
 - Smoke contra o stack rodando: `uv run python final-tests/api_smoke.py` (83 checagens).
 - Tipos: `pyright --pythonpath .venv/bin/python` — 20 erros **pré-existentes**
   de stubs (`request.user` tipado como `_User`/`AnonymousUser`, mixins sem
   base tipada); nenhum novo. Zerar é item do [[backlog]].
 - Schema: `manage.py spectacular --validate --fail-on-warn` — 0 erros.
+- Dependências: `uv sync --frozen` e `uv run pip-audit`. Para atualizar versões,
+  execute `uv lock --upgrade`, revise o diff e repita as validações.
+- CI: `.github/workflows/ci.yml` executa essas validações com Postgres+pgvector
+  e Redis isolados, além do build Docker e `collectstatic` em modo produção.

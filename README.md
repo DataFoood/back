@@ -7,9 +7,9 @@
 **Plataforma de descoberta de restaurantes com busca semântica.**
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Django](https://img.shields.io/badge/Django-6.0-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![DRF](https://img.shields.io/badge/DRF-3.17-A30000?style=flat-square&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.138-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Django](https://img.shields.io/badge/Django-6.1-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![DRF](https://img.shields.io/badge/DRF-3.18-A30000?style=flat-square&logo=django&logoColor=white)](https://www.django-rest-framework.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.163-009688?style=flat-square&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![pgvector](https://img.shields.io/badge/pgvector-vetorial-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://github.com/pgvector/pgvector)
 [![Redis](https://img.shields.io/badge/Redis-broker%2Fcache-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
@@ -142,11 +142,18 @@ Passo a passo e checklist em [`docs/deploy.md`](docs/deploy.md).
 ## Testes
 
 ```bash
-cd dtfd && uv run python manage.py test      # 240 testes; precisa de Postgres + Redis
+uv sync --frozen
+cd dtfd && uv run python manage.py test      # precisa de Postgres + Redis
 uv run python manage.py test ../final-tests  # regressões de segurança (rodada final)
-cd .. && uv run pytest shinzou/tests
+cd .. && uv run pytest shinzou/tests deploy/tests
+uv run pip-audit                            # vulnerabilidades das dependências
 uv run python final-tests/api_smoke.py       # smoke contra a API rodando
 ```
+
+Os testes de envio de promoções habilitam o Celery síncrono somente na própria
+classe; não é necessário definir `CELERY_TASK_ALWAYS_EAGER` para rodar a suíte.
+O CI executa testes, auditoria de dependências, checks de produção, validação do
+schema, migrações e build da imagem em cada PR.
 
 Como subir tudo sem Docker (Ollama falso incluído), os achados da rodada de
 testes finais e o passo a passo: [`final-tests/README.md`](final-tests/README.md).

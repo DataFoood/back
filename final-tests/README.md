@@ -3,6 +3,11 @@
 Rodada final de testes de integração e segurança (2026-09-28). Tudo que foi
 criado ou descoberto nela fica aqui.
 
+Atualização de 15/11/2026: as instruções atuais de validação estão no README
+da raiz e no CI. Os testes de envio de promoções configuram o Celery síncrono
+na própria classe. As contagens na seção Resultado abaixo são históricas.
+As regressões do comando Gunicorn ficam em `deploy/tests`.
+
 | Arquivo | O quê |
 |---|---|
 | `test_security_regressions.py` | 16 testes Django: um por achado + varredura de autorização. **Falham no código anterior, passam no atual.** |
@@ -32,7 +37,7 @@ Sem Docker (como esta rodada foi feita): ver "Rodar sem Docker" em
 cd dtfd
 uv run python manage.py test               # 178 testes da suíte
 uv run python manage.py test ../final-tests  # 16 regressões
-cd .. && uv run pytest shinzou/tests        # 6 do shinzou
+cd .. && uv run pytest shinzou/tests deploy/tests
 uv run python final-tests/api_smoke.py      # 83 checagens (API em :8000)
 ```
 
