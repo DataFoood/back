@@ -8,7 +8,7 @@ def test_small_stack_reserves_memory_for_the_host_and_uses_prebuilt_images():
     services = compose["services"]
     # A one-off model pull must not exhaust the host even while apps start.
     maximum_mib = sum(int(service["mem_limit"].removesuffix("m")) for service in services.values())
-    assert maximum_mib <= 1824
+    assert maximum_mib <= 1856
     assert all("build" not in service for service in services.values())
     assert all(not service.get("ports") for name, service in services.items() if name != "caddy")
     assert {"worker", "beat", "ollama", "shinzou"} <= services.keys()

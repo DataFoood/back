@@ -13,13 +13,13 @@ Não houve benchmark na instância AWS de destino: medir antes de divulgar.
 | Redis (32 MB para dados, sem eviction do broker) | 96 MiB |
 | Django / Gunicorn (1 worker, 2 threads) | 192 MiB |
 | Celery (pool solo, uma tarefa por vez) | 160 MiB |
-| Celery beat | 96 MiB |
+| Celery beat | 128 MiB |
 | Frontend standalone (heap Node até 128 MB) | 256 MiB |
 | Caddy | 64 MiB |
 | shinzou (1 worker, pool de 2 conexões) | 128 MiB |
 | Ollama (1 modelo, 1 inferência por vez) | 512 MiB |
 
-Total dos limites dos serviços persistentes: **1760 MiB**. A importação inicial
+Total dos limites dos serviços persistentes: **1792 MiB**. A importação inicial
 do modelo tem um cliente temporário de até 64 MiB. Esses limites não reservam
 memória e não comprovam capacidade: um serviço pode atingir seu limite e ser
 reiniciado. Monitore memória, reinícios, latência e espaço EBS. O kernel, Docker,
