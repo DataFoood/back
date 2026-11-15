@@ -1,0 +1,82 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: datafood_ci
+          POSTGRES_USER: datafood_ci
+          POSTGRES_PASSWORD: ci-only-password
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U datafood_ci -d datafood_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: [6379:6379]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s --health-timeout 3s --health-retries 10
+    env:
+      DEBUG: "True"
+      SECRET_KEY: ci-only-key-AbCdEf0123456789-abcdefghijklmnopqrstuvwxyz-ABCDEFGHIJKLMNOPQRSTUVWXYZ
+      SHINZOU_SERVICE_TOKEN: ci-only-internal-service-token
+      DB_NAME: datafood_ci
+      DB_USER: datafood_ci
+      DB_PASS: ci-only-password
+      DB_HOST: 127.0.0.1
+      DB_PORT: "5432"
+      REDIS_URL: redis://127.0.0.1:6379/1
+      CELERY_BROKER_URL: redis://127.0.0.1:6379/0
+      CELERY_RESULT_BACKEND: redis://127.0.0.1:6379/2
+      OLLAMA_URL: http://127.0.0.1:9
+      ALLOWED_HOSTS: localhost;127.0.0.1;web
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.12.0"
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Dependency audit
+        run: uv run pip-audit --path "$(uv run python -c 'import sysconfig; print(sysconfig.get_path("purelib"))')"
+      - name: Django tests
+        working-directory: dtfd
+        run: uv run python manage.py test --noinput
+      - name: Security regressions
+        working-directory: dtfd
+        run: uv run python manage.py test ../final-tests --noinput
+      - name: Ranking and production startup regressions
+        run: uv run pytest shinzou/tests deploy/tests
+      - name: Migration consistency and fresh database
+        working-directory: dtfd
+        run: |
+          uv run python manage.py makemigrations --check --dry-run
+          uv run python manage.py migrate --noinput
+      - name: Production settings and OpenAPI
+        working-directory: dtfd
+        env:
+          DEBUG: "False"
+        run: |
+          uv run python manage.py check --deploy --fail-level WARNING
+          uv run python manage.py spectacular --validate --fail-on-warn --file /tmp/openapi.yml
+      - name: Build production image
+        run: docker build -t datafood-ci .
+      - name: Validate production image and static files
+        run: >-
+          docker run --rm -e DEBUG=False -e SECRET_KEY -e SHINZOU_SERVICE_TOKEN -e ALLOWED_HOSTS
+          datafood-ci sh -c
+          'python manage.py check --deploy --fail-level WARNING && python manage.py collectstatic --noinput'

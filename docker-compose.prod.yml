@@ -61,11 +61,14 @@ services:
     environment:
       # 1 proxy confiável (Caddy) -> throttle usa o IP real do cliente
       NUM_PROXIES: ${NUM_PROXIES:-1}
-    command: >
-      sh -c "python manage.py migrate --noinput &&
-             python manage.py collectstatic --noinput &&
-             gunicorn dtfd.wsgi:application --bind 0.0.0.0:8000
-               --workers ${WEB_WORKERS:-3} --timeout 90 --access-logfile -"
+    command:
+      - sh
+      - -c
+      - >-
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        exec gunicorn dtfd.wsgi:application --bind 0.0.0.0:8000
+        --workers ${WEB_WORKERS:-3} --timeout 90 --access-logfile -
     depends_on:
       db:
         condition: service_healthy

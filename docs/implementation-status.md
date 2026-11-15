@@ -64,6 +64,31 @@ de compartilhar links com clientes.
 - Benchmark executou três buscas; usou o simulador local, portanto não calibra
   capacidade de produção nem comprova relevância de um modelo real.
 
+## Atualização de prontidão — 15/11/2026
+
+- Dependências atualizadas pelo lockfile, incluindo Django 6.1.3, DRF 3.18.3,
+  PyJWT 2.15.1, FastAPI 0.163.1, Gunicorn 27.0.1 e Celery 5.7.0.
+  Django e PyJWT agora são dependências diretas. Auditoria com `pip-audit`
+  não encontrou vulnerabilidades conhecidas no ambiente atualizado.
+- Comando de produção corrigido: todas as opções chegam ao Gunicorn e `exec`
+  permite que o servidor receba os sinais de parada do contêiner. A versão do
+  uv está fixada em 0.12.0 no Docker e no CI.
+- A classe de testes de envio de promoções habilita tarefas síncronas por
+  conta própria. Suíte completa: 284 testes Django, 16 regressões de segurança,
+  6 testes de ranking e 3 regressões de inicialização passaram. Sem depender
+  de `CELERY_TASK_ALWAYS_EAGER=True` no ambiente da suíte.
+- Migrações consistentes e aplicadas em banco vazio com pgvector; OpenAPI e
+  checks Django de produção passaram. Imagem Docker construída, validada em
+  modo produção e com `collectstatic` executado como usuário sem root.
+- Integração na imagem atualizada: 83/83 checagens HTTP passaram com Postgres,
+  Redis, shinzou e Ollama simulado. O log confirmou três workers do Gunicorn.
+  Esse ensaio usa dados demo isolados e não comprova qualidade semântica real.
+- CI adicionado para PRs e main: auditoria, testes, migrações, schema, checks
+  de produção, build e validação de estáticos dentro da imagem.
+
+As pendências externas abaixo continuam necessárias antes de liberar o piloto
+público. Não houve deploy remoto nem envio para canais reais nesta atualização.
+
 ## Pendências que impedem declarar o piloto real concluído
 
 1. **Dados reais:** o proxy deste ambiente negou HTTPS para `overpass-api.de`.
