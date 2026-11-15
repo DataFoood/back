@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 
 def reindex_restaurant(restaurant: Restaurant) -> RestaurantEmbedding:
     """(Re)gera o embedding de um restaurante e reseta o flag stale."""
+    if not settings.SEMANTIC_SEARCH_ENABLED:
+        raise ValueError("Busca semântica desativada; indexação não executada.")
     document = build_restaurant_document(restaurant)
     vector = embed_text(document)
     embedding, _ = RestaurantEmbedding.objects.update_or_create(
@@ -30,6 +32,8 @@ def reindex_restaurant(restaurant: Restaurant) -> RestaurantEmbedding:
 def reindex_all(only_stale: bool = True) -> int:
     """Reindexa restaurantes. only_stale=True processa só os marcados;
     False refaz todos. Retorna a quantidade processada."""
+    if not settings.SEMANTIC_SEARCH_ENABLED:
+        return 0
     qs = Restaurant.objects.all()
     if not settings.SHOW_DEMO_RESTAURANTS:
         qs = qs.filter(is_demo=False)

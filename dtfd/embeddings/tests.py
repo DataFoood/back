@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from restaurants.models import Cuisine, Restaurant, RestaurantItem
 
@@ -119,3 +119,36 @@ class ReindexEndpointTest(APITestCase):
         self.client.force_authenticate(self.common)
         response = self.client.post(self.URL, data={}, format="json")
         self.assertEqual(status.HTTP_403_FORBIDDEN, response.status_code)
+
+    @override_settings(SEMANTIC_SEARCH_ENABLED=False)
+    @patch("embeddings.views.reindex_stale.delay")
+    def test_text_only_mode_does_not_queue_indexing(self, delay):
+        self.client.force_authenticate(self.admin)
+        self.assertEqual(409, self.client.post(self.URL, {}, format="json").status_code)
+        delay.assert_not_called()
+
+
+@override_settings(SEMANTIC_SEARCH_ENABLED=False)
+class DisabledIndexingTest(TestCase):
+    @patch("embeddings.services.embed_text")
+    def test_scheduled_and_queued_tasks_do_not_contact_ollama(self, embed):
+        from .tasks import reindex_one, reindex_stale, reindex_all_task
+        restaurant = make_restaurant()
+        self.assertEqual(0, reindex_stale())
+        self.assertEqual(0, reindex_all_task())
+        self.assertFalse(reindex_one(restaurant.pk))
+        restaurant.refresh_from_db()
+        self.assertTrue(restaurant.embedding_stale)
+        embed.assert_not_called()
+
+
+class EmbeddingClientTest(TestCase):
+    @override_settings(EMBEDDING_KEEP_ALIVE="0", EMBEDDING_NUM_CTX=512)
+    @patch("embeddings.ollama.httpx.post")
+    def test_embedding_client_limits_context_and_unloads_model(self, post):
+        from .ollama import embed_text
+        post.return_value.json.return_value = {"embeddings": [FAKE_VECTOR]}
+        self.assertEqual(FAKE_VECTOR, embed_text("comida caseira"))
+        self.assertEqual("0", post.call_args.kwargs["json"]["keep_alive"])
+        self.assertEqual(512, post.call_args.kwargs["json"]["options"]["num_ctx"])
+        self.assertTrue(post.call_args.kwargs["json"]["truncate"])

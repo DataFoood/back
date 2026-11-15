@@ -1,7 +1,7 @@
 """Ollama falso para testes locais sem GPU/modelo.
 
-Implementa só `POST /api/embeddings` (o único endpoint que Django e shinzou
-usam) devolvendo um vetor determinístico de EMBEDDING_DIM dimensões:
+Implementa `POST /api/embed` e a rota legada `/api/embeddings`, devolvendo
+um vetor determinístico de EMBEDDING_DIM dimensões:
 bag-of-words com hashing + normalização L2. Não é semântico de verdade, mas
 textos que compartilham palavras ficam próximos — o suficiente para exercitar
 o pipeline inteiro (reindex -> pgvector -> kNN -> ranking -> hidratação).
@@ -48,11 +48,15 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"models": [{"name": os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")}]})
 
     def do_POST(self):
-        if self.path.rstrip("/") != "/api/embeddings":
+        path = self.path.rstrip("/")
+        if path not in ("/api/embeddings", "/api/embed"):
             return self._send(404, {"error": "not found"})
         length = int(self.headers.get("Content-Length") or 0)
         body = json.loads(self.rfile.read(length) or b"{}")
-        self._send(200, {"embedding": embed(str(body.get("prompt", "")))})
+        if path == "/api/embed":
+            self._send(200, {"embeddings": [embed(str(body.get("input", "")))]})
+        else:
+            self._send(200, {"embedding": embed(str(body.get("prompt", "")))})
 
     def _send(self, code, payload):
         data = json.dumps(payload).encode()
