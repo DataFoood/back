@@ -47,6 +47,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    # antes de tudo: troca o IP da Vercel pelo do usuário (utils/frontend_proxy.py)
+    "utils.frontend_proxy.FrontendProxyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -129,6 +131,10 @@ AUTH_COOKIE_SECURE = os.environ.get("AUTH_COOKIE_SECURE", str(not DEBUG)) == "Tr
 AUTH_COOKIE_SAMESITE = os.environ.get("AUTH_COOKIE_SAMESITE", "Lax")
 # vazio = só o host da API (o recomendado)
 AUTH_COOKIE_DOMAIN = os.environ.get("AUTH_COOKIE_DOMAIN") or None
+# Segredo compartilhado com o proxy do front (Next em proxy.ts, env
+# API_PROXY_SECRET lá). Com ele o back aceita o IP do usuário repassado pela
+# Vercel; vazio = ignora (utils/frontend_proxy.py)
+FRONTEND_PROXY_SECRET = os.environ.get("FRONTEND_PROXY_SECRET", "")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
