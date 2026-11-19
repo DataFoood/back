@@ -1,9 +1,16 @@
 from django.contrib import admin
-from .models import Restaurant, RestaurantSource, CatalogImport
+from .models import Restaurant, RestaurantImage, RestaurantSource, CatalogImport
+
+
+class RestaurantImageInline(admin.TabularInline):
+    model = RestaurantImage
+    fields = ['url']
+    extra = 1
 
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
+    inlines = [RestaurantImageInline]
     list_display = ['name', 'origin', 'is_demo', 'owner']
     list_filter = ['origin', 'is_demo']
     search_fields = ['name', 'slug']
