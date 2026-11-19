@@ -4,6 +4,19 @@ from restaurants.models import Restaurant, RestaurantFavorite, RestaurantView
 
 from .models import UserAmbientAffinity, UserCuisineAffinity, UserPriceAffinity
 
+SEARCH_HISTORY_KEEP = 50
+
+
+def record_search(user, query):
+    from users.models import User
+    from .models import SearchHistory
+
+    if not user.allow_info or not User.objects.filter(pk=user.pk, allow_info=True).exists():
+        return
+    SearchHistory.objects.create(user=user, query=query)
+    keep = SearchHistory.objects.filter(user=user).values_list("id", flat=True)[:SEARCH_HISTORY_KEEP]
+    SearchHistory.objects.filter(user=user).exclude(id__in=list(keep)).delete()
+
 # Pesos dos sinais (viram tabela de config no ranking, Fase 4).
 VIEW_WEIGHT = 1.0
 FAVORITE_WEIGHT = 5.0

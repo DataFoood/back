@@ -1,7 +1,43 @@
 # Search / RAG
 
 Busca semântica fim-a-fim. O front fala só com o Django; o **shinzou** (FastAPI,
-interno) faz o trabalho de IA.
+interno) faz a busca vetorial. A explicação textual opcional é gerada pelo
+Django diretamente no Ollama, conforme a seção abaixo.
+
+O frontend do chat usa agora o [assistente conversacional](conversation.md), em
+`POST /api/chats/respond/`, com filtros acumulados, contexto por plano e seleções
+persistidas. Este documento descreve a busca legada `/api/search/`, preservada.
+
+## Explicação local opcional
+
+`CHAT_GENERATION_ENABLED=True` acrescenta `answer` a `POST /api/search/`.
+O padrão é desabilitado. `answer` é texto ou `null` quando desabilitado,
+sem candidatos ou quando a geração falha; os cards permanecem disponíveis.
+Não há mudança no corpo da requisição nem migração de banco.
+
+Para a demonstração na t3.small, usar `SEMANTIC_SEARCH_ENABLED=False` e
+`CHAT_MODEL=qwen3:0.6b`: recuperação textual e explicação no mesmo backend,
+sem carregar embeddings para cada busca. Só ativar após disponibilizar o
+modelo, configurar limites no Ollama e validar o cliente que lê `answer`.
+Não editar apenas o `.env`: processos existentes precisam receber as novas
+variáveis. Esta alteração local ainda não configura ou publica a VPS.
+
+`restaurants/generation.py` envia somente a consulta atual e nome, descrição
+curta e até duas tags de cozinha/ambiente/preço dos três primeiros cards.
+Não envia conta, documentos, favoritos, histórico ou contatos; a personalização
+por plano pertence ao endpoint conversacional. Usa `httpx` já instalado, contexto 1024,
+até 120 tokens de saída, uma thread, sem thinking e keep-alive de dois minutos.
+Timeout de leitura de 30 s e conexão de 3 s; não há retentativa automática.
+
+A resposta do modelo é validada por formato, tamanho e término natural;
+texto vazio/truncado, JSON inválido e erros HTTP retornam `answer: null`.
+O texto ainda pode conter erros factuais: validação estrutural e instruções
+no prompt não garantem relevância ou precisão. Esta etapa não permite ao
+modelo executar ferramentas, consultar URLs ou alterar registros.
+
+Testes sem banco: `cd dtfd && uv run python manage.py test restaurants.test_generation`.
+O Ollama é simulado nesses testes; a prova real inicial está em
+`tasks/vps-baseline.md` e não substitui o ensaio completo com catálogo real.
 
 ## Pipeline
 ```
@@ -51,11 +87,13 @@ normaliza por dimensão pelo máximo, pula linhas `is_manual`. Roda via Celery
   usuário, validado com a **mesma** `SECRET_KEY` (HS256). Ver [[security]].
 
 ## Falhas e tratamento
-- Ollama/shinzou fora → Django responde **503** (front mostra fallback; resto do
-  app segue). Estratégia de fallback de embedding é item de [[backlog]].
+- Falha do shinzou ou busca semântica desativada → Django responde **200**
+  com recuperação textual e filtros (`mode: text`, `match: null`, `notice`).
+- Falha da explicação local → mantém os resultados e retorna `answer: null`.
 - `query` vazio → **400**.
 
 ## LGPD no fluxo de busca
-A query só é gravada em `SearchHistory` se a resposta foi 200 **e**
-`user.allow_info=true`. Retenção: últimas 50 buscas por usuário. Ver
-[[security]].
+No caminho semântico bem-sucedido, a query só é gravada em `SearchHistory`
+com `user.allow_info=true`. Retenção: últimas 50 buscas por usuário. O caminho
+textual não grava esse histórico; a geração opcional não altera essa regra.
+Ver [[security]].
