@@ -51,3 +51,10 @@ payload observado que ignorava filtros, o lote real (41→5→0) e a distinção
 falhar; fonte restaurada. A escrita do modelo continua simulada nessas suítes;
 usar `python manage.py probe_chat` na VPS para o próximo ensaio real. Não houve
 alteração no frontend nem aplicação remota desta correção por esta sessão.
+
+Escrita curta: o usuário validou o prompt do script 84e90c4 na VPS, com nomes
+reais e tempos de 4,14/3,46 s. Essa instrução foi aplicada ao backend, com contexto
+em português e exigência de mencionar um candidato enviado. 332 testes Django,
+16 regressões de segurança, OpenAPI e ausência de migrações aprovados em Linux.
+Remover temporariamente a exigência de nome fez a regressão falhar; fonte
+restaurada. Ainda conferir o texto final pelo site com a conta premium.
