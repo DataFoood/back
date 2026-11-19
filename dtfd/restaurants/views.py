@@ -28,7 +28,9 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 from users.authentication import CookieJWTAuthentication
 from users.models import User
+from preferences.services import record_search
 
+from .generation import generate_answer
 from .models import (
     Ambient,
     BusinessHour,
@@ -541,8 +543,6 @@ class SearchView(APIView):
     throttle_classes = [ScopedRateThrottle]
     throttle_scope = "search"
 
-    # quantas buscas manter por usuário (retenção)
-    HISTORY_KEEP = 50
     # entrada: query vira embedding (custo) -> tamanho limitado; limit 1..50
     MAX_QUERY_LENGTH = 500
     MAX_LIMIT = 50
@@ -567,11 +567,13 @@ class SearchView(APIView):
                     },
                     many=True,
                 ),
+                "answer": serializers.CharField(allow_null=True, required=False, max_length=1200),
             },
         ),
         description="Busca semântica (via shinzou). Resposta = lista rankeada "
         "de cards de restaurante + score do ranking + match (0-100, "
-        "similaridade semântica).",
+        "similaridade semântica). Pode retornar modo textual e, quando habilitada, "
+        "uma explicação local em answer; null se desabilitada ou indisponível.",
     )
     def post(self, request):
         query = request.data.get("query")
@@ -634,10 +636,10 @@ class SearchView(APIView):
             return self._fallback(request, candidates, query, limit)
 
         # loga só com 200 E consentimento LGPD (allow_info). Poda além de N.
-        if request.user.allow_info:
-            self._log_search(request.user, query)
+        record_search(request.user, query)
 
-        return Response({"results": self._hydrate(request, raw_results, allowed_ids), "mode": "semantic"})
+        results = self._hydrate(request, raw_results, allowed_ids)
+        return Response({"results": results, "mode": "semantic", "answer": generate_answer(query, results)})
 
     @staticmethod
     def _fallback(request, candidates, query, limit, notice=None):
@@ -652,8 +654,9 @@ class SearchView(APIView):
             qs = qs.filter(terms) if terms else qs.none()
         rows = list(qs.distinct().order_by("name", "id").prefetch_related(*CARD_PREFETCH)[:limit or 15])
         context = {"request": request, "favorited_ids": favorited_ids(request, rows)}
-        return Response({"results": [{"restaurant": RestaurantCardSerializer(r, context=context).data, "score": 0, "match": None} for r in rows],
-                         "mode": "text", "notice": notice or "Busca inteligente indisponível. Resultados por texto e filtros, sem avaliação de afinidade."})
+        results = [{"restaurant": RestaurantCardSerializer(r, context=context).data, "score": 0, "match": None} for r in rows]
+        return Response({"results": results, "answer": generate_answer(query, results), "mode": "text",
+                         "notice": notice or "Busca inteligente indisponível. Resultados por texto e filtros, sem avaliação de afinidade."})
 
     @staticmethod
     def _hydrate(request, raw_results, allowed_ids=None):
@@ -683,12 +686,3 @@ class SearchView(APIView):
                 "match": match,
             })
         return results
-
-    def _log_search(self, user, query):
-        from preferences.models import SearchHistory
-
-        SearchHistory.objects.create(user=user, query=query)
-        keep_ids = SearchHistory.objects.filter(user=user).values_list(
-            "id", flat=True
-        )[: self.HISTORY_KEEP]
-        SearchHistory.objects.filter(user=user).exclude(id__in=list(keep_ids)).delete()
