@@ -35,7 +35,7 @@ def generate_answer(query: str, results: list[dict]) -> str | None:
     return text if text and len(text) <= 1200 else None
 
 
-def complete_chat(messages: list[dict], *, output_schema=None, num_ctx=1024, num_predict=120) -> str | None:
+def complete_chat(messages: list[dict], *, num_ctx=1024, num_predict=120) -> str | None:
     if not settings.CHAT_GENERATION_ENABLED:
         return None
     payload = {
@@ -43,8 +43,6 @@ def complete_chat(messages: list[dict], *, output_schema=None, num_ctx=1024, num
         "options": {"num_ctx": num_ctx, "num_predict": num_predict, "num_thread": 1, "temperature": 0.2},
         "messages": messages,
     }
-    if output_schema is not None:
-        payload["format"] = output_schema
     try:
         response = httpx.post(
             f"{settings.OLLAMA_URL.rstrip('/')}/api/chat",

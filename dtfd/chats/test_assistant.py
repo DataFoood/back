@@ -18,34 +18,44 @@ from .recommendations import interpret_turn, personal_context
 @override_settings(CHAT_GENERATION_ENABLED=True)
 class InterpretationTest(SimpleTestCase):
     @patch("restaurants.generation.httpx.post")
-    def test_uses_one_bounded_call_and_validates_structured_output(self, remote):
-        remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
-            "done": True, "done_reason": "stop",
-            "message": {"content": json.dumps({"reply": "Vamos buscar ao ar livre.", "ready": True, "filters": {"ambient": 2}})},
-        })
-        turn = interpret_turn("e ao ar livre", [{"role": "user", "text": "jantar em Marília"}] * 100,
-                              {"city": "Marília"}, {"ambient": [{"id": 2, "name": "Ao Ar Livre"}]}, {})
+    def test_explicit_filters_are_applied_without_calling_the_model(self, remote):
+        choices = {"city": [{"name": "Marília"}], "ambient": [{"id": 2, "name": "Ao Ar Livre"}]}
+        turn = interpret_turn("jantar em Marilia em um lugar aberto", {}, choices)
+        self.assertEqual("Marília", turn.filters.city)
         self.assertEqual(2, turn.filters.ambient)
-        payload = remote.call_args.kwargs["json"]
-        context = json.loads(payload["messages"][1]["content"])
-        self.assertLessEqual(len(context["history"]), 6)
-        self.assertEqual("Marília", context["previous_filters"]["city"])
-        self.assertEqual(2048, payload["options"]["num_ctx"])
-        self.assertEqual(256, payload["options"]["num_predict"])
-        self.assertEqual(1, remote.call_count)
-        self.assertIn("properties", payload["format"])
+        self.assertTrue(turn.ready)
+        quoted = interpret_turn('Quero jantar em "Marília"', {}, choices)
+        self.assertEqual("Marília", quoted.filters.city)
+        self.assertIsNone(quoted.filters.text)
+        remote.assert_not_called()
 
-    @patch("restaurants.generation.httpx.post")
-    def test_invalid_model_json_is_not_a_new_selection(self, remote):
-        for output in ({"reply": "ok", "ready": True, "filters": {"ambient": 999}},
-                       {"reply": "ok", "ready": True, "filters": {"ambient": True}},
-                       {"reply": "ok", "ready": True, "filters": {"sql": "DROP TABLE"}},
-                       {"reply": "ok", "ready": "yes", "filters": {}}):
-            with self.subTest(output=output):
-                remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
-                    "done": True, "done_reason": "stop", "message": {"content": json.dumps(output)},
-                })
-                self.assertIsNone(interpret_turn("quero jantar", [], {}, {"ambient": [{"id": 2, "name": "Ao Ar Livre"}]}, {}))
+    def test_removal_is_distinct_from_exclusion_and_open_now(self):
+        choices = {"ambient": [{"id": 2, "name": "Ao Ar Livre"}]}
+        previous = {"city": "Marília", "ambient": 2}
+        turn = interpret_turn("não precisa ser ao ar livre", previous, choices)
+        self.assertEqual(["ambient"], turn.remove_filters)
+        self.assertEqual({}, turn.filters.model_dump(exclude_none=True))
+        self.assertIsNone(interpret_turn("não quero ao ar livre", previous, choices))
+        self.assertFalse(interpret_turn("um lugar aberto agora", {}, choices).ready)
+        self.assertEqual(2, interpret_turn("ao ar livre e aberto agora", {}, choices).filters.ambient)
+        self.assertFalse(interpret_turn("oi, tudo bem?", {}, choices).ready)
+
+    def test_ambiguous_filters_do_not_choose_arbitrarily(self):
+        choices = {"city": [{"name": "Marília"}, {"name": "Campinas"}]}
+        self.assertIsNone(interpret_turn("Marília ou Campinas", {}, choices))
+
+    def test_explicit_reset_and_delivery_optional(self):
+        reset = interpret_turn("sem filtros", {"city": "Marília", "ambient": 2}, {})
+        self.assertTrue(reset.ready)
+        self.assertEqual({"city", "ambient"}, set(reset.remove_filters))
+        self.assertFalse(interpret_turn("não preciso de delivery", {}, {}).filters.delivery)
+        self.assertFalse(interpret_turn("não precisa ter delivery", {}, {}).filters.delivery)
+
+    def test_catalog_restaurant_name_uses_the_model_name_limit(self):
+        name = "Restaurante " + "a" * 188
+        turn = interpret_turn(name, {}, {"text": [{"name": name}]})
+        self.assertTrue(turn.ready)
+        self.assertEqual(name, turn.filters.text)
 
 
 @override_settings(CHAT_GENERATION_ENABLED=True, SHOW_DEMO_RESTAURANTS=True,
@@ -71,6 +81,12 @@ class AssistantFlowTest(APITestCase):
     def setUp(self):
         cache.clear()
         self.client.force_authenticate(self.user)
+        writer = patch("restaurants.generation.httpx.post", return_value=httpx.Response(
+            200, request=httpx.Request("POST", "http://ollama/api/chat"),
+            json={"done": True, "done_reason": "stop", "message": {"content": "Você pode ver as opções ou continuar conversando."}},
+        ))
+        self.remote = writer.start()
+        self.addCleanup(writer.stop)
 
     @staticmethod
     def turn(reply, ready=True, **filters):
@@ -99,6 +115,78 @@ class AssistantFlowTest(APITestCase):
         self.assertEqual(4, selected.json()["count"])
         self.assertTrue(all(any(tag["id"] == self.outdoor.pk for tag in card["ambients"]) for card in selected.json()["results"]))
 
+    @patch("restaurants.generation.httpx.post")
+    def test_observed_empty_model_filters_cannot_ignore_city_or_outdoor_request(self, remote):
+        remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
+            "done": True, "done_reason": "stop", "message": {"content": json.dumps({
+                "reply": "Não há informações sobre restaurantes em Marília com filtros adicionais.",
+                "ready": True, "filters": {}, "remove_filters": [],
+            })},
+        })
+        first = self.client.post("/api/chats/respond/", {"query": "Quero jantar em Marília"}, format="json")
+        self.assertEqual(200, first.status_code)
+        content = first.json()["messages"][-1]["content"]
+        self.assertEqual("Marília", content["filters"].get("city"))
+        self.assertEqual(12, content["count"])
+        second = self.client.post("/api/chats/respond/", {
+            "query": "E que seja em um lugar aberto", "conversation_id": first.json()["id"],
+        }, format="json")
+        content = second.json()["messages"][-1]["content"]
+        self.assertEqual("Marília", content["filters"]["city"])
+        self.assertEqual(self.outdoor.pk, content["filters"]["ambient"])
+        self.assertEqual(4, content["count"])
+        self.assertNotIn("Não há informações", content["answer"])
+
+    @patch("restaurants.generation.httpx.post")
+    def test_unrecognized_request_does_not_silently_select_entire_catalog(self, remote):
+        remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
+            "done": True, "done_reason": "stop", "message": {"content": json.dumps({
+                "reply": "Vamos buscar", "ready": True, "filters": {},
+            })},
+        })
+        response = self.client.post("/api/chats/respond/", {"query": "Oi, tudo bem?"}, format="json")
+        self.assertEqual(0, response.json()["messages"][-1]["content"]["count"])
+
+    def test_real_marilia_catalog_does_not_invent_outdoor_data_and_can_refine_to_pizza(self):
+        from pathlib import Path
+        from django.core.management import call_command
+        from io import StringIO
+        call_command("import_osm", file=Path(__file__).resolve().parents[2] / "data/marilia-osm-20261119.json",
+                     replace=True, stdout=StringIO())
+        first = self.client.post("/api/chats/respond/", {"query": "Quero jantar em Marília"}, format="json").json()
+        self.assertEqual(41, first["messages"][-1]["content"]["count"])
+        second = self.client.post("/api/chats/respond/", {
+            "query": "E que seja em um lugar aberto", "conversation_id": first["id"],
+        }, format="json").json()
+        # O único objeto OSM ao ar livre não tem nome e não entra no catálogo.
+        self.assertEqual(0, second["messages"][-1]["content"]["count"])
+        self.assertIn("Não encontrei", second["messages"][-1]["content"]["answer"])
+        self.assertEqual(1, self.remote.call_count)
+        third = self.client.post("/api/chats/respond/", {
+            "query": "Não precisa ser ao ar livre, quero pizza", "conversation_id": first["id"],
+        }, format="json").json()
+        self.assertEqual(5, third["messages"][-1]["content"]["count"])
+        payload = self.remote.call_args.kwargs["json"]
+        context = json.loads(payload["messages"][1]["content"])
+        self.assertEqual({"city": "Marília", "cuisine": "Pizza & Massas"}, context["filtros"])
+        self.assertEqual(2, len(context["restaurantes"]))
+        self.assertTrue(all("Pizza & Massas" in row["cuisines"] for row in context["restaurantes"]))
+        self.assertEqual(2, self.remote.call_count)
+
+    def test_probe_measures_real_flow_without_persisting_conversations_or_accounts(self):
+        from pathlib import Path
+        from django.core.management import call_command
+        from io import StringIO
+        call_command("import_osm", file=Path(__file__).resolve().parents[2] / "data/marilia-osm-20261119.json",
+                     replace=True, stdout=StringIO())
+        output = StringIO()
+        call_command("probe_chat", stdout=output)
+        rows = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([41, 5, 0], [row["recommendations"] for row in rows])
+        self.assertEqual(2, self.remote.call_count)
+        self.assertFalse(ChatConversation.objects.exists())
+        self.assertEqual(2, User.objects.count())
+
     @patch("chats.assistant_views.interpret_turn")
     def test_other_accounts_cannot_read_context_or_selection(self, interpret):
         chat = ChatConversation.objects.create(user=self.other, title="Outra conversa", messages=[])
@@ -124,7 +212,9 @@ class AssistantFlowTest(APITestCase):
         interpret.return_value = self.turn("Quais opções você prefere?", city="Marília")
         response = self.client.post("/api/chats/respond/", {"query": "jantar", "level": 2, "plan": "premium"}, format="json")
         self.assertEqual("free", response.json()["messages"][-1]["content"]["plan"])
-        self.assertEqual({}, interpret.call_args.args[-1])
+        context = json.loads(self.remote.call_args.kwargs["json"]["messages"][1]["content"])
+        self.assertNotIn("preferencias", context)
+        self.assertNotIn("favoritos", context)
         self.user.level, self.user.allow_info = 2, True
         self.user.save(update_fields=["level", "allow_info"])
         response = self.client.post("/api/chats/respond/", {"query": "jantar"}, format="json")
@@ -133,6 +223,22 @@ class AssistantFlowTest(APITestCase):
         self.assertTrue(content["personalized"])
         self.assertEqual(12, content["count"])
         self.assertEqual(self.favorite.pk, content["recommendation_ids"][0])
+        payload = self.remote.call_args.kwargs["json"]
+        context = json.loads(payload["messages"][1]["content"])
+        self.assertEqual(["Italiana"], context["preferencias"])
+        self.assertEqual([self.favorite.name], context["favoritos"])
+        self.assertNotIn("email", json.dumps(context))
+        self.assertNotIn("format", payload)
+        self.assertEqual(1024, payload["options"]["num_ctx"])
+        self.assertEqual(120, payload["options"]["num_predict"])
+
+    def test_model_timeout_preserves_the_real_filtered_selection(self):
+        self.remote.side_effect = httpx.ReadTimeout("offline")
+        response = self.client.post("/api/chats/respond/", {"query": "Marília ao ar livre"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual(4, content["count"])
+        self.assertIn("Não consegui escrever", content["answer"])
+        self.assertEqual(1, self.remote.call_count)
 
     @patch("chats.assistant_views.interpret_turn")
     def test_failure_retains_selection_without_claiming_refinement(self, interpret):

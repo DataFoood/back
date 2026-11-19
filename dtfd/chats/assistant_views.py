@@ -13,7 +13,7 @@ from restaurants.serializers import CARD_PREFETCH, RestaurantCardSerializer
 from restaurants.views import favorited_ids, public_catalog
 from .models import ChatConversation
 from .recommendations import (
-    MAX_RECOMMENDATIONS, SelectionFilters, interpret_turn, personal_context,
+    MAX_RECOMMENDATIONS, SelectionFilters, compose_reply, interpret_turn, personal_context,
     select_restaurants, taxonomy_choices,
 )
 from .serializers import ChatConversationSerializer
@@ -50,7 +50,8 @@ class ChatRespondView(APIView):
         except ValueError:
             filters = {}
         profile = personal_context(request.user)
-        turn = interpret_turn(query, messages, filters, taxonomy_choices(), profile)
+        choices = taxonomy_choices()
+        turn = interpret_turn(query, filters, choices)
         if turn is None:
             reply = "Não consegui interpretar esse pedido agora. Pode reformular ou tentar novamente em instantes?"
             ready = bool(previous.get("recommendation_ids"))
@@ -62,6 +63,9 @@ class ChatRespondView(APIView):
         ids, limited = select_restaurants(filters, profile) if ready else ([], False)
         if ready and not ids:
             reply = "Não encontrei restaurantes cadastrados com esses filtros. Quer mudar a cidade, a cozinha ou o ambiente?"
+        elif turn is not None and ready:
+            written = compose_reply(query, messages, filters, choices, profile, ids)
+            reply = written or f"Não consegui escrever uma resposta agora. {reply}"
         content = {"kind": "results", "answer": reply, "results": [], "filters": filters,
                    "recommendation_ids": ids, "count": len(ids), "limited": limited,
                    "plan": "premium" if request.user.level >= 2 else "free", "personalized": bool(profile)}

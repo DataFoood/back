@@ -1,5 +1,8 @@
 # Medição inicial da VPS
 
+Registro histórico; as seções seguintes documentam versões e momentos diferentes.
+O estado mais recente está ao final, sem substituir as medições anteriores.
+
 Fonte: saídas fornecidas pelo usuário em 19/11/2026, coletadas no terminal da EC2. Não foram executadas por esta sessão. Instância informada: t3.small, us-east-2.
 
 ## Host
@@ -72,3 +75,27 @@ Pendentes: conteúdo/configuração efetiva do Compose remoto, créditos CPU AWS
 - Revisão incluiu inverter temporariamente a condição da flag: três testes falharam, detectando a mutação. Arquivo original restaurado byte a byte.
 - Dependências existentes instaladas com uv sync --frozen, sem alterar manifesto ou lockfile. Docker local não está ativo e não há PostgreSQL/Redis locais disponíveis para a suíte Django completa.
 - Nenhuma publicação, migração ou alteração persistente na VPS. Frontend e personalização por plano permanecem pendentes.
+
+## Ensaio conversacional recebido em 19/11/2026
+
+O usuário confirmou geração habilitada, busca vetorial desabilitada, Qwen3 0.6B
+e cupom habilitado. Catálogo com 41 locais de Marília e 12 contas, backup criado.
+A geração estruturada com contexto 2048 retornou os mesmos filtros vazios e
+resposta “Não há informações sobre restaurantes…” para os dois pedidos:
+
+| Pedido | Tempo | Filtros | Seleção |
+| --- | ---: | --- | ---: |
+| Quero jantar em Marília | 14,09 s | `{}` | 41 |
+| E que seja em um lugar aberto | 23,67 s | `{}` | 41 |
+
+Ollama residente: 781 MB, CPU, contexto 2048; container 891,1 MiB de 900 MiB.
+Host com 400 MiB disponíveis e 524 MiB de swap usada, contra 81 MiB no repouso
+anterior. As amostras são posteriores à inferência; não medem o pico nem provam
+paginação contínua durante a geração. Web/Ollama sem reinícios registrados e
+OOMKilled=false; isso não valida a qualidade, que falhou nesses dois pedidos.
+
+Correção preparada: filtrar no backend antes da chamada e gerar somente texto
+sobre os candidatos reais, com contexto 1024/120. Sem mudança de modelo, banco
+ou frontend. O modelo deixa de decidir IDs/taxonomias/contagens. A interpretação
+passa a reconhecer comandos explícitos com cobertura limitada; pedidos não
+reconhecidos devem pedir esclarecimento. Um novo ensaio real continua necessário.
