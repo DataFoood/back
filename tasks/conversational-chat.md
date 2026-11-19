@@ -43,3 +43,11 @@ verificações em três resoluções, incluindo console, com API simulada. A rem
 temporária da proteção de contexto privado fez o teste de consentimento falhar;
 proteção restaurada e 23 testes focados aprovados. Roteiro geral de navigation.mjs
 adaptado ao novo contrato e validado sintaticamente; não reexecutado por completo.
+
+Correção após o ensaio real: 330 testes Django e 16 regressões de segurança
+aprovados em Linux, OpenAPI sem avisos e nenhuma migração pendente. Inclui o
+payload observado que ignorava filtros, o lote real (41→5→0) e a distinção entre
+área externa e aberto agora. Uma mutação que removeu essa distinção fez o teste
+falhar; fonte restaurada. A escrita do modelo continua simulada nessas suítes;
+usar `python manage.py probe_chat` na VPS para o próximo ensaio real. Não houve
+alteração no frontend nem aplicação remota desta correção por esta sessão.
