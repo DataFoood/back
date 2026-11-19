@@ -5,6 +5,7 @@ from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
 from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
@@ -70,3 +71,59 @@ class CatalogTest(TestCase):
         restaurant = Restaurant.objects.get()
         self.assertEqual('1433334444', restaurant.phone)
         self.assertEqual('', restaurant.whatsapp_number)
+
+    def test_explicit_osm_tags_enable_filters_without_guessing_price_or_ambience(self):
+        osm.upsert(self.record(cuisine='italian;pizza', outdoor_seating='yes'))
+        restaurant = Restaurant.objects.get()
+        self.assertSetEqual({'Italiana', 'Pizza & Massas'}, set(restaurant.cuisines.values_list('name', flat=True)))
+        self.assertEqual(['Ao Ar Livre'], list(restaurant.ambients.values_list('name', flat=True)))
+        self.assertFalse(restaurant.price_ranges.exists())
+        osm.upsert(self.record(cuisine='unmapped', outdoor_seating='no'))
+        self.assertFalse(restaurant.cuisines.exists())
+        self.assertFalse(restaurant.ambients.exists())
+
+    def test_replace_archives_old_catalog_and_keeps_accounts_and_imported_ids(self):
+        user = User.objects.create_user(email='keep@test.example', name='Conta', password='Testing12345')
+        old = Restaurant.objects.create(name='Catálogo anterior', slug='old', owner=user)
+        from promotions.models import Promotion
+        promotion = Promotion.objects.create(restaurant=old, title='Campanha antiga', message='Teste', status='scheduled')
+        payload = {'elements': [dict(type='node', id=123, lat=-22.21, lon=-49.95,
+                    tags={'name': 'Restaurante de Marília', 'amenity': 'restaurant'})]}
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / 'osm.json'
+            path.write_text(json.dumps(payload), encoding='utf-8')
+            call_command('import_osm', file=path, replace=True, dry_run=True, stdout=StringIO())
+            self.assertTrue(Restaurant.objects.filter(pk=old.pk).exists())
+            call_command('import_osm', file=path, replace=True, stdout=StringIO())
+            imported = Restaurant.objects.get()
+            call_command('import_osm', file=path, replace=True, stdout=StringIO())
+        self.assertEqual([imported.pk], list(Restaurant.objects.values_list('pk', flat=True)))
+        self.assertTrue(Restaurant.all_objects.filter(pk=old.pk, deleted_at__isnull=False).exists())
+        self.assertTrue(User.objects.filter(pk=user.pk).exists())
+        self.assertFalse(Promotion.objects.filter(pk=promotion.pk).exists())
+        self.assertTrue(Promotion.all_objects.filter(pk=promotion.pk).exists())
+        self.assertEqual('Marília', imported.addresses.get().city)
+
+    def test_replace_requires_nonempty_validated_file_and_rolls_back_partial_failure(self):
+        old = Restaurant.objects.create(name='Catálogo anterior', slug='old')
+        with self.assertRaises(CommandError):
+            call_command('import_osm', replace=True, stdout=StringIO())
+        with TemporaryDirectory() as folder:
+            path = Path(folder) / 'osm.json'
+            for payload in ({'elements': []}, {'elements': [], 'remark': 'timeout'}):
+                path.write_text(json.dumps(payload), encoding='utf-8')
+                with self.assertRaises(CommandError):
+                    call_command('import_osm', file=path, replace=True, stdout=StringIO())
+            element = dict(type='node', id=123, lat=-22.21, lon=-49.95,
+                           tags={'name': 'Novo', 'amenity': 'restaurant'})
+            path.write_text(json.dumps({'elements': [element, {**element, 'id': 124}]}), encoding='utf-8')
+            real_upsert = osm.upsert
+            def fail_second(record):
+                if record['external_id'] == 'node/124':
+                    raise ValueError('Falha simulada')
+                return real_upsert(record)
+            with patch('restaurants.catalog.osm.upsert', side_effect=fail_second):
+                with self.assertRaises(CommandError):
+                    call_command('import_osm', file=path, replace=True, stdout=StringIO())
+        self.assertEqual([old.pk], list(Restaurant.objects.values_list('pk', flat=True)))
+        self.assertFalse(RestaurantSource.objects.exists())

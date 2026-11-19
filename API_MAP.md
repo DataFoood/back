@@ -199,7 +199,14 @@ Cliente e operação — `/api/promotions/`:
 Recebe promoção só quem **favoritou o restaurante e deu opt-in**. Detalhes
 em [docs/promotions.md](docs/promotions.md).
 
+### Premium de demonstração — `/api/users/premium/redeem/`
+
+Ativação de premium para demonstração: `POST /api/users/premium/redeem/`,
+autenticado, corpo `{code}`, resposta: próprio usuário atualizado. Código
+reutilizável configurado por hash; contrato em [premium-demo.md](docs/premium-demo.md).
+
 ### Chats — `/api/chats/` (conversas da busca, na conta)
+
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
 | GET/POST | `` | 🔑 | lista paginada sem mensagens (`?q=` no título) / cria `{title, messages}` |

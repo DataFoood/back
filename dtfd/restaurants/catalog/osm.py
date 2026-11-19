@@ -10,7 +10,7 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from address.models import Address
-from restaurants.models import Restaurant, RestaurantSource
+from restaurants.models import Ambient, Cuisine, Restaurant, RestaurantSource
 
 ENDPOINT = 'https://overpass-api.de/api/interpreter'
 ATTRIBUTION = '© OpenStreetMap contributors'
@@ -22,7 +22,11 @@ area["boundary"="administrative"]["admin_level"="8"]["IBGE:GEOCODIGO"="3529005"]
 nwr["amenity"~"^(restaurant|cafe|fast_food|food_court)$"](area.city);
 out center tags;'''
 TAGS = {'name', 'amenity', 'cuisine', 'phone', 'contact:phone', 'website', 'contact:website',
-        'opening_hours', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode'}
+        'opening_hours', 'outdoor_seating', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode'}
+# Só correspondências explícitas; nomes de locais não comprovam cozinha/ambiente.
+CUISINES = {'italian': 'Italiana', 'pizza': 'Pizza & Massas', 'japanese': 'Japonesa',
+            'sushi': 'Japonesa', 'chinese': 'Chinesa', 'mexican': 'Mexicana',
+            'middle_eastern': 'Árabe', 'seafood': 'Frutos do Mar', 'steak_house': 'Churrasco/Grelhados'}
 
 
 def fetch():
@@ -93,6 +97,12 @@ def upsert(record):
         restaurant.phone = tags.get('contact:phone', tags.get('phone', ''))[:20]
         restaurant.website = safe_website(tags.get('contact:website', tags.get('website', '')))
         restaurant.save(update_fields=['name', 'phone', 'website', 'updated_at'])
+        names = {CUISINES[value.strip()] for value in tags.get('cuisine', '').split(';') if value.strip() in CUISINES}
+        restaurant.cuisines.set(Cuisine.objects.filter(name__in=names))
+        ambients = {'fast_food': ['Fast Food'], 'cafe': ['Cafeteria']}.get(tags.get('amenity'), []).copy()
+        if tags.get('outdoor_seating') == 'yes':
+            ambients.append('Ao Ar Livre')
+        restaurant.ambients.set(Ambient.objects.filter(name__in=ambients))
         ct = ContentType.objects.get_for_model(Restaurant)
         Address.objects.update_or_create(
             content_type=ct, object_id=restaurant.pk, label='OpenStreetMap',
