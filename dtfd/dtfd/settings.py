@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
         "register": "10/hour",
+        "premium_coupon": "10/min",
         # busca é cara (embedding + kNN): limita por usuário
         "search": os.environ.get("SEARCH_RATE", "30/min"),
         # descadastro é público (link do e-mail): barra força bruta de token
@@ -222,6 +223,7 @@ SEMANTIC_SEARCH_ENABLED = os.environ.get("SEMANTIC_SEARCH_ENABLED", "True") == "
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 CHAT_GENERATION_ENABLED = os.environ.get("CHAT_GENERATION_ENABLED", "False") == "True"
 CHAT_MODEL = os.environ.get("CHAT_MODEL", "qwen3:0.6b")
+PREMIUM_TEST_COUPON_SHA256 = os.environ.get("PREMIUM_TEST_COUPON_SHA256", "").strip().lower()
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))
 EMBEDDING_KEEP_ALIVE = os.environ.get("EMBEDDING_KEEP_ALIVE", "5m")
