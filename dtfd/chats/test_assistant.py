@@ -24,6 +24,9 @@ class InterpretationTest(SimpleTestCase):
         self.assertEqual("Marília", turn.filters.city)
         self.assertEqual(2, turn.filters.ambient)
         self.assertTrue(turn.ready)
+        quoted = interpret_turn('Quero jantar em "Marília"', {}, choices)
+        self.assertEqual("Marília", quoted.filters.city)
+        self.assertIsNone(quoted.filters.text)
         remote.assert_not_called()
 
     def test_removal_is_distinct_from_exclusion_and_open_now(self):

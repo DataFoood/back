@@ -17,7 +17,7 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
 - O backend determina plano e contexto. `role` representa permissões de acesso,
   não assinatura. Nesta demonstração, o operador atribui `level` pelo admin;
   não há pagamento ou treinamento do modelo.
-- Cidade, nome/prato, cozinha, ambiente, faixa de preço e delivery são os filtros
+- Cidade, nome de restaurante, cozinha, ambiente, faixa de preço e delivery são os filtros
   disponíveis. “Lugar aberto” significa ambiente ao ar livre, não aberto agora.
   Faixa de preço não garante um orçamento exato nem restrições alimentares.
 - O banco calcula a seleção de restaurantes públicos. São até 50 opções por

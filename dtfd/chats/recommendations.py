@@ -110,9 +110,6 @@ def interpret_turn(query, previous_filters, choices):
     delivery = re.search(r"\b(?:delivery|entrega)\b", text)
     if delivery:
         patch["delivery"] = not bool(re.search(r"(?:sem|nao (?:precisa|preciso)(?: de| ter)?) $", text[:delivery.start()]))
-    quoted = re.search(r'["“]([^"”]{1,80})["”]', query)
-    if quoted:
-        patch["text"] = quoted[1]
     ready = bool(patch or removed) or bool(previous_filters and text in ("sim", "pode mostrar", "ver recomendacoes", "mostrar opcoes"))
     reply = "Você pode abrir as opções ou continuar refinando." if ready else "Qual cidade, tipo de cozinha ou ambiente você procura?"
     return AssistantTurn(reply=reply, ready=ready, filters=patch, remove_filters=removed)
