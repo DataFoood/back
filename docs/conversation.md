@@ -39,6 +39,17 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
 - Falha de escrita preserva a seleção e informa explicitamente a falha. Não há
   chamada ao modelo sem candidatos; saudação/pedido incompleto recebe pergunta
   de esclarecimento. Uma seleção pronta usa uma chamada, sem ferramentas autônomas.
+- Premium pode iniciar com “Sugira algo pelos meus gostos”, “O que combina
+  comigo?” ou “Me surpreenda”. Sem autorização ou perfil suficiente, recebe
+  orientação para começar; o plano gratuito não acessa o perfil.
+- `personalization_note` explica uma afinidade real com o primeiro candidato
+  (favorito, cozinha/ambiente/faixa de preço ou acesso). Quando não há afinidade,
+  informa isso sem alegar correspondência. É uma explicação calculada pelo
+  backend; não uma conclusão do modelo. Somente essa explicação resumida é
+  persistida, sem copiar o contexto comportamental inteiro para a conversa.
+- `suggestions` contém até três próximos pedidos, com taxonomias presentes na
+  seleção atual. Sem resultados, sugere retirar filtros. Os textos podem ser
+  enviados como um novo turno e continuam sujeitos à interpretação validada.
 - Pesquisas interpretadas e prontas para seleção entram no histórico somente com
   consentimento, com retenção das últimas 50. E-mail, CPF e telefone não entram no
   contexto do modelo. O contexto não é copiado para o histórico da conversa.

@@ -211,6 +211,65 @@ class AssistantFlowTest(APITestCase):
         self.other.level, self.other.allow_info = 2, True
         self.assertEqual({}, personal_context(self.other))
 
+    def test_premium_can_start_from_tastes_and_gets_a_grounded_explanation(self):
+        self.user.level, self.user.allow_info = 2, True
+        self.user.save(update_fields=["level", "allow_info"])
+        response = self.client.post("/api/chats/respond/", {"query": "Sugira algo pelos meus gostos"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual(12, content["count"])
+        self.assertEqual(self.favorite.pk, content["recommendation_ids"][0])
+        self.assertIn(self.favorite.name, content["personalization_note"])
+        self.assertIn("favorito", content["personalization_note"])
+        self.assertEqual({}, content["filters"])
+        self.assertEqual(1, self.remote.call_count)
+
+    def test_personal_start_explains_missing_plan_consent_or_profile_without_inference(self):
+        for level, consent, account, expected in ((1, True, self.user, "Premium"),
+                                                  (2, False, self.user, "autorize"),
+                                                  (2, True, self.other, "salve")):
+            with self.subTest(level=level, consent=consent, account=account.pk):
+                account.level, account.allow_info = level, consent
+                account.save(update_fields=["level", "allow_info"])
+                self.client.force_authenticate(account)
+                response = self.client.post("/api/chats/respond/", {"query": "O que combina comigo?"}, format="json")
+                content = response.json()["messages"][-1]["content"]
+                self.assertEqual(0, content["count"])
+                self.assertFalse(content["personalized"])
+                self.assertIn(expected, content["answer"])
+                self.assertNotIn("personalization_note", content)
+        self.remote.assert_not_called()
+
+    def test_refinement_suggestions_are_available_and_can_be_sent_verbatim(self):
+        first = self.client.post("/api/chats/respond/", {"query": "Marília"}, format="json").json()
+        content = first["messages"][-1]["content"]
+        self.assertIn("Ao Ar Livre", content["suggestions"])
+        self.assertLessEqual(len(content["suggestions"]), 3)
+        second = self.client.post("/api/chats/respond/", {"query": "Ao Ar Livre", "conversation_id": first["id"]}, format="json").json()
+        content = second["messages"][-1]["content"]
+        self.assertEqual(4, content["count"])
+        self.assertNotIn("Ao Ar Livre", content["suggestions"])
+        self.assertNotIn("Pizza & Massas", content["suggestions"])
+
+    def test_empty_results_offer_a_removal_that_keeps_the_other_filters(self):
+        first = self.client.post("/api/chats/respond/", {"query": "Marília Japonesa"}, format="json").json()
+        content = first["messages"][-1]["content"]
+        self.assertEqual(0, content["count"])
+        self.assertIn("Retire Japonesa", content["suggestions"])
+        second = self.client.post("/api/chats/respond/", {"query": "Retire Japonesa", "conversation_id": first["id"]}, format="json").json()
+        content = second["messages"][-1]["content"]
+        self.assertEqual(12, content["count"])
+        self.assertEqual({"city": "Marília"}, content["filters"])
+
+    def test_premium_explanation_does_not_claim_an_affinity_for_unmatched_options(self):
+        self.user.level, self.user.allow_info = 2, True
+        self.user.save(update_fields=["level", "allow_info"])
+        response = self.client.post("/api/chats/respond/", {"query": "Marília ao ar livre"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual(4, content["count"])
+        self.assertNotIn(self.favorite.pk, content["recommendation_ids"])
+        self.assertIn("não encontrei", content["personalization_note"])
+        self.assertNotIn("Italiana", content["personalization_note"])
+
     @patch("chats.assistant_views.interpret_turn")
     def test_client_cannot_choose_premium_and_premium_does_not_override_filters(self, interpret):
         interpret.return_value = self.turn("Quais opções você prefere?", city="Marília")

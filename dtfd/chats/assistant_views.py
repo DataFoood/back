@@ -13,8 +13,8 @@ from restaurants.serializers import CARD_PREFETCH, RestaurantCardSerializer
 from restaurants.views import favorited_ids, public_catalog
 from .models import ChatConversation
 from .recommendations import (
-    MAX_RECOMMENDATIONS, SelectionFilters, compose_reply, interpret_turn, personal_context,
-    select_restaurants, taxonomy_choices,
+    MAX_RECOMMENDATIONS, AssistantTurn, SelectionFilters, compose_reply, conversation_guidance,
+    interpret_turn, personal_context, personal_discovery, select_restaurants, taxonomy_choices,
 )
 from .serializers import ChatConversationSerializer
 from .views import KEEP
@@ -52,6 +52,16 @@ class ChatRespondView(APIView):
         profile = personal_context(request.user)
         choices = taxonomy_choices()
         turn = interpret_turn(query, filters, choices)
+        if personal_discovery(query):
+            if request.user.level < 2:
+                reply = "A escolha pelos seus gostos faz parte do Premium. Posso ajudar agora: qual cozinha ou cidade você prefere?"
+            elif not request.user.allow_info:
+                reply = "Para usar seus gostos, autorize a personalização no perfil. Se preferir, me diga uma cozinha ou cidade e seguimos por aqui."
+            elif not profile:
+                reply = "Ainda não conheço seus gostos. Para começar, salve alguns restaurantes ou ajuste suas preferências no perfil. O que você gosta de comer?"
+            else:
+                reply = "Vou considerar seus gostos sem limitar as opções. Você pode me contar mais sobre o que procura hoje."
+            turn = AssistantTurn(reply=reply, ready=bool(profile), filters={})
         if turn is None:
             reply = "Não consegui interpretar esse pedido agora. Pode reformular ou tentar novamente em instantes?"
             ready = bool(previous.get("recommendation_ids"))
@@ -69,6 +79,7 @@ class ChatRespondView(APIView):
         content = {"kind": "results", "answer": reply, "results": [], "filters": filters,
                    "recommendation_ids": ids, "count": len(ids), "limited": limited,
                    "plan": "premium" if request.user.level >= 2 else "free", "personalized": bool(profile)}
+        content.update(conversation_guidance(filters, choices, profile, ids, ready))
         # O modelo roda antes da transação; a trava só protege a anexação das mensagens.
         with transaction.atomic():
             if chat:
