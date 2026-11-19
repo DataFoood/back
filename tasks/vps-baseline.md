@@ -99,3 +99,27 @@ sobre os candidatos reais, com contexto 1024/120. Sem mudança de modelo, banco
 ou frontend. O modelo deixa de decidir IDs/taxonomias/contagens. A interpretação
 passa a reconhecer comandos explícitos com cobertura limitada; pedidos não
 reconhecidos devem pedir esclarecimento. Um novo ensaio real continua necessário.
+
+## Ensaio da seleção determinística e escrita curta
+
+Na versão publicada pelo usuário, o comando probe_chat selecionou 41→5→0,
+com cidade, cozinha e ambiente preservados. Tempos: 19,21 s, 3,88 s e 0,02 s.
+O terceiro caso não chama o modelo porque não há cadastro com área externa.
+Ollama: contexto 1024, residente 663 MB; container 634,5 MiB de 900 MiB.
+Host: 595 MiB disponíveis, swap usada 485 MiB. Coletas posteriores à chamada,
+sem medição do pico. A escrita ainda ecoou “Convide…” e inventou convites aos
+restaurantes, portanto a qualidade textual não foi aprovada nessa instrução.
+
+O usuário executou scripts/probe_chat_writing.py do commit 84e90c4 em processo
+isolado, com a instrução curta que pede uma sugestão citando um nome fornecido.
+As respostas passaram a mencionar Açaí Café e Di Carlotta Pizzeria, em 4,14 s e
+3,46 s. São duas observações, sem medição separada de carregamento; não atribuir
+essa diferença inteira ao prompt nem prometer latência fixa. A segunda resposta
+ainda mencionou “filtros de cidade e tipo de culinária”.
+
+Preparado para produção: mesma instrução curta, campos de contexto em português
+e exigência de citar um candidato enviado. Preserva contexto 1024/120 e o mesmo
+modelo. O teste automático deve rejeitar as respostas reais que ecoavam a
+instrução, além de nomes fora da seleção. Conferir o texto final pelo site,
+inclusive com contexto premium autorizado; não considerar todos os atributos
+factuais validados apenas por mencionar um nome correto.

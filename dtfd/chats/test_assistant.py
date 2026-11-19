@@ -81,10 +81,14 @@ class AssistantFlowTest(APITestCase):
     def setUp(self):
         cache.clear()
         self.client.force_authenticate(self.user)
-        writer = patch("restaurants.generation.httpx.post", return_value=httpx.Response(
-            200, request=httpx.Request("POST", "http://ollama/api/chat"),
-            json={"done": True, "done_reason": "stop", "message": {"content": "Você pode ver as opções ou continuar conversando."}},
-        ))
+        def written_response(*args, **kwargs):
+            context = json.loads(kwargs["json"]["messages"][1]["content"])
+            row = context["restaurantes"][0]
+            name = row["nome"]
+            return httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
+                "done": True, "done_reason": "stop", "message": {"content": f"Uma opção é {name}."},
+            })
+        writer = patch("restaurants.generation.httpx.post", side_effect=written_response)
         self.remote = writer.start()
         self.addCleanup(writer.stop)
 
@@ -168,9 +172,9 @@ class AssistantFlowTest(APITestCase):
         self.assertEqual(5, third["messages"][-1]["content"]["count"])
         payload = self.remote.call_args.kwargs["json"]
         context = json.loads(payload["messages"][1]["content"])
-        self.assertEqual({"city": "Marília", "cuisine": "Pizza & Massas"}, context["filtros"])
+        self.assertEqual({"cidade": "Marília", "cozinha": "Pizza & Massas"}, context["busca"])
         self.assertEqual(2, len(context["restaurantes"]))
-        self.assertTrue(all("Pizza & Massas" in row["cuisines"] for row in context["restaurantes"]))
+        self.assertTrue(all("Pizza & Massas" in row["cozinhas"] for row in context["restaurantes"]))
         self.assertEqual(2, self.remote.call_count)
 
     def test_probe_measures_real_flow_without_persisting_conversations_or_accounts(self):
@@ -239,6 +243,36 @@ class AssistantFlowTest(APITestCase):
         self.assertEqual(4, content["count"])
         self.assertIn("Não consegui escrever", content["answer"])
         self.assertEqual(1, self.remote.call_count)
+
+    @patch("restaurants.generation.httpx.post")
+    def test_instruction_echo_or_unselected_name_is_not_a_generated_recommendation(self, remote):
+        for answer in (
+            "Convide as opções disponíveis.",
+            "Convidamos os restaurantes para que possamos criar uma opção de pizza na cidade de Marília.",
+            "Sugiro Outro Restaurante.",
+            "Sugiro Restaurante 000.",
+        ):
+            with self.subTest(answer=answer):
+                remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
+                    "done": True, "done_reason": "stop", "message": {"content": answer},
+                })
+                response = self.client.post("/api/chats/respond/", {"query": "Marília"}, format="json")
+                content = response.json()["messages"][-1]["content"]
+                self.assertEqual(12, content["count"])
+                self.assertIn("Não consegui escrever", content["answer"])
+
+    @patch("restaurants.generation.httpx.post")
+    def test_named_recommendation_is_plain_text_with_customer_facing_context(self, remote):
+        remote.return_value = httpx.Response(200, request=httpx.Request("POST", "http://ollama/api/chat"), json={
+            "done": True, "done_reason": "stop", "message": {"content": "Uma opção é **Restaurante 00**."},
+        })
+        response = self.client.post("/api/chats/respond/", {"query": "Marília"}, format="json")
+        self.assertEqual("Uma opção é Restaurante 00.", response.json()["messages"][-1]["content"]["answer"])
+        payload = remote.call_args.kwargs["json"]
+        context = json.loads(payload["messages"][1]["content"])
+        self.assertNotIn("filtros", context)
+        self.assertEqual({"cidade": "Marília"}, context["busca"])
+        self.assertEqual("Restaurante 00", context["restaurantes"][0]["nome"])
 
     @patch("chats.assistant_views.interpret_turn")
     def test_failure_retains_selection_without_claiming_refinement(self, interpret):

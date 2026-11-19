@@ -32,6 +32,10 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
 - O modelo recebe somente até dois restaurantes já selecionados, rótulos dos
   filtros e o resumo autorizado. Escreve até duas frases e não controla filtros,
   IDs ou contagens. Não recebe a lista inteira de taxonomias nem gera JSON.
+- A escrita precisa mencionar pelo menos um dos nomes enviados, com limite de
+  palavra, para não aceitar eco da instrução ou um nome diferente. O contexto de
+  escrita usa nomes de campos em português e a resposta é texto simples. Isso
+  não verifica automaticamente todos os fatos que o modelo possa afirmar.
 - Falha de escrita preserva a seleção e informa explicitamente a falha. Não há
   chamada ao modelo sem candidatos; saudação/pedido incompleto recebe pergunta
   de esclarecimento. Uma seleção pronta usa uma chamada, sem ferramentas autônomas.
