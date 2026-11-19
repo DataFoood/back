@@ -75,7 +75,10 @@ def conversation_guidance(filters, choices, profile, ids, ready):
         for key in ("ambient", "cuisine", "price_range", "text", "city"):
             if key in filters:
                 label = next((row["name"] for row in choices.get(key, []) if row.get("id") == filters[key]), filters[key])
-                guidance["suggestions"].append(f"Retire {label}")
+                query = f"Retire {label}"
+                turn = interpret_turn(query, filters, choices)
+                if turn and key in turn.remove_filters:
+                    guidance["suggestions"].append(query)
         if not guidance["suggestions"]:
             guidance["suggestions"].append("Mostrar todos")
     else:
@@ -134,10 +137,10 @@ def interpret_turn(query, previous_filters, choices):
                     continue
                 if key == "ambient" and alias in ("lugar aberto", "ambiente aberto") and "aberto agora" in text:
                     continue
-                if key == "price_range" and alias in ("premium", "luxo") and not re.search(r"(?:preco|faixa) (?:de )?" + alias, text):
-                    continue
                 before = text[:match.start()]
                 remove = bool(re.search(r"(?:nao (?:precisa|preciso)(?: ser| de)?(?: em)?|sem filtro(?: de)?|qualquer|remova|retire|tire) $", before))
+                if key == "price_range" and alias in ("premium", "luxo") and not remove and not re.search(r"(?:preco|faixa) (?:de )?" + alias, text):
+                    continue
                 if not remove and re.search(r"(?:nao quero|sem|evitar) $", before):
                     return None  # Exclusão não é o mesmo que retirar um filtro.
                 matches.append((name if key in ("city", "text") else row["id"], remove))

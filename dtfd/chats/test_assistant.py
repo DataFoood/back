@@ -51,6 +51,13 @@ class InterpretationTest(SimpleTestCase):
         self.assertFalse(interpret_turn("não preciso de delivery", {}, {}).filters.delivery)
         self.assertFalse(interpret_turn("não precisa ter delivery", {}, {}).filters.delivery)
 
+    def test_premium_price_can_be_removed_without_treating_the_plan_as_a_filter(self):
+        choices = {"price_range": [{"id": 7, "name": "Premium"}]}
+        self.assertFalse(interpret_turn("sou premium", {}, choices).ready)
+        turn = interpret_turn("Retire Premium", {"city": "Marília", "price_range": 7}, choices)
+        self.assertEqual(["price_range"], turn.remove_filters)
+        self.assertTrue(turn.ready)
+
     def test_catalog_restaurant_name_uses_the_model_name_limit(self):
         name = "Restaurante " + "a" * 188
         turn = interpret_turn(name, {}, {"text": [{"name": name}]})
