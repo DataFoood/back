@@ -5,6 +5,36 @@ manual. Não é Google Places nem coleta de páginas. O endpoint público não t
 SLA: limite a frequência, não execute importação em cada busca de usuário e
 respeite erros/pausas do serviço. Reimportação por ID é idempotente.
 
+## Substituir o catálogo para a apresentação
+
+O lote real está em `data/marilia-osm-20261119.json`: 45 objetos, 41 nomes válidos.
+Obtido em 19/11/2026, com base informada pela fonte de 15/07/2026; detalhes,
+atribuição e licença em `data/README.md`. Não comprova funcionamento atual.
+
+Após publicar o backend atualizado, executar no diretório do repositório na VPS:
+
+```bash
+bash deploy/replace-marilia.sh
+```
+
+O script verifica o checksum, cria um dump completo em `~/datafood-backups`,
+confere a leitura do arquivo e executa prévia e substituição. Mantém os ajustes
+locais de Caddy/Compose. Se o container ainda não aceitar `--replace`, para antes
+de alterar o catálogo. Não remove volumes nem contas.
+
+`import_osm --file ARQUIVO --replace` importa e arquiva o catálogo anterior na
+mesma transação; uma falha reverte o lote. Também arquiva promoções dos locais
+anteriores para impedir disparos agendados. Registros antigos e relações continuam
+no banco, indisponíveis no catálogo ativo. Repetir o mesmo lote não duplica locais.
+Lote vazio, inválido ou parcial não substitui nada. Usar `--dry-run` para prévia.
+
+O script exige Docker, sudo e o backend atualizado no container. Os nomes padrão
+são `backend-web-1` e `backend-db-1`; em ambiente de teste podem ser definidos por
+`DATAFOOD_WEB_CONTAINER`, `DATAFOOD_DB_CONTAINER` e `DATAFOOD_BACKUP_DIR`.
+Não chamar reindexação no fluxo sem embeddings. Preços, fotos e avaliações
+ausentes não são preenchidos. Cozinhas e ambientes só recebem tags explicitadas
+na fonte; dados de um dono existente mantêm precedência.
+
 ```bash
 cd dtfd
 uv run python manage.py migrate

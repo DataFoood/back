@@ -1,0 +1,725 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-07-15T15:22:01Z",
+    "timestamp_areas_base": "2026-07-15T15:22:01Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 1594876389,
+      "lat": -22.2186749,
+      "lon": -49.9766295,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "burger",
+        "name": "Lanchonete Parada Obrigatória"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2632626929,
+      "lat": -22.1908744,
+      "lon": -49.9357124,
+      "tags": {
+        "addr:city": "Marília",
+        "addr:street": "Rua Aurora",
+        "amenity": "restaurant",
+        "cuisine": "regional",
+        "name": "Pesqueiro Nascimento"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3008468711,
+      "lat": -22.2304728,
+      "lon": -49.9223361,
+      "tags": {
+        "amenity": "fast_food",
+        "level": "1"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3595595786,
+      "lat": -22.2236054,
+      "lon": -49.951993,
+      "tags": {
+        "addr:city": "marilia",
+        "addr:housenumber": "455",
+        "addr:street": "Rua Sete de Setembro",
+        "addr:suburb": "boa vista",
+        "amenity": "restaurant",
+        "cuisine": "pizza",
+        "delivery": "yes",
+        "name": "Di Carlotta Pizzeria",
+        "opening_hours": "Tu-Sa 18:00-23:45; Su 18:00-22:30"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3740348048,
+      "lat": -22.2221911,
+      "lon": -49.9530377,
+      "tags": {
+        "amenity": "restaurant"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3923628727,
+      "lat": -22.2222237,
+      "lon": -49.9531155,
+      "tags": {
+        "amenity": "cafe"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3990838373,
+      "lat": -22.2091646,
+      "lon": -49.9548699,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "chinese",
+        "name": "Restaurante Muralha"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5802562314,
+      "lat": -22.2255964,
+      "lon": -49.9351697,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Temaki Music Lounge"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6577688609,
+      "lat": -22.2254578,
+      "lon": -49.9502429,
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "151",
+        "addr:street": "Avenida Presidente Roosvelt",
+        "amenity": "restaurant",
+        "delivery": "yes",
+        "name": "Punta Cana - Pastel e Garapa",
+        "payment:credit_cards": "yes",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13727365736,
+      "lat": -22.2289468,
+      "lon": -49.9161893,
+      "tags": {
+        "addr:housenumber": "509",
+        "addr:street": "Rua Carlos Pavarini",
+        "amenity": "fast_food",
+        "name": "Quiosque Esmeralda"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13969637601,
+      "lat": -22.2184279,
+      "lon": -49.9419766,
+      "tags": {
+        "addr:housenumber": "675",
+        "addr:postcode": "17509150",
+        "addr:street": "Rua Bahia",
+        "amenity": "restaurant",
+        "name": "Rainha da Pururuca",
+        "opening_hours": "Mo-Sa 09:00-18:00; Su 09:00-13:00",
+        "phone": "+55 14 99758 3535",
+        "website:menu": "https://whatsmenu.com.br/rainhadapururuca"
+      }
+    },
+    {
+      "type": "way",
+      "id": 375869620,
+      "center": {
+        "lat": -22.227674,
+        "lon": -49.9454504
+      },
+      "tags": {
+        "addr:city": "marilia",
+        "amenity": "fast_food",
+        "building": "yes",
+        "cuisine": "burger",
+        "name": "San dubba"
+      }
+    },
+    {
+      "type": "way",
+      "id": 377088594,
+      "center": {
+        "lat": -22.2206074,
+        "lon": -49.9419061
+      },
+      "tags": {
+        "addr:city": "Marilia",
+        "addr:street": "Avenida Tiradentes",
+        "amenity": "fast_food",
+        "brand": "McDonald's",
+        "brand:wikidata": "Q38076",
+        "brand:wikipedia": "en:McDonald's",
+        "building": "yes",
+        "cuisine": "burger",
+        "name": "McDonald's",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208017,
+      "center": {
+        "lat": -22.2227951,
+        "lon": -49.9547691
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "building": "yes",
+        "cuisine": "pizza",
+        "name": "Ponto da Pizza"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208030,
+      "center": {
+        "lat": -22.221431,
+        "lon": -49.9522275
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "retail",
+        "name": "Açaí Café"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208031,
+      "center": {
+        "lat": -22.2223499,
+        "lon": -49.9518937
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "retail",
+        "cuisine": "italian",
+        "name": "Bella Cucina"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208033,
+      "center": {
+        "lat": -22.221014,
+        "lon": -49.9519453
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "brand": "China in Box",
+        "brand:wikidata": "Q18463999",
+        "building": "retail",
+        "cuisine": "chinese",
+        "name": "China in Box",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208034,
+      "center": {
+        "lat": -22.2237402,
+        "lon": -49.9591216
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "building": "retail",
+        "cuisine": "chicken",
+        "name": "Croctori"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389208049,
+      "center": {
+        "lat": -22.1924583,
+        "lon": -49.9589565
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "brand": "Budweiser",
+        "building": "retail",
+        "cuisine": "pizza",
+        "name": "Fast Tele Pizza",
+        "source": "survey"
+      }
+    },
+    {
+      "type": "way",
+      "id": 389582513,
+      "center": {
+        "lat": -22.2301718,
+        "lon": -49.9115953
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "retail",
+        "name": "Restaurante Parada 445"
+      }
+    },
+    {
+      "type": "way",
+      "id": 488499733,
+      "center": {
+        "lat": -22.235581,
+        "lon": -49.9688943
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "school",
+        "cuisine": "coffee_shop",
+        "delivery": "no",
+        "outdoor_seating": "yes",
+        "smoking": "outside",
+        "takeaway": "no"
+      }
+    },
+    {
+      "type": "way",
+      "id": 488536656,
+      "center": {
+        "lat": -22.1920779,
+        "lon": -49.9597539
+      },
+      "tags": {
+        "addr:city": "Marilia",
+        "addr:housenumber": "2001",
+        "addr:postcode": "17507-000",
+        "addr:street": "Avenida Castro Alves",
+        "addr:suburb": "Santa Tereza",
+        "amenity": "fast_food",
+        "brand": "McDonald's",
+        "brand:wikidata": "Q38076",
+        "brand:wikipedia": "en:McDonald's",
+        "building": "yes",
+        "cuisine": "burger",
+        "name": "McDonald's",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 612777809,
+      "center": {
+        "lat": -22.2292368,
+        "lon": -49.9305418
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Churrascaria do Gaúcho"
+      }
+    },
+    {
+      "type": "way",
+      "id": 644932763,
+      "center": {
+        "lat": -22.2292882,
+        "lon": -49.9314346
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "1480",
+        "addr:postcode": "17519000",
+        "addr:street": "Avenida Tiradentes",
+        "addr:suburb": "Fragata",
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Kieza"
+      }
+    },
+    {
+      "type": "way",
+      "id": 769723865,
+      "center": {
+        "lat": -22.1583763,
+        "lon": -49.9631709
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "building": "yes",
+        "cuisine": "pizza",
+        "name": "Pizzaria Castelli"
+      }
+    },
+    {
+      "type": "way",
+      "id": 801711234,
+      "center": {
+        "lat": -22.2266172,
+        "lon": -49.9337673
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "1660",
+        "addr:street": "Avenida Tiradentes",
+        "amenity": "fast_food",
+        "brand": "Habib's",
+        "brand:wikidata": "Q2504930",
+        "brand:wikipedia": "en:Habib's",
+        "building": "yes",
+        "cuisine": "middle_eastern",
+        "name": "Habib's",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 801711240,
+      "center": {
+        "lat": -22.2241681,
+        "lon": -49.9356755
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "1008",
+        "addr:street": "Avenida Tiradentes",
+        "amenity": "fast_food",
+        "brand": "Burger King",
+        "brand:wikidata": "Q177054",
+        "brand:wikipedia": "en:Burger King",
+        "building": "yes",
+        "cuisine": "burger",
+        "name": "Burger King",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1078210822,
+      "center": {
+        "lat": -22.227649,
+        "lon": -49.9635926
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "cuisine": "burger",
+        "name": "Jeronimo Track Mirante"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1083795118,
+      "center": {
+        "lat": -22.2167766,
+        "lon": -49.9487206
+      },
+      "tags": {
+        "amenity": "fast_food",
+        "brand": "Subway",
+        "brand:wikidata": "Q244457",
+        "building": "yes",
+        "cuisine": "sandwich",
+        "name": "Subway",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1083842821,
+      "center": {
+        "lat": -22.2186288,
+        "lon": -49.9470594
+      },
+      "tags": {
+        "amenity": "cafe",
+        "building": "yes",
+        "cuisine": "coffee_shop",
+        "name": "+ 1 Café"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1085865970,
+      "center": {
+        "lat": -22.2197401,
+        "lon": -49.9487295
+      },
+      "tags": {
+        "addr:housenumber": "51",
+        "addr:street": "Rua Quatro de Abril",
+        "amenity": "cafe",
+        "building": "yes",
+        "name": "Grappa Café"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1085865974,
+      "center": {
+        "lat": -22.2202452,
+        "lon": -49.9487016
+      },
+      "tags": {
+        "addr:housenumber": "38",
+        "addr:street": "Avenida Rio Branco",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "sushi",
+        "name": "Tori Sushi"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1085892182,
+      "center": {
+        "lat": -22.2200223,
+        "lon": -49.9491382
+      },
+      "tags": {
+        "addr:housenumber": "368",
+        "addr:street": "Rua São Luiz",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "steak_house",
+        "name": "Estância Grill"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1092496933,
+      "center": {
+        "lat": -22.2222064,
+        "lon": -49.9542862
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "658",
+        "addr:postcode": "17502-000",
+        "addr:street": "Avenida Rio Branco",
+        "addr:suburb": "Alto Cafezal",
+        "amenity": "fast_food",
+        "building": "commercial",
+        "cuisine": "burger",
+        "name": "Freakburguer",
+        "opening_hours": "Tu-Su 17:30-23:00",
+        "phone": "+55 14 3301 1829",
+        "website": "https://www.freakburguer.com.br/"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1092497052,
+      "center": {
+        "lat": -22.2219786,
+        "lon": -49.9537039
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "594",
+        "addr:postcode": "17500-090",
+        "addr:street": "Avenida Rio Branco",
+        "addr:suburb": "Alto Cafezal",
+        "amenity": "restaurant",
+        "building": "commercial",
+        "cuisine": "sushi",
+        "diet:raw": "yes",
+        "name": "Sugoi Kansha Japanese Restaurant",
+        "opening_hours": "Tu-Su 19:00-23:00",
+        "phone": "+55 14 3316 2533",
+        "website": "http://www.sugoikansha.com.br/"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1178348270,
+      "center": {
+        "lat": -22.2434996,
+        "lon": -49.9177123
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "170",
+        "addr:postcode": "17521-171",
+        "addr:street": "Rua Pedro Banzato",
+        "addr:suburb": "Jardim Marajó",
+        "amenity": "fast_food",
+        "building": "yes",
+        "name": "Robson Lanches",
+        "phone": "+55 14 3306 4719",
+        "phone:mobile": "+55 14 99833 3907"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1180104591,
+      "center": {
+        "lat": -22.2436353,
+        "lon": -49.9143868
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "75",
+        "addr:postcode": "17521-176",
+        "addr:street": "Rua Kintaro Mitsuka",
+        "addr:suburb": "Jardim Marajó",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "tilápia;fish;feijoada;self-service;sopa;galinhada;bobó",
+        "name": "Restaurante do Gato",
+        "opening_hours": "Mo-Su 08:30-21:00",
+        "phone": "+55 14 3221 8426"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1182093382,
+      "center": {
+        "lat": -22.2531501,
+        "lon": -49.8914551
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Restaurante Hakuna Matata",
+        "phone": "+55 14 99627 2558"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1182093393,
+      "center": {
+        "lat": -22.2362467,
+        "lon": -49.9189186
+      },
+      "tags": {
+        "addr:street": "Rodovia Transbrasiliana",
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Recanto dos Amigos"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1182093394,
+      "center": {
+        "lat": -22.2355706,
+        "lon": -49.9194801
+      },
+      "tags": {
+        "addr:city": "Marília",
+        "addr:housenumber": "422",
+        "addr:postcode": "17521-450",
+        "addr:street": "Avenida Jóquei Clube",
+        "addr:suburb": "Jóquei Clube",
+        "amenity": "restaurant",
+        "building": "retail",
+        "internet_access": "yes",
+        "name": "Lanchonete & Churrascaria Melancia",
+        "phone": "+55(14)3451-2919;+55(14)3451-3995"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1320095435,
+      "center": {
+        "lat": -22.212599,
+        "lon": -49.9353268
+      },
+      "tags": {
+        "addr:street": "Avenida Cascata",
+        "amenity": "restaurant",
+        "bar": "yes",
+        "building": "yes",
+        "contact:facebook": "https://www.facebook.com/rockwaypizzabar/",
+        "cuisine": "pizza",
+        "email": "rockwaypizzabar@gmail.com",
+        "mobile": "+55 14 99620 2570",
+        "name": "Rock Way Pizza Bar",
+        "opening_hours": "Th,Su 19:00-22:00; Fr,Sa 19:00-22:30",
+        "payment:cash": "yes",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "payment:pix": "yes",
+        "toilets": "yes",
+        "website": "https://instadelivery.com.br/rockway"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324172100,
+      "center": {
+        "lat": -22.2100669,
+        "lon": -49.9394808
+      },
+      "tags": {
+        "addr:street": "Avenida Cristo Rei",
+        "amenity": "fast_food",
+        "building": "yes",
+        "name": "Kanabara Açai"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324852469,
+      "center": {
+        "lat": -22.2263548,
+        "lon": -49.9346697
+      },
+      "tags": {
+        "addr:housenumber": "273",
+        "addr:street": "Avenida Nélson Severino Zambon",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "japanese",
+        "name": "Kazoku Restaurante Japonês"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1324876417,
+      "center": {
+        "lat": -22.2249382,
+        "lon": -49.9311907
+      },
+      "tags": {
+        "addr:housenumber": "6",
+        "addr:street": "Rua Pedro Pretti",
+        "addr:suburb": "Jardim Maria Izabel",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "japanese",
+        "mobile": "+55 14 99140 7909",
+        "name": "Daruma Temak & Rolls",
+        "opening_hours": "Mo-Sa,PH 18:00-23:30",
+        "website": "https://darumatemakirolls.com.br/"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 5821260,
+      "center": {
+        "lat": -22.2227951,
+        "lon": -49.9547691
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "retail",
+        "cuisine": "asian",
+        "name": "Restaurante Tokyo",
+        "type": "multipolygon"
+      }
+    }
+  ]
+}
