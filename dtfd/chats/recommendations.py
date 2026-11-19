@@ -65,6 +65,52 @@ def folded(text):
     )).split())
 
 
+def personal_discovery(query):
+    return folded(query) in ("sugira algo pelos meus gostos", "o que combina comigo", "me surpreenda")
+
+
+def conversation_guidance(filters, choices, profile, ids, ready):
+    guidance = {"suggestions": []}
+    if ready and not ids:
+        for key in ("ambient", "cuisine", "price_range", "text", "city"):
+            if key in filters:
+                label = next((row["name"] for row in choices.get(key, []) if row.get("id") == filters[key]), filters[key])
+                query = f"Retire {label}"
+                turn = interpret_turn(query, filters, choices)
+                if turn and key in turn.remove_filters:
+                    guidance["suggestions"].append(query)
+        if not guidance["suggestions"]:
+            guidance["suggestions"].append("Mostrar todos")
+    else:
+        candidates = public_catalog().filter(pk__in=ids) if ids else public_catalog()
+        for key, relation in (("cuisine", "cuisines"), ("ambient", "ambients"), ("price_range", "price_ranges")):
+            if key in filters:
+                continue
+            available = set(candidates.values_list(f"{relation}__pk", flat=True))
+            for row in choices[key]:
+                if row["id"] in available:
+                    turn = interpret_turn(row["name"], filters, choices)
+                    if turn and turn.ready and getattr(turn.filters, key) == row["id"]:
+                        guidance["suggestions"].append(row["name"])
+        if not filters.get("city"):
+            guidance["suggestions"] = [row["name"] for row in choices["city"][:1]] + guidance["suggestions"]
+    guidance["suggestions"] = list(dict.fromkeys(guidance["suggestions"]))[:3]
+    if profile and ids:
+        first = public_catalog().filter(pk=ids[0]).prefetch_related("cuisines", "ambients", "price_ranges").first()
+        note = "Considerei seu perfil, mas não encontrei afinidades cadastradas entre estas opções."
+        if first:
+            matches = [row["name"] for key, relation in (("cuisine", "cuisines"), ("ambient", "ambients"), ("price_range", "price_ranges"))
+                       for row in profile.get(key, []) if row["id"] in {tag.pk for tag in getattr(first, relation).all()}]
+            if first.pk in {row["id"] for row in profile.get("favorites", [])}:
+                note = f"{first.name} aparece primeiro e está nos seus favoritos. Seus pedidos continuam tendo prioridade."
+            elif matches:
+                note = f"{first.name} combina com seus gostos por {', '.join(matches[:2])}. Isso ajudou a ordenar as opções."
+            elif first.pk in {row["id"] for row in profile.get("views", [])}:
+                note = f"Você já acessou {first.name}. Esse interesse ajudou a ordenar as opções."
+        guidance["personalization_note"] = note
+    return guidance
+
+
 ALIASES = {
     "Ao Ar Livre": ("lugar aberto", "ambiente aberto", "area externa"),
     "Pizza & Massas": ("pizza", "pizzaria", "massas"),
@@ -91,10 +137,10 @@ def interpret_turn(query, previous_filters, choices):
                     continue
                 if key == "ambient" and alias in ("lugar aberto", "ambiente aberto") and "aberto agora" in text:
                     continue
-                if key == "price_range" and alias in ("premium", "luxo") and not re.search(r"(?:preco|faixa) (?:de )?" + alias, text):
-                    continue
                 before = text[:match.start()]
                 remove = bool(re.search(r"(?:nao (?:precisa|preciso)(?: ser| de)?(?: em)?|sem filtro(?: de)?|qualquer|remova|retire|tire) $", before))
+                if key == "price_range" and alias in ("premium", "luxo") and not remove and not re.search(r"(?:preco|faixa) (?:de )?" + alias, text):
+                    continue
                 if not remove and re.search(r"(?:nao quero|sem|evitar) $", before):
                     return None  # Exclusão não é o mesmo que retirar um filtro.
                 matches.append((name if key in ("city", "text") else row["id"], remove))
