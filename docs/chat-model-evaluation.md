@@ -65,7 +65,7 @@ o modelo e manter aplicação, banco, worker e sistema operacional.
 Se a máquina for uma AWS T3, a `t3.medium` dobra a RAM da `t3.small` de 2 para
 4 GiB, mantendo duas vCPUs e a mesma linha de base de créditos CPU. Pode dar
 folga para experimentar o 1.7B; não promete respostas mais rápidas. A memória
-residente local de aproximadamente 1,46 GiB do modelo maior deixa pouco espaço
+residente local de aproximadamente 1,42 GiB do modelo maior deixa pouco espaço
 num host inteiro de 2 GiB. Não aprovar esse cenário só por ter um usuário.
 
 Antes de qualquer troca, repetir o ensaio **na VPS com a aplicação ativa**,

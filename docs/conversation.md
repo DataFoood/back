@@ -32,7 +32,7 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
   “Não precisa ser ao ar livre” retira o filtro; excluir uma categoria é uma
   operação diferente, não suportada. “Aberto agora” não vira ambiente externo.
 - O modelo recebe somente até dois restaurantes já selecionados, rótulos dos
-  filtros e o resumo autorizado. Escreve até duas frases e não controla filtros,
+  filtros e o resumo autorizado. Recebe orientação de escrita breve e não controla filtros,
   IDs ou contagens. Não recebe a lista inteira de taxonomias nem gera JSON.
 - A escrita precisa mencionar pelo menos um dos nomes enviados, com limite de
   palavra, para não aceitar eco da instrução ou um nome diferente. O contexto de
