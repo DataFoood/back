@@ -25,12 +25,14 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
   nunca um número inventado pelo modelo. Nenhum restaurante é criado pela IA.
 - O backend reconhece filtros explícitos antes de buscar: cidades e nomes do
   catálogo, nomes de taxonomias e sinônimos limitados, como “lugar aberto”,
-  “pizza” e “sushi”. Não é interpretação livre pelo modelo. Um pedido não
+  “pizza”, “sushi” e “lanche”. Lanche, hambúrguer e sanduíche usam a tag
+  existente **Fast Food**; ela é ampla e não comprova itens específicos do
+  cardápio. Sem essa tag, não se inventa um filtro. Não é interpretação livre pelo modelo. Um pedido não
   reconhecido pede esclarecimento; ambiguidades não escolhem arbitrariamente.
   “Não precisa ser ao ar livre” retira o filtro; excluir uma categoria é uma
   operação diferente, não suportada. “Aberto agora” não vira ambiente externo.
 - O modelo recebe somente até dois restaurantes já selecionados, rótulos dos
-  filtros e o resumo autorizado. Escreve até duas frases e não controla filtros,
+  filtros e o resumo autorizado. Recebe orientação de escrita breve e não controla filtros,
   IDs ou contagens. Não recebe a lista inteira de taxonomias nem gera JSON.
 - A escrita precisa mencionar pelo menos um dos nomes enviados, com limite de
   palavra, para não aceitar eco da instrução ou um nome diferente. O contexto de
@@ -39,6 +41,12 @@ montada. Recarregar recupera as mensagens e seleções, reiniciando o percurso d
 - Falha de escrita preserva a seleção e informa explicitamente a falha. Não há
   chamada ao modelo sem candidatos; saudação/pedido incompleto recebe pergunta
   de esclarecimento. Uma seleção pronta usa uma chamada, sem ferramentas autônomas.
+- Esclarecimentos acolhem o pedido e fazem uma pergunta por vez, mantendo a cidade
+  conhecida. Sem candidatos, convidam a ampliar a busca; falha do modelo mantém
+  a contagem real disponível. Essas mensagens não dependem de inferência.
+- Campos de cozinha/ambiente sem tags são omitidos do contexto de escrita.
+  Ausência de cadastro não significa ambiente vazio nem ausência de uma cozinha.
+  Um exemplo curto orienta o tom do modelo; isso não garante correção factual.
 - Premium pode iniciar com “Sugira algo pelos meus gostos”, “O que combina
   comigo?” ou “Me surpreenda”. Sem autorização ou perfil suficiente, recebe
   orientação para começar; o plano gratuito não acessa o perfil.
@@ -122,6 +130,7 @@ Para o ensaio gratuito do fluxo real no container:
 
 ```bash
 sudo docker exec backend-web-1 python manage.py probe_chat
+sudo docker exec backend-web-1 python manage.py probe_chat --query "Marília" --query "lanche"
 sudo docker exec backend-ollama-1 ollama ps
 sudo docker stats --no-stream
 free -h
@@ -134,6 +143,9 @@ declarada. O único objeto OSM com essa última tag não tem nome e foi ignorado
 O comando mede o tempo total de cada turno e falha explicitamente se o modelo
 não escrever uma resposta válida para candidatos disponíveis. Também testar
 o perfil premium pelo site, com preferências autorizadas e favoritas reais.
+`--query` pode ser repetido para medir outros pedidos na mesma sequência,
+preservando os filtros entre eles. Sem essa opção, o roteiro original permanece.
+O ensaio local comparativo e seus limites estão em [chat-model-evaluation.md](chat-model-evaluation.md).
 
 Testes automatizados usam respostas de modelo simuladas. Cobrem refinamento
 12→4, retirada de filtros, isolamento de contas, consentimento, planos, falhas,

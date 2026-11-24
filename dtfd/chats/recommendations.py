@@ -116,7 +116,39 @@ ALIASES = {
     "Pizza & Massas": ("pizza", "pizzaria", "massas"),
     "Japonesa": ("japones", "sushi"), "Italiana": ("italiano",),
     "Cafeteria": ("cafe",), "Churrasco/Grelhados": ("churrasco", "grelhados"),
+    "Fast Food": ("lanche", "lanches", "lanchonete", "lanchonetes", "hamburguer", "hamburgueres",
+                  "hamburgueria", "burger", "sanduiche", "sanduiches"),
 }
+
+
+def clarification_reply(query, filters, choices):
+    """Uma pergunta por vez, sem pedir de novo o que a conversa já informou."""
+    text = folded(query)
+    city = filters.get("city")
+    if re.fullmatch(r"(?:oi|ola|bom dia|boa tarde|boa noite)(?: tudo bem)?", text):
+        intro = f"Vamos encontrar um lugar em {city}." if city else "Que bom te ver por aqui."
+        return f"Oi! {intro} O que você está com vontade de comer hoje?"
+    if re.search(r"\b(?:lanche|lanches|hamburguer|sanduiche)\b", text):
+        intro = "Bora encontrar um lanche que combine com a sua vontade!"
+    elif re.search(r"\b(?:almoco|almocar|jantar|janta|comer|fome)\b", text):
+        intro = "Vamos encontrar um lugar para matar essa fome!"
+    else:
+        intro = "Vamos descobrir um lugar que combine com o que você tem em mente."
+    if city:
+        return f"{intro} Já estamos procurando em {city}. Você prefere alguma comida ou um ambiente específico?"
+    cities = choices.get("city", [])
+    if len(cities) == 1:
+        return f"{intro} Você quer procurar em {cities[0]['name']}?"
+    return f"{intro} Em qual cidade você quer procurar?"
+
+
+def selection_reply(query, filters, count):
+    city = f" em {filters['city']}" if filters.get("city") else ""
+    if not count:
+        return f"Não encontrei restaurantes{city} com essa combinação no catálogo. Quer ampliar um pouco a busca?"
+    intro = "Bora de lanche! " if re.search(r"\b(?:lanche|lanches|hamburguer|sanduiche)\b", folded(query)) else ""
+    options = "uma opção" if count == 1 else f"{count} opções"
+    return f"{intro}Separei {options}{city} para você conhecer. Quer ver as recomendações ou ajustar mais alguma coisa?"
 
 
 def interpret_turn(query, previous_filters, choices):
@@ -157,7 +189,7 @@ def interpret_turn(query, previous_filters, choices):
     if delivery:
         patch["delivery"] = not bool(re.search(r"(?:sem|nao (?:precisa|preciso)(?: de| ter)?) $", text[:delivery.start()]))
     ready = bool(patch or removed) or bool(previous_filters and text in ("sim", "pode mostrar", "ver recomendacoes", "mostrar opcoes"))
-    reply = "Você pode abrir as opções ou continuar refinando." if ready else "Qual cidade, tipo de cozinha ou ambiente você procura?"
+    reply = "Boa! Vou procurar lugares que combinam com esse pedido." if ready else clarification_reply(query, previous_filters, choices)
     return AssistantTurn(reply=reply, ready=ready, filters=patch, remove_filters=removed)
 
 
@@ -170,6 +202,8 @@ def compose_reply(query, messages, filters, choices, profile, ids):
     rows = public_catalog().filter(pk__in=ids[:2]).prefetch_related("cuisines", "ambients")
     by_id = {row.pk: {"nome": row.name[:80], "cozinhas": [tag.name[:24] for tag in row.cuisines.all()[:2]],
                       "ambientes": [tag.name[:24] for tag in row.ambients.all()[:2]]} for row in rows}
+    # Ausência de tags não descreve o ambiente físico ou o cardápio do local.
+    by_id = {pk: {key: value for key, value in row.items() if value} for pk, row in by_id.items()}
     context = {"pedido": query[:160], "busca": labels, "restaurantes": [by_id[pk] for pk in ids[:2] if pk in by_id]}
     if profile:
         context["preferencias"] = [row["name"][:40] for key in ("cuisine", "ambient", "price_range") for row in profile.get(key, [])[:1]]
@@ -180,7 +214,12 @@ def compose_reply(query, messages, filters, choices, profile, ids):
     if history:
         context["pedido_anterior"] = history[-1]
     answer = complete_chat([
-        {"role": "system", "content": "Ajude o cliente a escolher onde comer. Sugira em português um dos restaurantes cadastrados, citando o nome exatamente como foi fornecido. Use somente fatos dos dados. Escreva até duas frases."},
+        {"role": "system", "content": (
+            "Responda em português brasileiro ao pedido de comida. Seja simpático e breve. "
+            "Indique um dos restaurantes do JSON pelo nome exato. Não invente características "
+            "nem experiências pessoais. Exemplo de estilo: \"Bora escolher! Que tal conhecer NOME?\" "
+            "Use o nome real no lugar de NOME."
+        )},
         {"role": "user", "content": json.dumps(context, ensure_ascii=False, separators=(",", ":"))},
     ], num_ctx=1024, num_predict=120)
     if not answer or len(answer) > 500 or answer.lstrip().startswith(("{", "[", "```")):

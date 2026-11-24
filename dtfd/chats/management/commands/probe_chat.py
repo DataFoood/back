@@ -10,11 +10,15 @@ from chats.recommendations import compose_reply, interpret_turn, select_restaura
 class Command(BaseCommand):
     help = "Mede o chat real com o catálogo de Marília, sem gravar conversas ou contas."
 
+    def add_arguments(self, parser):
+        parser.add_argument("--query", action="append", help="Pedido a medir; repita para simular uma conversa.")
+
     def handle(self, *args, **options):
         if not settings.CHAT_GENERATION_ENABLED:
             raise CommandError("Geração desabilitada; o modelo não foi testado.")
         filters, history, choices = {}, [], taxonomy_choices()
-        for query in ("Quero jantar em Marília", "Quero pizza", "E que seja em um lugar aberto"):
+        queries = options.get("query") or ("Quero jantar em Marília", "Quero pizza", "E que seja em um lugar aberto")
+        for query in queries:
             start = time.perf_counter()
             turn = interpret_turn(query, filters, choices)
             if turn is None or not turn.ready:
