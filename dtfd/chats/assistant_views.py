@@ -14,7 +14,7 @@ from restaurants.views import favorited_ids, public_catalog
 from .models import ChatConversation
 from .recommendations import (
     MAX_RECOMMENDATIONS, AssistantTurn, SelectionFilters, compose_reply, conversation_guidance,
-    interpret_turn, personal_context, personal_discovery, select_restaurants, taxonomy_choices,
+    interpret_turn, personal_context, personal_discovery, select_restaurants, selection_reply, taxonomy_choices,
 )
 from .serializers import ChatConversationSerializer
 from .views import KEEP
@@ -72,10 +72,10 @@ class ChatRespondView(APIView):
             reply, ready = turn.reply.strip(), turn.ready
         ids, limited = select_restaurants(filters, profile) if ready else ([], False)
         if ready and not ids:
-            reply = "Não encontrei restaurantes cadastrados com esses filtros. Quer mudar a cidade, a cozinha ou o ambiente?"
+            reply = selection_reply(query, filters, 0)
         elif turn is not None and ready:
             written = compose_reply(query, messages, filters, choices, profile, ids)
-            reply = written or f"Não consegui escrever uma resposta agora. {reply}"
+            reply = written or f"Não consegui escrever a sugestão agora. {selection_reply(query, filters, len(ids))}"
         content = {"kind": "results", "answer": reply, "results": [], "filters": filters,
                    "recommendation_ids": ids, "count": len(ids), "limited": limited,
                    "plan": "premium" if request.user.level >= 2 else "free", "personalized": bool(profile)}

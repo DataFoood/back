@@ -64,6 +64,49 @@ class InterpretationTest(SimpleTestCase):
         self.assertTrue(turn.ready)
         self.assertEqual(name, turn.filters.text)
 
+    @patch("restaurants.generation.httpx.post")
+    def test_snack_language_matches_an_existing_catalog_category_without_inference(self, remote):
+        choices = {"ambient": [{"id": 3, "name": "Fast Food"}]}
+        for query in ("lanche", "quero um lanche", "LANCHES", "hambúrguer", "hamburgueria", "sanduíche"):
+            with self.subTest(query=query):
+                turn = interpret_turn(query, {"city": "Marília"}, choices)
+                self.assertTrue(turn.ready)
+                self.assertEqual(3, turn.filters.ambient)
+                self.assertIsNone(turn.filters.city)
+                self.assertIsNone(turn.filters.cuisine)
+        remote.assert_not_called()
+
+    def test_snack_alias_does_not_ignore_negation_or_word_boundaries(self):
+        choices = {"ambient": [{"id": 3, "name": "Fast Food"}]}
+        self.assertIsNone(interpret_turn("não quero lanche", {}, choices))
+        self.assertIsNone(interpret_turn("sem hambúrguer", {}, choices))
+        self.assertFalse(interpret_turn("lancheira", {}, choices).ready)
+
+    @patch("restaurants.generation.httpx.post")
+    def test_missing_snack_category_acknowledges_the_request_without_inventing_filters(self, remote):
+        turn = interpret_turn("lanche", {}, {"city": [{"name": "Marília"}]})
+        self.assertFalse(turn.ready)
+        self.assertEqual({}, turn.filters.model_dump(exclude_none=True))
+        self.assertIn("lanche", turn.reply)
+        self.assertIn("Marília", turn.reply)
+        self.assertEqual(1, turn.reply.count("?"))
+        remote.assert_not_called()
+
+    def test_clarification_uses_the_city_already_provided_in_the_conversation(self):
+        turn = interpret_turn("quero um lanche", {"city": "Marília"}, {})
+        self.assertFalse(turn.ready)
+        self.assertIn("lanche", turn.reply)
+        self.assertIn("Já estamos procurando em Marília", turn.reply)
+        self.assertNotIn("qual cidade", turn.reply.casefold())
+        self.assertEqual(1, turn.reply.count("?"))
+
+    def test_greeting_opens_a_conversation_instead_of_repeating_a_filter_form(self):
+        turn = interpret_turn("Olá, tudo bem?", {}, {})
+        self.assertFalse(turn.ready)
+        self.assertIn("Oi!", turn.reply)
+        self.assertIn("vontade", turn.reply)
+        self.assertEqual({}, turn.filters.model_dump(exclude_none=True))
+
 
 @override_settings(CHAT_GENERATION_ENABLED=True, SHOW_DEMO_RESTAURANTS=True,
                    CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}})
@@ -184,6 +227,68 @@ class AssistantFlowTest(APITestCase):
         self.assertTrue(all("Pizza & Massas" in row["cozinhas"] for row in context["restaurantes"]))
         self.assertEqual(2, self.remote.call_count)
 
+    def test_snack_request_refines_the_existing_city_and_excludes_other_cities(self):
+        fast_food = Ambient.objects.get(name="Fast Food")
+        self.favorite.ambients.add(fast_food)
+        other_city = Restaurant.objects.create(name="Lanchonete distante", slug="outra-cidade")
+        other_city.ambients.add(fast_food)
+        Address.objects.create(content_type=ContentType.objects.get_for_model(Restaurant),
+                               object_id=other_city.pk, city="Campinas", state="SP")
+        first = self.client.post("/api/chats/respond/", {"query": "Marília"}, format="json").json()
+        response = self.client.post("/api/chats/respond/", {"query": "lanche", "conversation_id": first["id"]}, format="json")
+        self.assertEqual(200, response.status_code)
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual({"city": "Marília", "ambient": fast_food.pk}, content["filters"])
+        self.assertEqual([self.favorite.pk], content["recommendation_ids"])
+        self.assertNotIn("qual cidade", content["answer"].casefold())
+        context = json.loads(self.remote.call_args.kwargs["json"]["messages"][1]["content"])
+        self.assertEqual("lanche", context["pedido"])
+        self.assertEqual("Marília", context["busca"]["cidade"])
+        self.assertEqual(self.favorite.name, context["restaurantes"][0]["nome"])
+
+    def test_writer_omits_unknown_tags_instead_of_describing_an_empty_physical_space(self):
+        self.client.post("/api/chats/respond/", {"query": self.favorite.name}, format="json")
+        context = json.loads(self.remote.call_args.kwargs["json"]["messages"][1]["content"])
+        self.assertEqual(1, len(context["restaurantes"]))
+        row = context["restaurantes"][0]
+        self.assertEqual(self.favorite.name, row["nome"])
+        self.assertNotIn("ambientes", row)
+        self.assertEqual(["Italiana"], row["cozinhas"])
+
+    def test_real_marilia_snack_request_selects_only_registered_fast_food(self):
+        from pathlib import Path
+        from django.core.management import call_command
+        from io import StringIO
+        call_command("import_osm", file=Path(__file__).resolve().parents[2] / "data/marilia-osm-20261119.json",
+                     replace=True, stdout=StringIO())
+        expected = set(Restaurant.objects.filter(ambients__name="Fast Food", deleted_at__isnull=True).values_list("pk", flat=True))
+        self.assertTrue(expected)
+        response = self.client.post("/api/chats/respond/", {"query": "lanche"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual(expected, set(content["recommendation_ids"]))
+        self.assertLess(content["count"], 41)
+        self.assertEqual(1, self.remote.call_count)
+
+    def test_snack_request_without_candidates_does_not_invent_places_or_call_the_model(self):
+        response = self.client.post("/api/chats/respond/", {"query": "lanche"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual(0, content["count"])
+        self.assertEqual([], content["recommendation_ids"])
+        self.assertIn("Não encontrei", content["answer"])
+        self.assertEqual(1, content["answer"].count("?"))
+        self.remote.assert_not_called()
+
+    @patch("restaurants.generation.httpx.post", side_effect=httpx.ReadTimeout("offline"))
+    def test_snack_fallback_preserves_real_options_and_acknowledges_the_request(self, remote):
+        self.favorite.ambients.add(Ambient.objects.get(name="Fast Food"))
+        response = self.client.post("/api/chats/respond/", {"query": "lanche"}, format="json")
+        content = response.json()["messages"][-1]["content"]
+        self.assertEqual([self.favorite.pk], content["recommendation_ids"])
+        self.assertIn("lanche", content["answer"])
+        self.assertIn("uma opção", content["answer"])
+        self.assertNotIn("qual cidade", content["answer"].casefold())
+        self.assertEqual(1, remote.call_count)
+
     def test_probe_measures_real_flow_without_persisting_conversations_or_accounts(self):
         from pathlib import Path
         from django.core.management import call_command
@@ -197,6 +302,17 @@ class AssistantFlowTest(APITestCase):
         self.assertEqual(2, self.remote.call_count)
         self.assertFalse(ChatConversation.objects.exists())
         self.assertEqual(2, User.objects.count())
+
+    def test_probe_can_reproduce_snack_refinement_without_writing_conversations(self):
+        from django.core.management import call_command
+        from io import StringIO
+        self.favorite.ambients.add(Ambient.objects.get(name="Fast Food"))
+        output = StringIO()
+        call_command("probe_chat", query=["Marília", "lanche"], stdout=output)
+        rows = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertEqual([12, 1], [row["recommendations"] for row in rows])
+        self.assertEqual("Marília", rows[-1]["filters"]["city"])
+        self.assertFalse(ChatConversation.objects.exists())
 
     @patch("chats.assistant_views.interpret_turn")
     def test_other_accounts_cannot_read_context_or_selection(self, interpret):
