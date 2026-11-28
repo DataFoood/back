@@ -81,8 +81,7 @@ def enrich_tags(restaurant, tags, source):
         'vegetarian': 'Vegana/Vegetariana', 'vegan': 'Vegana/Vegetariana',
     }
     cuisine_names = list(dict.fromkeys(cuisine_map[value.strip()] for value in tags.get('cuisine', '').split(';') if value.strip() in cuisine_map))[:3]
-    if cuisine_names:
-        restaurant.cuisines.set(Cuisine.objects.filter(name__in=cuisine_names))
+    restaurant.cuisines.set(Cuisine.objects.filter(name__in=cuisine_names))
     ambient = {'cafe': 'Cafeteria', 'bar': 'Bar/Pub', 'pub': 'Bar/Pub', 'fast_food': 'Fast Food'}.get(tags.get('amenity'))
     ambient_names = [ambient] if ambient else []
     if tags.get('outdoor_seating') == 'yes':

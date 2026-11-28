@@ -118,10 +118,10 @@ class CatalogTest(TestCase):
                            tags={'name': 'Novo', 'amenity': 'restaurant'})
             path.write_text(json.dumps({'elements': [element, {**element, 'id': 124}]}), encoding='utf-8')
             real_upsert = osm.upsert
-            def fail_second(record):
+            def fail_second(record, **kwargs):
                 if record['external_id'] == 'node/124':
                     raise ValueError('Falha simulada')
-                return real_upsert(record)
+                return real_upsert(record, **kwargs)
             with patch('restaurants.catalog.osm.upsert', side_effect=fail_second):
                 with self.assertRaises(CommandError):
                     call_command('import_osm', file=path, replace=True, stdout=StringIO())

@@ -178,7 +178,7 @@ class ConversationTest(APITestCase):
         remote.assert_called_once()
 
     @override_settings(CHAT_GENERATION_ENABLED=True)
-    @patch('restaurants.generation.generate_answer', return_value='Conheça um lugar totalmente inventado.')
+    @patch('chats.recommendations.compose_reply', return_value='Conheça um lugar totalmente inventado.')
     def test_unknown_restaurant_in_generated_text_uses_fallback(self, writer):
         content = self.turn('Quero pizza')['messages'][-1]['content']
         self.assertNotIn('inventado', content['answer'])

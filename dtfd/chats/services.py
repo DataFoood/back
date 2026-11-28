@@ -251,9 +251,9 @@ def respond(user, query, messages, request):
         answer = 'Ainda não encontrei restaurantes' + (f' {context}' if context else ' no catálogo disponível') + '. Não vou sugerir um lugar que não cumpra esse pedido.'
         answer += ' Podemos trocar um filtro ou consultar outra cidade com cobertura. Informações não cadastradas, como preços e restrições alimentares, precisam ser confirmadas com o restaurante.'
     if selected and getattr(settings, 'CHAT_GENERATION_ENABLED', False):
-        from restaurants.generation import generate_answer
-        cards = RestaurantCardSerializer(selected[:3], many=True, context={'request': request, 'favorited_ids': set()}).data
-        generated = generate_answer(query + ('; filtros preservados: ' + context if context else ''), [{'restaurant': card} for card in cards])
+        from .recommendations import compose_reply, personal_context, taxonomy_choices
+        writing_filters = {key: value for key, value in filters.items() if key in ('city', 'text', 'cuisine', 'ambient', 'price_range', 'delivery')}
+        generated = compose_reply(query, messages, writing_filters, taxonomy_choices(), personal_context(user), [r.pk for r in selected])
         # O texto é opcional; a seleção, os filtros e a contagem vêm do banco.
         if generated and any(folded(r.name) in folded(generated) for r in selected[:3]):
             answer = generated + f' Encontrei {total} opções' + (f' {context}.' if context else ' no catálogo.')

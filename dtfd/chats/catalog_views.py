@@ -87,5 +87,6 @@ class ChatRecommendationsView(APIView):
         ids = list(dict.fromkeys(pk for pk in ids if type(pk) is int))[:50]
         by_id = {r.pk: r for r in public_catalog().filter(pk__in=ids).prefetch_related(*CARD_PREFETCH)}
         favorites = set(request.user.favorites.filter(restaurant_id__in=ids).values_list('restaurant_id', flat=True))
-        return Response({'results': RestaurantCardSerializer([by_id[pk] for pk in ids if pk in by_id], many=True,
-                        context={'request': request, 'favorited_ids': favorites}).data})
+        cards = RestaurantCardSerializer([by_id[pk] for pk in ids if pk in by_id], many=True,
+                                        context={'request': request, 'favorited_ids': favorites}).data
+        return Response({'count': len(cards), 'results': cards})
