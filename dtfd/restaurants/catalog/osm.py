@@ -12,6 +12,7 @@ from django.utils import timezone
 from address.models import Address
 from restaurants.models import Restaurant, RestaurantSource, RestaurantImage, Cuisine, Ambient, BusinessHour
 
+
 ENDPOINT = 'https://overpass-api.de/api/interpreter'
 ATTRIBUTION = '© OpenStreetMap contributors'
 LICENSE = 'ODbL-1.0'
@@ -22,9 +23,10 @@ area["boundary"="administrative"]["admin_level"="8"]["IBGE:GEOCODIGO"="3529005"]
 nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"](area.city);
 out center tags;'''
 TAGS = {'name', 'amenity', 'cuisine', 'phone', 'contact:phone', 'website', 'contact:website',
-        'opening_hours', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode',
+        'opening_hours', 'outdoor_seating', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode',
         'description', 'description:pt', 'email', 'contact:email', 'image', 'wikimedia_commons',
         'delivery', 'takeaway', 'drive_through', 'reservation', 'website:menu', 'contact:menu'}
+
 
 
 def fetch():
@@ -75,15 +77,17 @@ def enrich_tags(restaurant, tags, source):
         'brazilian': 'Brasileira', 'regional': 'Regional (ex: Nordestina, Mineira)',
         'italian': 'Italiana', 'pizza': 'Pizza & Massas', 'japanese': 'Japonesa', 'sushi': 'Japonesa',
         'chinese': 'Chinesa', 'burger': 'Americana', 'barbecue': 'Churrasco/Grelhados',
-        'mexican': 'Mexicana', 'arab': 'Árabe', 'seafood': 'Frutos do Mar',
+        'mexican': 'Mexicana', 'arab': 'Árabe', 'middle_eastern': 'Árabe', 'steak_house': 'Churrasco/Grelhados', 'seafood': 'Frutos do Mar',
         'vegetarian': 'Vegana/Vegetariana', 'vegan': 'Vegana/Vegetariana',
     }
     cuisine_names = list(dict.fromkeys(cuisine_map[value.strip()] for value in tags.get('cuisine', '').split(';') if value.strip() in cuisine_map))[:3]
     if cuisine_names:
         restaurant.cuisines.set(Cuisine.objects.filter(name__in=cuisine_names))
-    ambient = {'cafe': 'Cafeteria', 'bar': 'Bar/Pub', 'pub': 'Bar/Pub'}.get(tags.get('amenity'))
-    if ambient:
-        restaurant.ambients.add(*Ambient.objects.filter(name=ambient))
+    ambient = {'cafe': 'Cafeteria', 'bar': 'Bar/Pub', 'pub': 'Bar/Pub', 'fast_food': 'Fast Food'}.get(tags.get('amenity'))
+    ambient_names = [ambient] if ambient else []
+    if tags.get('outdoor_seating') == 'yes':
+        ambient_names.append('Ao Ar Livre')
+    restaurant.ambients.set(Ambient.objects.filter(name__in=ambient_names))
     kind = {'cafe': 'Cafeteria', 'bar': 'Bar', 'pub': 'Pub', 'fast_food': 'Lanchonete', 'ice_cream': 'Sorveteria', 'food_court': 'Praça de alimentação'}.get(tags.get('amenity'), 'Restaurante')
     place = ', no bairro ' + tags['addr:suburb'] if tags.get('addr:suburb') else ''
     restaurant.description = tags.get('description:pt', tags.get('description', ''))[:2000] or f'{kind} em Marília{place}.' + (' Cozinha: ' + ', '.join(cuisine_names) + '.' if cuisine_names else '')

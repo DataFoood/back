@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .views import ChatDetailView, ChatListCreateView, ChatRespondView, ChatRecommendationsView
+from .views import ChatDetailView, ChatListCreateView
+from .assistant_views import ChatRecommendationsView, ChatRespondView
 
 urlpatterns = [
     path("", ChatListCreateView.as_view(), name="chat-list-create"),

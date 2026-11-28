@@ -1,6 +1,4 @@
 from django.conf import settings
-import hashlib
-import secrets
 from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
@@ -60,24 +58,6 @@ class LoginView(TokenObtainPairView):
         if is_browser(request) and response.status_code == status.HTTP_200_OK:
             to_cookie_session(response)
         return response
-
-
-class PremiumRedeemView(APIView):
-    """Cupom de demonstração configurado no servidor, sem código público embutido."""
-    permission_classes = [IsAuthenticated]
-    throttle_classes = [ScopedRateThrottle]
-    throttle_scope = 'premium_coupon'
-
-    @extend_schema(request=inline_serializer('PremiumRedeem', {'code': serializers.CharField(max_length=80)}), responses=UserDetailSerializer)
-    def post(self, request):
-        expected = getattr(settings, 'PREMIUM_TEST_COUPON_SHA256', '')
-        value = request.data.get('code')
-        if not isinstance(value, str) or len(value) > 80 or not expected or not secrets.compare_digest(hashlib.sha256(value.strip().encode()).hexdigest(), expected):
-            raise serializers.ValidationError({'code': ['Cupom inválido ou indisponível.']})
-        # A ativação não altera consentimento, papel ou permissões administrativas.
-        User.objects.filter(pk=request.user.pk, level__lt=2).update(level=2)
-        request.user.refresh_from_db()
-        return Response(UserDetailSerializer(request.user).data)
 
 
 class RefreshView(TokenRefreshView):

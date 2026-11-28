@@ -13,7 +13,7 @@ from users.models import User
 from .models import ChatConversation
 
 
-@override_settings(CONVERSATION_MODEL='')
+@override_settings(CONVERSATION_MODEL='', CHAT_CATALOG_MODE=True)
 class ConversationTest(APITestCase):
     def setUp(self):
         cache.clear()

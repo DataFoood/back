@@ -199,14 +199,25 @@ Cliente e operação — `/api/promotions/`:
 Recebe promoção só quem **favoritou o restaurante e deu opt-in**. Detalhes
 em [docs/promotions.md](docs/promotions.md).
 
+### Premium de demonstração — `/api/users/premium/redeem/`
+
+Ativação de premium para demonstração: `POST /api/users/premium/redeem/`,
+autenticado, corpo `{code}`, resposta: próprio usuário atualizado. Código
+reutilizável configurado por hash; contrato em [premium-demo.md](docs/premium-demo.md).
+
 ### Chats — `/api/chats/` (conversas da busca, na conta)
+
 | Método | Rota | Acesso | Nota |
 |---|---|---|---|
 | GET/POST | `` | 🔑 | lista paginada sem mensagens (`?q=` no título) / cria `{title, messages}` |
 | GET/PATCH/DELETE | `<id>/` | 🔑 (só as próprias; outras → 404) | DELETE apaga de verdade |
+| POST | `respond/` | 🔑 | `{query, conversation_id?}`; interpreta, seleciona e salva o turno |
+| GET | `<id>/recommendations/<message_index>/` | 🔑 (só as próprias) | cards atuais da seleção; índice da mensagem começa em zero |
 
 `messages`: lista de `{role: "user"|"assistant", ...}` (até 200, 256 KB). São
 mantidas as 50 mais recentes por conta; encerrar a conta apaga todas.
+
+Fluxo conversacional, contexto por plano, limites e operação: [conversation.md](docs/conversation.md).
 
 ### Search — `/api/search/` ⭐
 | Método | Rota | Acesso |
@@ -222,10 +233,14 @@ Body: `query` obrigatório (texto, **máx 500 caracteres**); `limit` opcional
 Rate limit: 30/min por usuário (`SEARCH_RATE`).
 ```json
 // response
-{ "results": [ { "restaurant": { /* card */ }, "score": 1.42, "match": 87 } ] }
+{ "results": [ { "restaurant": { /* card */ }, "score": 1.42, "match": 87 } ], "answer": null }
 ```
 `match` = similaridade semântica (0-100) — é o "% match" da UI. `score` só
-ordena.
+ordena. `answer` contém explicação curta quando `CHAT_GENERATION_ENABLED=True`,
+ou `null` se desabilitada, sem candidatos ou indisponível. A geração usa só os
+dados públicos de até três cards; timeout/saída inválida preservam os resultados.
+Para a t3.small, habilitar com `SEMANTIC_SEARCH_ENABLED=False` e testar limites
+do Ollama. Ativação, contexto e limitações em `docs/search-rag.md`.
 
 ---
 
