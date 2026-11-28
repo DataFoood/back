@@ -28,6 +28,7 @@ com busca semântica (RAG).
   segurança, smoke contra a API e os achados da rodada de 2026-09-28.
 
 ## Planejamento
+- [[review-2026-11-28]] — correções de UX/API, carga real, migrações e verificação.
 - [[backlog]] — próximos passos.
 - [[log]] — registro cronológico.
 

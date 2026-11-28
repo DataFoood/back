@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "utils.frontend_proxy.FrontendProxyMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -129,6 +130,7 @@ AUTH_COOKIE_SECURE = os.environ.get("AUTH_COOKIE_SECURE", str(not DEBUG)) == "Tr
 AUTH_COOKIE_SAMESITE = os.environ.get("AUTH_COOKIE_SAMESITE", "Lax")
 # vazio = só o host da API (o recomendado)
 AUTH_COOKIE_DOMAIN = os.environ.get("AUTH_COOKIE_DOMAIN") or None
+FRONTEND_PROXY_SECRET = os.environ.get("FRONTEND_PROXY_SECRET", "")
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -149,6 +151,7 @@ REST_FRAMEWORK = {
     # rates por escopo, aplicados via ScopedRateThrottle nas views sensiveis
     "DEFAULT_THROTTLE_RATES": {
         "login": "5/min",
+        "premium_coupon": "10/min",
         "register": "10/hour",
         # busca é cara (embedding + kNN): limita por usuário
         "search": os.environ.get("SEARCH_RATE", "30/min"),
@@ -213,6 +216,10 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Embeddings / Ollama ---------------------------------------------------
 SEMANTIC_SEARCH_ENABLED = os.environ.get("SEMANTIC_SEARCH_ENABLED", "True") == "True"
+CONVERSATION_MODEL = os.environ.get("CONVERSATION_MODEL", "")
+CHAT_GENERATION_ENABLED = os.environ.get("CHAT_GENERATION_ENABLED", "False") == "True"
+CHAT_MODEL = os.environ.get("CHAT_MODEL", "qwen3:0.6b")
+PREMIUM_TEST_COUPON_SHA256 = os.environ.get("PREMIUM_TEST_COUPON_SHA256", "").strip().lower()
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
 EMBEDDING_MODEL = os.environ.get("EMBEDDING_MODEL", "nomic-embed-text")
 EMBEDDING_DIM = int(os.environ.get("EMBEDDING_DIM", "768"))

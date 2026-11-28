@@ -4,6 +4,7 @@ from pathlib import Path
 import httpx
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from restaurants.catalog import osm
 from restaurants.models import CatalogImport
@@ -30,13 +31,15 @@ class Command(BaseCommand):
                 raise ValueError('Importação limitada a 10 mil objetos por execução.')
             # Validar toda a resposta antes de começar a gravar objetos.
             records = [osm.normalize(e) for e in payload['elements']]
+            source_time = (payload.get('osm3s') or {}).get('timestamp_osm_base')
+            fetched_at = parse_datetime(source_time) if isinstance(source_time, str) else None
             for record in records:
                 if record is None:
                     counts['skipped'] += 1
                     continue
                 counts['valid'] += 1
                 if not options['dry_run']:
-                    counts[osm.upsert(record)] += 1
+                    counts[osm.upsert(record, fetched_at=fetched_at)] += 1
             run.status = 'preview' if options['dry_run'] else 'completed'
         except (httpx.HTTPError, OSError, ValueError, TypeError) as exc:
             run.status = 'failed'

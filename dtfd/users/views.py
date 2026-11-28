@@ -1,4 +1,7 @@
 from django.conf import settings
+import hashlib
+import secrets
+from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -57,6 +60,24 @@ class LoginView(TokenObtainPairView):
         if is_browser(request) and response.status_code == status.HTTP_200_OK:
             to_cookie_session(response)
         return response
+
+
+class PremiumRedeemView(APIView):
+    """Cupom de demonstração configurado no servidor, sem código público embutido."""
+    permission_classes = [IsAuthenticated]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'premium_coupon'
+
+    @extend_schema(request=inline_serializer('PremiumRedeem', {'code': serializers.CharField(max_length=80)}), responses=UserDetailSerializer)
+    def post(self, request):
+        expected = getattr(settings, 'PREMIUM_TEST_COUPON_SHA256', '')
+        value = request.data.get('code')
+        if not isinstance(value, str) or len(value) > 80 or not expected or not secrets.compare_digest(hashlib.sha256(value.strip().encode()).hexdigest(), expected):
+            raise serializers.ValidationError({'code': ['Cupom inválido ou indisponível.']})
+        # A ativação não altera consentimento, papel ou permissões administrativas.
+        User.objects.filter(pk=request.user.pk, level__lt=2).update(level=2)
+        request.user.refresh_from_db()
+        return Response(UserDetailSerializer(request.user).data)
 
 
 class RefreshView(TokenRefreshView):
@@ -182,9 +203,26 @@ class UserDeleteView(DestroyAPIView):
         # encerrou a própria conta: apaga a sessão deste navegador também
         return clear_auth_cookies(response) if instance.pk == request.user.pk else response
 
+    @transaction.atomic
     def perform_destroy(self, instance):
         from chats.models import ChatConversation
+        from restaurants.models import Restaurant, RestaurantReview, RestaurantFavorite, RestaurantView
+        from preferences.models import SearchHistory, UserCuisineAffinity, UserAmbientAffinity, UserPriceAffinity
+        from promotions.models import MessagingPreference
+        from address.models import Address
+        from django.contrib.contenttypes.models import ContentType
 
+        affected = list(RestaurantReview.all_objects.filter(author=instance).values_list('restaurant_id', flat=True).distinct())
+        # Soft delete de usuário não dispara on_delete no banco. Removemos
+        # conteúdo público e sinais pessoais explicitamente na mesma transação.
+        RestaurantReview.all_objects.filter(author=instance).delete()
+        for model in (RestaurantFavorite, RestaurantView, UserCuisineAffinity, UserAmbientAffinity, UserPriceAffinity):
+            model.all_objects.filter(user=instance).delete()
+        SearchHistory.objects.filter(user=instance).delete()
+        MessagingPreference.objects.filter(user=instance).delete()
+        Address.all_objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=instance.pk).delete()
+        for restaurant in Restaurant.all_objects.filter(pk__in=affected):
+            restaurant.recalc_rating()
         instance.deleted_at = timezone.now()
         instance.is_active = False  # bloqueia login imediatamente
         instance.save(update_fields=["deleted_at", "is_active"])
