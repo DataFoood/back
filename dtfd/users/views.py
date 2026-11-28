@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.db import transaction
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema, inline_serializer
 from rest_framework import serializers, status
@@ -182,9 +183,26 @@ class UserDeleteView(DestroyAPIView):
         # encerrou a própria conta: apaga a sessão deste navegador também
         return clear_auth_cookies(response) if instance.pk == request.user.pk else response
 
+    @transaction.atomic
     def perform_destroy(self, instance):
         from chats.models import ChatConversation
+        from restaurants.models import Restaurant, RestaurantReview, RestaurantFavorite, RestaurantView
+        from preferences.models import SearchHistory, UserCuisineAffinity, UserAmbientAffinity, UserPriceAffinity
+        from promotions.models import MessagingPreference
+        from address.models import Address
+        from django.contrib.contenttypes.models import ContentType
 
+        affected = list(RestaurantReview.all_objects.filter(author=instance).values_list('restaurant_id', flat=True).distinct())
+        # Soft delete de usuário não dispara on_delete no banco. Removemos
+        # conteúdo público e sinais pessoais explicitamente na mesma transação.
+        RestaurantReview.all_objects.filter(author=instance).delete()
+        for model in (RestaurantFavorite, RestaurantView, UserCuisineAffinity, UserAmbientAffinity, UserPriceAffinity):
+            model.all_objects.filter(user=instance).delete()
+        SearchHistory.objects.filter(user=instance).delete()
+        MessagingPreference.objects.filter(user=instance).delete()
+        Address.all_objects.filter(content_type=ContentType.objects.get_for_model(User), object_id=instance.pk).delete()
+        for restaurant in Restaurant.all_objects.filter(pk__in=affected):
+            restaurant.recalc_rating()
         instance.deleted_at = timezone.now()
         instance.is_active = False  # bloqueia login imediatamente
         instance.save(update_fields=["deleted_at", "is_active"])

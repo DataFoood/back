@@ -14,6 +14,7 @@ RUN uv sync --frozen --no-dev
 
 COPY dtfd/ ./dtfd/
 COPY shinzou/ ./shinzou/
+COPY catalog/ ./catalog/
 
 # roda sem root; staticfiles precisa ser gravável pelo collectstatic
 RUN useradd --system --uid 1000 --home /app app \

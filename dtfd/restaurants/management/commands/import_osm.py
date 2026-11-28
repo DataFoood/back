@@ -5,6 +5,7 @@ import httpx
 from django.db import transaction
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 
 from restaurants.catalog import osm
 from restaurants.models import CatalogImport, Restaurant, RestaurantSource
@@ -35,6 +36,8 @@ class Command(BaseCommand):
                 raise ValueError('Importação limitada a 10 mil objetos por execução.')
             # Validar toda a resposta antes de começar a gravar objetos.
             records = [osm.normalize(e) for e in payload['elements']]
+            source_time = (payload.get('osm3s') or {}).get('timestamp_osm_base')
+            fetched_at = parse_datetime(source_time) if isinstance(source_time, str) else None
             counts['valid'] = sum(record is not None for record in records)
             counts['skipped'] = len(records) - counts['valid']
             if options['replace'] and not counts['valid']:
@@ -45,7 +48,7 @@ class Command(BaseCommand):
                 if not options['dry_run']:
                     for record in records:
                         if record:
-                            counts[osm.upsert(record)] += 1
+                            counts[osm.upsert(record, fetched_at=fetched_at)] += 1
                 if options['replace']:
                     selected = RestaurantSource.objects.filter(provider='osm', external_id__in=external_ids).values_list('restaurant_id', flat=True)
                     if not options['dry_run'] and not Restaurant.objects.filter(pk__in=selected).exists():

@@ -2,6 +2,16 @@
 
 Registro cronológico (append-only). Mais recente no topo.
 
+## 2026-11-28 — catálogo real, conversa e integridade das avaliações
+- Rotas de turnos/recomendações/cupom alinhadas ao front; seleção ancorada no
+  catálogo, filtros persistidos, surpresa contextual e personalização consentida.
+- Snapshots OSM + Turismo de Marília: carga local de 194 cadastros, 151 com capa,
+  185 com endereço e 6 casos para revisão; segunda execução sem novos registros.
+- Créditos de fotos e capa derivada da galeria; horários brutos publicados no
+  detalhe quando não há uma representação estruturada segura.
+- Encerrar conta remove avaliações e sinais, com recálculo das notas e limpeza
+  dos casos legados por migração. Ver [[review-2026-11-28]].
+
 ## 2026-10-21 — sessão em cookie, paginação padrão, conversas na conta
 - **Sessão do navegador em cookies HttpOnly** (`users/authentication.py`):
   tokens saem do corpo e do `localStorage`; o front só roda o refresh.

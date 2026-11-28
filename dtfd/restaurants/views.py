@@ -204,9 +204,22 @@ class TaxonomiesView(APIView):
     )
     def get(self, request):
         return Response({
-            key: LookupSerializer(model.objects.order_by("id"), many=True).data
+            key: LookupSerializer(self.visible(key, model), many=True).data
             for key, model in self.MODELS.items()
         })
+
+    @staticmethod
+    def visible(key, model):
+        # Classificações operacionais continuam no banco para compatibilidade,
+        # mas não tornam o cadastro e a descoberta um questionário técnico.
+        if key in ('business_models', 'physical_formats', 'target_audiences'):
+            return model.objects.none()
+        qs = model.objects.order_by('id')
+        if key == 'ambients':
+            return qs.filter(name__in=['Casual Dining', 'Cafeteria', 'Familiar', 'Romântico', 'Bar/Pub', 'Ao Ar Livre', 'Bistrô'])
+        if key == 'service_models':
+            return qs.filter(name__in=['À la carte', 'Buffet a quilo', 'Buffet livre', 'Rodízio'])
+        return qs
 
 
 class RestaurantDetailView(RetrieveUpdateDestroyAPIView):

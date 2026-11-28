@@ -32,6 +32,9 @@ class ChatRespondView(APIView):
 
     @extend_schema(request=ChatTurnSerializer, responses=ChatConversationSerializer)
     def post(self, request):
+        if settings.CHAT_CATALOG_MODE:
+            from .catalog_views import ChatRespondView as CatalogRespondView
+            return CatalogRespondView().post(request)
         incoming = ChatTurnSerializer(data=request.data)
         incoming.is_valid(raise_exception=True)
         conversation_id = incoming.validated_data.get("conversation_id")
@@ -108,6 +111,9 @@ class ChatRecommendationsView(APIView):
         "count": serializers.IntegerField(), "results": RestaurantCardSerializer(many=True),
     }))
     def get(self, request, pk, message_index):
+        if settings.CHAT_CATALOG_MODE:
+            from .catalog_views import ChatRecommendationsView as CatalogRecommendationsView
+            return CatalogRecommendationsView().get(request, pk, message_index)
         chat = get_object_or_404(ChatConversation, pk=pk, user=request.user)
         message = chat.messages[message_index] if message_index < len(chat.messages) else {}
         content = message.get("content") if isinstance(message, dict) and message.get("role") == "assistant" else None

@@ -1,0 +1,2418 @@
+{
+  "provider": "marilia_tourism",
+  "source_url": "https://turismo.marilia.sp.gov.br/-onde-comer-e-beber/",
+  "fetched_at": "2026-11-28T17:55:59.176945+00:00",
+  "attribution": "Diretório de Turismo da Prefeitura de Marília",
+  "license": "",
+  "records": [
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churracaria-palhana/523",
+      "source_id": "523",
+      "name": "CHURRACARIA PALHANA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7ae818879c3d543d88862b9766e0e8fd-16-06-2025-11-11-32.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Castro Alves nº 1660, Somenzari, Marília - SP - (14) 3434-1900",
+      "phone": "1434341900",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://churrascariapalhana.com.br/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-kieza/526",
+      "source_id": "526",
+      "name": "CHURRASCARIA KIEZA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/8abf0120a7f79d9505eb623c0d11a3ac-16-06-2025-13-27-16.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Tiradentes, 1480 – Fragata – Marília SP – (14) 3422 2690",
+      "phone": "1434222690",
+      "opening_hours": "Segunda a sábado das 11:00h às 15:00h e das 19:00h às 23:00h Domingos das 11:00h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://m.facebook.com/kiezachurrascaria/about/?ref=page_internal"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/baby-buffalo-churrascaria/527",
+      "source_id": "527",
+      "name": "BABY BÚFFALO CHURRASCARIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/bc3efb7469ec8ed2b851737a31c0b3b7-16-06-2025-13-29-27.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 81 – Barbosa – Marília SP – (14) 3433 9998",
+      "phone": "1434339998",
+      "opening_hours": "De segunda a sábado das 11:00h às 15:00h Domingo das 11:00h às 15:30h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://babybuffalo.com.br/wp-content/uploads/2024/02/cardapio-baby-buffalo-2024.pdf"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-itapuazinho/528",
+      "source_id": "528",
+      "name": "CHURRASCARIA ITAPUÃZINHO",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/408ef2f84364ff3de90439681eb1b085-16-06-2025-13-31-00.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Rua. Benedito Alves Delfino, 222, CEP. 17.512-043 - Jd. Sasazaki - Marília – SP - (14) 3425-3685",
+      "phone": "1434253685",
+      "opening_hours": "Segunda a sábado das 11:00h às 15:00h Domingos das 11:00h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.facebook.com/Itapuazinho/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churracaria-nabrasa/529",
+      "source_id": "529",
+      "name": "CHURRACARIA NABRASA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f098411822a12a79218f7e19c31e1448-16-06-2025-13-33-49.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Rua. XV de Novembro, 1013 - Alto Cafezal, Marília - SP, 17504-000 – (14) 3433-4041.",
+      "phone": "1434334041",
+      "opening_hours": "Segunda a sábado das 11:00h às 15:00h Domingos das 11:00h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem. E Compra:",
+      "links": [
+        "https://www.ifood.com.br/delivery/marilia-sp/nabrasa-restaurante-e-churrascaria-alto-cafezal/24649301-c773-436d-98a8-449204e14721?utm_medium=ReserveGoogle"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-maninhos-grill/530",
+      "source_id": "530",
+      "name": "CHURRASCARIA MANINHO´S GRILL",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/75e85e160c3ee5d04260fa3cc4964fc7-16-06-2025-13-35-11.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Rua. Catanduva, 157 - Alto Cafezal, Marília - SP, 17500-240 – (14) 3221-0153.",
+      "phone": "1432210153",
+      "opening_hours": "Segunda a sábado das 10:30h às 15:00h Domingos das 10:30h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem. E entregas.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-estancia-grill/531",
+      "source_id": "531",
+      "name": "CHURRASCARIA ESTÂNCIA GRILL",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2021e8f4caf23df8ef9a105e3e90d672-16-06-2025-13-36-46.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Rua. São Luiz, 368 - Centro, Marília - SP, 17500-005 – (14) 3413-9447.",
+      "phone": "1434139447",
+      "opening_hours": "Segunda a sábado das 11:00h às 15:00h Domingos das 11:00h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/estanciagrillmarilia_/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-barriga-verde/532",
+      "source_id": "532",
+      "name": "CHURRASCARIA BARRIGA VERDE",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e8c69714a73e65e407576bc08a89908c-16-06-2025-13-37-52.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Rua. Rio Grande do Sul, 155 - Marília, SP, 17509-130 – (14)3454-6001.",
+      "phone": "1434546001",
+      "opening_hours": "Segunda a sábado das 10:30h às 14:45h Domingos das 10:30h às 14:45h.",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem.",
+      "links": [
+        "https://www.facebook.com/pages/Restaurante%20Barriga%20Verde/1424997454379844/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/alvorada-grill/533",
+      "source_id": "533",
+      "name": "ALVORADA GRILL",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d3708c3f73f0da0fd857cb2a72ecd715-16-06-2025-13-39-20.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "",
+      "phone": "1434176506",
+      "opening_hours": "Segunda a sexta das 06:00h às 22:00h – Almoço das 11:00 as 14:45 Sábado das 06:00h às 17:00h – Almoço das 11:00 as 14:45",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem. E Compra:",
+      "links": [
+        "https://www.ifood.com.br/delivery/marilia-sp/nabrasa-restaurante-e-churrascaria-alto-cafezal/24649301-c773-436d-98a8-449204e14721?utm_medium=ReserveGoogle",
+        "https://www.instagram.com/alvoradagrill/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-melancia/534",
+      "source_id": "534",
+      "name": "CHURRASCARIA MELÂNCIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7b1303369f36f7d7da4e940a9c8a6fb6-16-06-2025-13-40-35.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Jóquei Clube, 422 - Jóquei Clube, Marília - SP, 17521-450 - (14) 3451-2919.",
+      "phone": "1434512919",
+      "opening_hours": "Segunda a sábado das 06:00h às 23:00h Domingos das 07:00h às 23:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.facebook.com/churrascariamelancia"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-do-gaucho/535",
+      "source_id": "535",
+      "name": "CHURRASCARIA DO GAÚCHO",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/561d051e15ba19079daa84544621bc17-16-06-2025-13-41-43.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Tiradentes, 1.487 - Fragata, Marília - SP, 17519-000 – (14) 99814-1631 (14) 3413-5362.",
+      "phone": "14998141631",
+      "opening_hours": "Segunda a sábado das 10:00h às 15:00h – 19:00 às 23:00 Domingos das 10:00h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/churrascariadogauchomarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/churrascaria-do-sul/536",
+      "source_id": "536",
+      "name": "CHURRASCARIA DO SUL",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1fb746f9cabcda611b287359028a6c55-16-06-2025-13-43-03.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Av. Vicente Ferreira, 253 - Cascata, Marília - SP, 17509-180 – (14) 3454-3134.",
+      "phone": "1434543134",
+      "opening_hours": "Segunda a sábado das 10:30h às 14:30h Domingos das 10:30h às 14:30h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.facebook.com/p/Restaurante-do-Sul-100055389163540/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/file-do-boi-restaurante-e-churrascaria/537",
+      "source_id": "537",
+      "name": "FILÉ DO BOI RESTAURANTE E CHURRASCARIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/0242ed8e39760b981f7be2f79ef1c33b-16-06-2025-13-45-11.jpg",
+      "categories": [
+        "Churrascaria"
+      ],
+      "address_raw": "Avenida da Saudade, 431 - Mirante, Marília - SP, 17502-430 – (14) 3221-3033.",
+      "phone": "1432213033",
+      "opening_hours": "Segunda a sábado das 10:30h às 15:00h Domingos das 10:30h às 15:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.facebook.com/p/Churrascaria-Fil%C3%A9-do-Boi-61552643394263/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sabor--arte-restaurante-e-pizzaria/722",
+      "source_id": "722",
+      "name": "Sabor & Arte Restaurante e Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/722a6ebcef411be819af191b3c64aba5-07-07-2025-11-23-34.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 1531 - Centro, Marília - SP, 17500-022. 014 3367-4776.",
+      "phone": "1433674776",
+      "opening_hours": "Segunda a Sábado das 11:00h às 14:30h / 19:00 às 23:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.facebook.com/SaboreArteRestauranteMarilia/?locale=pt_BR",
+        "https://www.instagram.com/saborearterestaurante_/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/le-marche-bistro-e-emporio-gourmet/565",
+      "source_id": "565",
+      "name": "LE MARCHÊ BISTRÔ E EMPÓRIO GOURMET",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/edf7de1c9f3c631d0d6b0a4848e91e38-17-06-2025-11-55-02.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Rua Álvares Cabral, 190 – Centro – Marília SP – (14) 3113 5213",
+      "phone": "1431135213",
+      "opening_hours": "Terça a sábado das 19:30 às 23:00h, aos domingos das 12:00 às 14:30h. www.lemarchebistro.com.br",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/osteria-casa-toscana/567",
+      "source_id": "567",
+      "name": "OSTERIA CASA TOSCANA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/6037122787fc97f5af5b6d889f2aa68a-17-06-2025-13-32-42.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Rua Álvares Cabral, 263 – Centro – Marília SP – (14) 3413-5850 (14) 99839-0045",
+      "phone": "1434135850",
+      "opening_hours": "Terça a sexta das 11:30 às 14:30 das 19:00h às 23:00h Sábado das 12:00 às 15:00 das 19:00 às 23:00",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/rotisserie-dona-elisa/568",
+      "source_id": "568",
+      "name": "Rotisserie Dona Elisa",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/fdfe556d268291303f79a7c452cafa30-17-06-2025-14-08-01.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "R. dos Bancários, 143 - Jardim Maria Izabel, Marília - SP, 17516-032 - 14 3433-8322",
+      "phone": "1434338322",
+      "opening_hours": "Segunda a Sábado das 09:00 às 18:30 Domingo das 09:00 às 14:00",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cantina-mamma-mia/575",
+      "source_id": "575",
+      "name": "CANTINA MAMMA MIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b80ff1ca8845703253b244d4ef59cc29-17-06-2025-16-43-37.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Rua. José Amador Léon, 51 - Santa Olivia, Marília - SP, 17502-070",
+      "phone": "",
+      "opening_hours": "De Segunda à sábado das 11:00h às 14:30h e das 18:00h às 23:00h e aos domingos das 11:00h às 14:30h. www.cantinamammamia.com.br",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/restaurante-do-italiano/522",
+      "source_id": "522",
+      "name": "RESTAURANTE DO ITALIANO",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/954c2a97a7209ec934e978d04ca620f1-16-06-2025-11-23-53.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Av. Santo Antônio n°260 - Boa Vista, Marília - SP. (14) 2030-0996 (14) 99606-9621",
+      "phone": "1420300996",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.instagram.com/restaurantedoitaliano/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/al-mirante/538",
+      "source_id": "538",
+      "name": "Al Mirante",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f48663f74d8e3a92542a65b6490ffac8-16-06-2025-14-00-50.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Av. Carlos Artêncio, 680 - Fragata, Marília - SP. (14) 99646-1827",
+      "phone": "14996461827",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.instagram.com/almirante.marilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/don-mantelli/539",
+      "source_id": "539",
+      "name": "Don Mantelli",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e794350ede3b8e054714af1fce62d51f-16-06-2025-14-19-37.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "",
+      "phone": "1433040007",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.instagram.com/donmantelli/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/o-forno-restaurante/540",
+      "source_id": "540",
+      "name": "O FORNO RESTAURANTE",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/9ed68c85a6a6d8b64b96a07b71a82110-16-06-2025-14-31-18.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Rua Álvares Cabral, 191 – Centro – Marília SP – (14) 3433 0001",
+      "phone": "1434330001",
+      "opening_hours": "Todos os dias das 07:00h às 13:00h e das 18:00h às 23:00h.",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/fire-garden/545",
+      "source_id": "545",
+      "name": "Fire Garden",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2a2e6e4ee0a48fa2e9734f33c41b4a2c-16-06-2025-16-08-42.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Av. Brg. Eduardo Gomes, 369 - Jardim Maria Izabel, Marília - SP. (14) 99132-6985",
+      "phone": "14991326985",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.instagram.com/firegardenoficial/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/casa-seixas/546",
+      "source_id": "546",
+      "name": "Casa Seixas",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/ec3fdd91a43ea18a4884899618ae41e1-19-08-2025-08-28-06.jpg",
+      "categories": [
+        "Restaurantes gourmet"
+      ],
+      "address_raw": "Av. Santo Antônio 28 - Boa Vista, Marília - (14) 99719-8844",
+      "phone": "14997198844",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.instagram.com/casa.seixas/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/stadium-lanches/723",
+      "source_id": "723",
+      "name": "Stadíum Lanches",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7fe1d28dd7d81fb947434b0f772e3ae2-07-07-2025-15-58-22.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. República, 5 - ap.2 loja 02 - Centro, Marília - SP, 17509-054. 14 3367-2568",
+      "phone": "1433672568",
+      "opening_hours": "De segunda a domingo das 18:00 às 03:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/stadium.lanches/",
+        "https://www.facebook.com/stadiumlanchonete/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/gauchos-burguer/621",
+      "source_id": "621",
+      "name": "Gaucho´s Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/aed7a6833a1237dbfa3726c751c95a87-01-07-2025-11-11-57.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua. XV de Novembro, 747 - Centro, Marília - SP, 17500-050 – 014 99631-7759.",
+      "phone": "14996317759",
+      "opening_hours": "De segunda a domingo 8:00 às 00:00.",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/vikings-burguer/622",
+      "source_id": "622",
+      "name": "Vikings Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/855ff53fa3906a4134f89e534331b754-01-07-2025-11-14-55.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua. Cel. Galdino de Almeida, 391 - Centro, Marília - SP, 17500-100 – 014 99147-2707.",
+      "phone": "14991472707",
+      "opening_hours": "De segunda a sábado 7:30 às 17:30.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/vikingsburguercafe/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/old-skull-rustic-burguer/623",
+      "source_id": "623",
+      "name": "Old Skull Rustic Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/c1024c6642a5af075faf536b647abcfb-01-07-2025-11-16-35.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua. Monte Carmelo, 612 - Fragata, Marília - SP, 17519-030 – 014 99144-1886.",
+      "phone": "14991441886",
+      "opening_hours": "De terça a domingo das 18:50 às 23:00",
+      "service_notes": "",
+      "links": [
+        "https://pedido.anota.ai/loja/oldskullrusticburguer-1?f=ms",
+        "https://www.instagram.com/oldskullrusticburguer/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/heaven-burguer/624",
+      "source_id": "624",
+      "name": "Heaven Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/5e7342e80635aa7dd4803f79f42a9ded-01-07-2025-11-21-00.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "R. Rio Grande do Sul, 511 - Cascata, Marília - SP, 17509-130 – 014 99786-6914.",
+      "phone": "14997866914",
+      "opening_hours": "De segunda a domingo das 18:30 às 23:30",
+      "service_notes": "",
+      "links": [
+        "https://heavenburguer.menudino.com/",
+        "https://www.instagram.com/heaven.burguer/",
+        "https://www.facebook.com/Heaven.barbecue/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/xullys-food--burguer/625",
+      "source_id": "625",
+      "name": "Xully’s Food & Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2063361c43670e9aeb95dd2e8fd89fa5-01-07-2025-11-22-37.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "",
+      "phone": "14997989553",
+      "opening_hours": "De segunda a sábado das 8:00 às 18:00",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/guimas-burguer/626",
+      "source_id": "626",
+      "name": "Guima´s Burguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/50817e67e031911ce974affd2494ba69-01-07-2025-11-25-52.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. República, 1142 - Palmital, Marília - SP, 17509-031 – 014 99796-8880.",
+      "phone": "14997968880",
+      "opening_hours": "De quinta a domingo das 19:00 à 01:00",
+      "service_notes": "",
+      "links": [
+        "https://www.facebook.com/guimasburguers/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sabores-do-mundo-hamburgueria/627",
+      "source_id": "627",
+      "name": "Sabores do Mundo Hamburgueria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/07936c69d2ad18e2ceab74525566ac4c-01-07-2025-11-27-18.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua. Amazonas, 344 - Centro, Marília - SP, 17509-120 – 014 99163-8748.",
+      "phone": "14991638748",
+      "opening_hours": "De segunda a domingo das 19:00 às 23:00 Terça feira fechado",
+      "service_notes": "",
+      "links": [
+        "https://instadelivery.com.br/saboresdomundohamburgueria",
+        "https://menu.ifood.com.br/c911d6df-d219-4083-b00e-a3e8c1a70a8b"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/burguer-do-casquinha/628",
+      "source_id": "628",
+      "name": "Burguer do Casquinha",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/60edec43540ddb3f602f00a555ddd12e-01-07-2025-11-29-09.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "",
+      "phone": "14998084481",
+      "opening_hours": "Consulta pelo site ou Instagram",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/burguerdocasquinha/",
+        "https://burgerdocasquinha.bypedi.com.br/@google"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/madero--jeronimo-burger-marilia/599",
+      "source_id": "599",
+      "name": "Madero & Jeronimo Burger Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/57545203b1ea564302cb95d2889fdeac-25-06-2025-11-51-31.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. da Saudade, 571 - Mirante, Marília - SP, 17521-460 – 014 3161-0399",
+      "phone": "1431610399",
+      "opening_hours": "De segunda a domingo das 11:30 às 23:00.",
+      "service_notes": "",
+      "links": [
+        "https://jeronimoburger.com.br/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bakos-hamburgueria/601",
+      "source_id": "601",
+      "name": "Bako´s Hamburgueria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/a27d03a4f64c85ad615aec13a3b7cb39-25-06-2025-15-34-17.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "R. Mato Grosso, 378 - Marília, SP, 17509-090 – 14 99618-2340.",
+      "phone": "14996182340",
+      "opening_hours": "Quarta a domingo das 18:30h às 23:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Retirada na porta.",
+      "links": [
+        "https://www.instagram.com/bakosmarilia/",
+        "https://www.facebook.com/bakosmarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/freakburguer/602",
+      "source_id": "602",
+      "name": "Freakburguer",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7baa6a3f8f5f0d189a8eed8bff0a1372-25-06-2025-15-35-34.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. Rio Branco, 658 - Alto Cafezal, Marília - SP, 17539-013 – 014 99811-1829.",
+      "phone": "14998111829",
+      "opening_hours": "De terça a domingo das 18:30 às 23:00. http://www.freakburguer.com.br/",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/dom-portuga-hamburgueria/603",
+      "source_id": "603",
+      "name": "Dom Portuga Hamburgueria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/19d905b03ea363cfc0e929ac75179727-25-06-2025-15-56-16.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "",
+      "phone": "14996730011",
+      "opening_hours": "Consulta pelo site.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/domportuga_/",
+        "https://instagram.com/domportuga_unidade2?igshid=MzMyNGUyNmU2YQ"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/qdb-grill/604",
+      "source_id": "604",
+      "name": "QDB GRILL",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/bb0f0b2415fefb23976ec62268980a47-25-06-2025-16-25-19.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua: Nove de Julho, N° 179 - Banzato, Marília - SP, 17515-150 – 014 99663-4311.",
+      "phone": "14996634311",
+      "opening_hours": "De quinta a domingo das 18:30 às 22:30.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/explore/locations/617323974949621/qdb-grill/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/ruffus-burguer-house/605",
+      "source_id": "605",
+      "name": "Ruffus Burguer House",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/48505cae0d8a3166dfe852238dfc116e-25-06-2025-16-49-01.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Rua. Cel. José Brás, 469 - Alto Cafezal, Marília - SP, 17501-570 – 014 3367-3002.",
+      "phone": "1433673002",
+      "opening_hours": "De domingo a quinta feira das 18:30 às 23:30. De sexta e sábado 18:30 à 00:30",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/ruffusburgerhouse/",
+        "https://www.facebook.com/RuffusBurgerHouse/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/burger-king/524",
+      "source_id": "524",
+      "name": "BURGER KING",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/607bd64e453f0e17b2917a032748707a-16-06-2025-11-54-58.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. Tiradentes, 1008 - Fragata, Marília - SP, 17519-000",
+      "phone": "",
+      "service_notes": "Opções de serviço",
+      "links": [
+        "https://www.burgerking.com.br/cardapio"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/mc-donalds/541",
+      "source_id": "541",
+      "name": "MC DONALD´S",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d1501aabe2e0cf167198346291b8f54c-16-06-2025-15-22-34.jpg",
+      "categories": [
+        "Hamburgueria"
+      ],
+      "address_raw": "Av. Tiradentes, 204 – Fragata – Marília SP – (14) 3454 6633",
+      "phone": "1434546633",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://www.mcdonalds.com.br/?utm_source=google&utm_medium=cpc&utm_campaign=food_ordering_deliveryMRD",
+        "https://api-mcd-ecommerce.appmcdonalds.com/qr?c=BR&r=MRD&utm_source=google&utm_medium=cpc&utm_campaign=food_ordering_mopMRD"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/grao-cafe--cafeteria/945",
+      "source_id": "945",
+      "name": "Grão Café – Cafeteria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f83ba0c6d55bee4d601bf6a790eafab9-04-09-2025-11-54-54.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Alfredo Augusto de Araújo, 153 - Parque São Jorge, Marília - SP, 17520-260",
+      "phone": "14997151501",
+      "opening_hours": "De segunda a sábado das 09:00 às 19:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/graocafe_cafeteria/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bom-dia---emporio-e-cafeteria/946",
+      "source_id": "946",
+      "name": "Bom Dia - Empório e Cafeteria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/4c8be80dbf46dd6d4af4a24dbe589633-04-09-2025-16-03-12.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Paulino da Silva Lavandeira, 232 - Fragata, Marília - SP, 17501-250",
+      "phone": "14997529331",
+      "opening_hours": "De segunda a sábado das 07:00 às 20:00 Domingo 07:00 a 12:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/emporio.bomdia/?hl=pt",
+        "https://www.facebook.com/people/Bom-Dia-Emp%C3%B3rio-Cafeteria/61572309980054/#"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/dell-cafe-sucos-e-salgados/870",
+      "source_id": "870",
+      "name": "Dell Café Sucos e Salgados",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/77f57adbb0c9cf4ed11c0694635acc15-15-08-2025-10-47-59.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Nove de Julho, 1023 - Centro, Marília - SP, 17500-120 – 014 3454-1552 14 99126-5337.",
+      "phone": "1434541552",
+      "opening_hours": "De segunda a sábado feira das 07:30 às 18:00.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/cafe.dell/",
+        "https://www.facebook.com/dellcafe/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-ulltra/871",
+      "source_id": "871",
+      "name": "Café Ulltra",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/0d90e5d52671b770b2bad2924d0415f4-15-08-2025-11-32-25.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Rio Branco, 841 - Alto Cafezal, Marília - SP, 17502-000 014 99830-5793",
+      "phone": "14998305793",
+      "opening_hours": "De segunda a sexta feira das 07:00 às 19:00. Aos sábados 08:00 as 12:00.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/ulltracafe/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafezin-cafeteria/873",
+      "source_id": "873",
+      "name": "Cafezin Cafeteria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/ef5438ac374dfe967c7cd583e568145b-15-08-2025-12-01-56.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Dr. Thimo Bruno Belucci, 255, 17.507, 400 - loja 15 - Santa Tereza, Marília - SP, 17507-400 Dentro do Confiança Aquarius.",
+      "phone": "14981347659",
+      "opening_hours": "Aberto todos os dias das 08:00 às 20:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/cafezin_cafeteria/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-sao-bento/874",
+      "source_id": "874",
+      "name": "Café São Bento",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/36488137fa9ac1ea211d3ae5a6d02e1f-15-08-2025-13-40-02.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Nove de Julho, 729 - Centro, Marília - SP, 17509-110",
+      "phone": "",
+      "opening_hours": "De segunda a sexta feira das 07:00 às 17:00 Sábado das 07:00 às 14:30",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-cb-to-go-marilia/875",
+      "source_id": "875",
+      "name": "Café CB to Go Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/ed9d393973158aadb299449785a2f7f9-15-08-2025-13-43-33.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Quatro de Abril, 474 - Centro, Marília - SP, 17500-011 014 99189-5885",
+      "phone": "14991895885",
+      "opening_hours": "De segunda a sexta feira das 08:00 às 18:00 Sábado das 08:00 às 12:00",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-do-douglas/876",
+      "source_id": "876",
+      "name": "Café do Douglas",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/490918b55b1d6319a07a8f25bd163be7-15-08-2025-13-59-13.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "R. Dom Pedro II, 228 - Centro, Marília - SP, 17500-110 014 99809-8564",
+      "phone": "14998098564",
+      "opening_hours": "De segunda a sexta feira das 08:00 às 18:30 Sábado das 08:00 às 15:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/cafedodouglas/",
+        "https://www.facebook.com/djrcafee/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/coffees-a-casa-do-cafe/877",
+      "source_id": "877",
+      "name": "Coffee`s a Casa do Café",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b2156916867e7d19a35f96314c965213-15-08-2025-14-12-44.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "",
+      "phone": "1434323870",
+      "opening_hours": "De segunda a sexta feira das 10:00 às 2:00 Sábado e domingo das 13:00 às 19:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/coffeesbr/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/go-coffee--marilia/596",
+      "source_id": "596",
+      "name": "GO COFFEE – MARÍLIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2c9ff388fbf5dfea3c3cc2fccea5c804-25-06-2025-10-17-03.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. José Alberto Gonçalves, 120 - MARIA IZABEL, Marília - SP, 17516-330 – 014 99859-1213.",
+      "phone": "14998591213",
+      "opening_hours": "De segunda a sábado feira das 08:30 às 19:00.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/lojagocoffee.marilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/caroll-cafe/597",
+      "source_id": "597",
+      "name": "Caroll Café",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/83fc545bd2a3068a56f767f46144c4e6-25-06-2025-10-18-23.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. Bororós, 111 - Sen. Salgado Filho, Marília - SP, 17502-560 – 014 3413-8033.",
+      "phone": "1434138033",
+      "opening_hours": "De segunda a sexta feira das 08:00 às 17:30. http://www.facebook.com.br/cafecarolmarilia",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-do-feirante/587",
+      "source_id": "587",
+      "name": "Café do Feirante",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/3a9e44833d13ea94a3573520f5323021-24-06-2025-16-32-03.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Carlos Pavarini, 233 - Loja 15 - Parque das Indústrias, Marília - SP, 17519-680 - 014 3367-0657.",
+      "phone": "1434323605",
+      "opening_hours": "Consultar pelo site",
+      "service_notes": "",
+      "links": [
+        "https://www.facebook.com/cafedofeirantesaoluiz",
+        "https://www.instagram.com/cafedofeirantehc/",
+        "https://www.facebook.com/cafedofeiranteconfianca/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/orly-bagueteria/588",
+      "source_id": "588",
+      "name": "Orly Bagueteria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/84d83ca5667c6b972ff5cd834f3cc697-24-06-2025-16-34-47.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. Paes Leme, 88 - Centro, Marília - SP, 17500-150 – 014 3413-8488",
+      "phone": "1434138488",
+      "opening_hours": "De segunda a sábado das 06:30 às 22:00. http://facebook.com/orlybagueteria",
+      "service_notes": "",
+      "links": [
+        "https://facebook.com/orlybagueteria"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/wod-cafe/589",
+      "source_id": "589",
+      "name": "WOD Café",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/013f6d837915a9563c85a5d0d10c5881-24-06-2025-16-36-40.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Carlos Gomes, 462 - Centro, Marília - SP, 17501-000 – 014 99649-2549",
+      "phone": "14996492549",
+      "opening_hours": "De segunda a sexta feira das 08:00 às 18:00. Aos sábados das 08:00 às 12:00",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pura-beach-cafe/590",
+      "source_id": "590",
+      "name": "Pura Beach Café",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1d1212d9d771eeabb84015ee7b755fd4-24-06-2025-16-38-07.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Jesus Montolar, 1200 L - Fragata, Marília - SP, 17519-211 – 014 99904-0828",
+      "phone": "14999040828",
+      "opening_hours": "De segunda a sexta feira das 07:00 às 22:00. Aos sábados das 08:00 às 20:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/purabeachcafe/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/terrazzo-marilia/591",
+      "source_id": "591",
+      "name": "Terrazzo Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/4752396381bf348085a66ebe78bd7c27-24-06-2025-16-40-49.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. das Esmeraldas, 2333 - Parque das Esmeraldas, Marília - SP, 17516-000 – 014 99750-7337",
+      "phone": "14997507337",
+      "opening_hours": "De segunda a domingo das 07:00 às 22:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/terrazzomarilia?igsh=eHVsOTh3bXI4N3hu"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/juliana-iori-doces-cafe-e-bistro/592",
+      "source_id": "592",
+      "name": "Juliana Iori Doces, Café e Bistrô",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e889fa5787a567d45019a83087cf44c5-24-06-2025-16-42-39.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. dos Bancários, 443 - Jardim Maria Izabel, Marília - SP, 17516-032 – 014 99629-6003",
+      "phone": "14996296003",
+      "opening_hours": "De segunda a sexta feira das 11:30 às 19:30. Aos sábados das 08:30 às 18:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/iorijuliana"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/santo-espresso/593",
+      "source_id": "593",
+      "name": "Santo Espresso",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/5f1ea3bcd118de72db28c5945425f820-24-06-2025-16-56-25.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. dos Bancários, 287 - Jardim Maria Izabel, Marília - SP, 17516-032 – 014 99188-5996",
+      "phone": "14991885996",
+      "opening_hours": "De segunda a sexta feira das 08:30 às 11:30 e das 13:30 às 18:30. Aos sábados das 08:00 à 12:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/santoespressocafe/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/hachimitsu/564",
+      "source_id": "564",
+      "name": "Hachimitsu",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/635b8bc2721792b0b2e5533b7e7d8e7b-17-06-2025-09-06-48.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Av. Jesus Montolar, 1200 - Parque das Industrias, Marília - SP (14) 2030-0701",
+      "phone": "1420300701",
+      "service_notes": "Opções de serviço",
+      "links": [
+        "https://www.instagram.com/hachimitsumarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/grappa-caffe/525",
+      "source_id": "525",
+      "name": "GRAPPA CAFFÉ",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/83b88d331e0e9e45d05d53d1397e6554-25-06-2025-08-40-34.jpg",
+      "categories": [
+        "Cafeterias"
+      ],
+      "address_raw": "Rua. Álvares Cabral, 351 - Centro, Marília - SP, 17501-100 – 014 3367-3761",
+      "phone": "1433673761",
+      "opening_hours": "De segunda a sábado das 08:00 às 19:00.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/grappacaffe/?hl=pt"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/la-bamba-food/543",
+      "source_id": "543",
+      "name": "La Bamba Food",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/296bbd6217a13220c17c408ae481e9e0-16-06-2025-15-48-47.jpg",
+      "categories": [
+        "Restaurantes mexicanos"
+      ],
+      "address_raw": "Av. Rio Branco, 1266 - Alto Cafezal, Marília – SP - (14) 99800-2021.",
+      "phone": "14998002021",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem. E Compra:",
+      "links": [
+        "https://www.ifood.com.br/delivery/marilia-sp/nabrasa-restaurante-e-churrascaria-alto-cafezal/24649301-c773-436d-98a8-449204e14721?utm_medium=ReserveGoogle",
+        "https://www.instagram.com/labamba.food/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/chilis-tex-mex-comida-mexicana/544",
+      "source_id": "544",
+      "name": "Chili´s tex mex (Comida mexicana)",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/59e859aaecf8ee1bef5c0c762f0908dd-16-06-2025-15-52-22.jpg",
+      "categories": [
+        "Restaurantes mexicanos"
+      ],
+      "address_raw": "Rua Nicola Ricci, 310 - Polon, Marília - SP, 17507-210 – (14) 99866-6398.",
+      "phone": "14998666398",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem. E Compra:",
+      "links": [
+        "https://www.ifood.com.br/delivery/marilia-sp/nabrasa-restaurante-e-churrascaria-alto-cafezal/24649301-c773-436d-98a8-449204e14721?utm_medium=ReserveGoogle",
+        "https://www.instagram.com/chili_stexmex/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/ting-thai/745",
+      "source_id": "745",
+      "name": "Ting Thai",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/12aa4f07c52795f27781d06cbc6d1ecd-14-07-2025-16-32-25.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Vicente Ferreira, 533 Cascata, Marília – SP, 17515-000.",
+      "phone": "14997625999",
+      "opening_hours": "Terça a Domingo das 18:00h às 22:00h. Sexta feira e Sábado até 23:00h",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/tingthai_delivery/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sugoi-kansha-restaurante-japones/555",
+      "source_id": "555",
+      "name": "SUGOI KANSHA RESTAURANTE JAPONÊS",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f0e3c1cf4c0990b23e2c6c2d6d2300a6-17-06-2025-08-24-45.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Rio Branco, 594 – Alto Cafezal – Marília SP – (14) 3316 2533",
+      "phone": "1433162533",
+      "opening_hours": "Segunda a quarta-feira das 19:00h às 23:00h, quinta, sexta e sábado das 19:00h às 23:00h. http://www.sugoikansha.com/",
+      "service_notes": "Opções de serviço: Refeição no local · Drive-through.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/mr-chang-comida-chinesa-delivery/556",
+      "source_id": "556",
+      "name": "Mr Chang Comida Chinesa Delivery",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/3d0e67bc052ef88be3e944f2a39b0acc-17-06-2025-08-26-27.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Rua. Vinte e Quatro de Dezembro, 1574 - Alto Cafezal, Marília - SP, 17504-010 – (14) 3413-1115.",
+      "phone": "1434131115",
+      "opening_hours": "Terça a domingo das 11:00h às 14:00h , 18:00 às 22:00h http://www.mrchang.com.br/",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/yakitai-yakisoba-delivery-marilia/557",
+      "source_id": "557",
+      "name": "Yakitai Yakisoba Delivery Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b8302cf489df123da2aa3db2beaee4d9-17-06-2025-08-28-42.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Rua. XV de Novembro, 860 - Centro - Centro, Marília - SP, 17500-050 – (14) 99111-7203.",
+      "phone": "14991117203",
+      "opening_hours": "Segunda a sábado das 11:00h às 14:00h, 18:00 às 22:00. http://www.yakitaimarilia.com.br/",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/daruma-temaki-roll---restaurante-japones/558",
+      "source_id": "558",
+      "name": "Daruma Temaki Roll - Restaurante Japonês",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/3b3937cd45fb28c9d6ace93c2f7cdde4-17-06-2025-08-30-37.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Rua. Pedro Preti, 6 - Jardim Maria Izabel, Marília - SP, 17516-340 – (14) 3434-0044.",
+      "phone": "1434340044",
+      "opening_hours": "Segunda a domingo das 18:00h às 23:30h. http://darumatemakirolls.com.br/",
+      "service_notes": "Opções de serviço: Refeição no local · Retirada na porta.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/buddha-sushi/559",
+      "source_id": "559",
+      "name": "Buddha Sushi",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/44aa275068ab58e6faadf15cca2a929f-17-06-2025-08-32-51.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 45A - Centro, Marília - SP, 17525-040 – (14) 99733-2025.",
+      "phone": "14997332025",
+      "opening_hours": "Terça a domingo das 19:00h às 23:00h.",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://app.cardapioweb.com/buddha_sushi?fbclid=PAZXh0bgNhZW0CMTEAAaaGYwZOgUGanoPa2ip1x_DlwzRHEZNFnloX8om_gWJSaOO543esuARvbak_aem_I6r0Q4zSx14jvTK5kr0VCA"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/japakitos---restaurante-japones/560",
+      "source_id": "560",
+      "name": "JapaKitos - Restaurante Japonês",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/5623c615e943ec017ceb348eec6b7f9e-17-06-2025-08-34-47.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "R. Dr. Reinaldo Machado, 178 - Fragata, Marília - SP, 17509-200 – (14) 99126-9856.",
+      "phone": "14991269856",
+      "opening_hours": "Segunda a sexta feira das 11:00h às 14:00h , 18:30 Sábado das às 18:00 às 22:30.",
+      "service_notes": "Opções de serviço:",
+      "links": [
+        "https://japakitos.pedidosite.com.br/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/casa-do-yakisoba-marilia/561",
+      "source_id": "561",
+      "name": "Casa do Yakísoba Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/92990c3457a9e301546f2d5758de13c8-17-06-2025-08-37-27.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Santo Antônio, 3752, CEP. 17507-220 - Santa Tereza - Marília – SP – (14) 99837-9801 (14) 9960-09526",
+      "phone": "14998379801",
+      "opening_hours": "Segunda a domingo das 18:30h às 23:30h.",
+      "service_notes": "Opções de serviço",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sushi-alpha-marilia/562",
+      "source_id": "562",
+      "name": "SUSHI ALPHA MARILIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d9f10bd809b7322ba6cafb69a2d69400-17-06-2025-08-39-39.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Tiradentes, 184 - Fragata, Marília - SP, 17501-330 – (14) 99822-9078.",
+      "phone": "14998229078",
+      "opening_hours": "Terça a quinta das 18:00h às 23:00h – sexta a domingo das 18:00 às 00:00.",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/sushialphamarilia/?hl=pt"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/maad-sushi/563",
+      "source_id": "563",
+      "name": "MAAD SUSHI",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/04ebab139f2530fe7f05ba2a61945278-17-06-2025-08-41-39.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "R. Bandeirantes, 284 - Centro, Marília - SP, 17501-090 – (14) 92002-1219.",
+      "phone": "14920021219",
+      "opening_hours": "Segunda a domingo das 18:00h às 23:00h.",
+      "service_notes": "Opções de serviço",
+      "links": [
+        "https://www.instagram.com/maad_sushi/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bento-sushi/547",
+      "source_id": "547",
+      "name": "Bentô Sushi",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/49ca26079cd078a31bf7d5511c7306e6-16-06-2025-16-20-24.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Avenida Santo Antônio, 929 - (14) 3221-6522.",
+      "phone": "1432216522",
+      "service_notes": "",
+      "links": [
+        "https://www.facebook.com/bento.mariliasp/",
+        "https://deliveryoriental.com.br/bentosushimarilia"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sakura-oriental-gourmet/548",
+      "source_id": "548",
+      "name": "Sakurá Oriental Gourmet",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7f81f9ebe5d1cad1adcd367ac2b0254b-16-06-2025-16-24-10.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Rua. Álvares Cabral, 426 - Centro, Marília - SP, 17501-100 – (14) 99869-6465.",
+      "phone": "14998696465",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/kozan-restaurante-japones/549",
+      "source_id": "549",
+      "name": "KOZAN RESTAURANTE JAPONÊS",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/059e94871320cad87fb05f6abc445ad7-16-06-2025-16-26-05.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Av. Presidente Roosevelt, 190 – Boa Vista – Marília SP – (14) 3413 6607",
+      "phone": "1434136607",
+      "opening_hours": "Segunda a domingo das 12:00h às 14:30h e das 18:00h às 22:45h",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.google.com/search?q=kosan&rlz=1C1AVFA_enBR810BR819&oq=kosan&aqs=chrome..69i57j0i10i433j0j46i10j0j0i10j46i10i175i199j0i10l3.7367j0j7&sourceid=chrome&ie=UTF-8",
+        "https://www.instagram.com/kozansushimarilia/",
+        "https://www.kozan.com.br/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/muralha-restaurante-chines/550",
+      "source_id": "550",
+      "name": "MURALHA RESTAURANTE CHINÊS",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/73569324feb0b870825566d6809e070a-16-06-2025-16-28-36.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "R. Dr. Joaquim de Abreu Sampaio Vidal, 101 - Alto Cafezal, Marília - SP, 17504-400 – (14) 3433 3562.",
+      "phone": "1434333562",
+      "opening_hours": "Segunda das 11:00h às 14:00h , 18:30 às 23:00h, Terça-feira fechado",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.facebook.com/Restaurante-Muralha-Mar%C3%ADlia-1494447107469075/timeline/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sushimaki-temaki--rolls/552",
+      "source_id": "552",
+      "name": "SUSHIMAKI TEMAKI & ROLL´S",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/79327912a4a80abc87323a03d1389d17-16-06-2025-16-51-08.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Avenida das Esmeraldas, 31 - Jardim Tangara Marília – SP - (14) 3453-2210",
+      "phone": "1434532210",
+      "opening_hours": "Segunda a sábado das 18:00h às 00:00h http://www.sushimaki.net.br/",
+      "service_notes": "Opções de serviço: Refeição no local · Retirada na porta.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sushimaki/553",
+      "source_id": "553",
+      "name": "SUSHIMAKI",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/65fb1e2c542f2b0154269022ac1b7fb7-16-06-2025-16-52-49.jpg",
+      "categories": [
+        "Restaurantes orientais"
+      ],
+      "address_raw": "Rua. General Osório, 22 - Alto Cafezal, Marília - SP, 17502-570 – (14) 99909-0831.",
+      "phone": "14999090831",
+      "opening_hours": "Segunda a sábado das 19:00h às 23:30h",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://loja.neemo.com.br/sushimaki"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/chaplin/569",
+      "source_id": "569",
+      "name": "CHAPLIN",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/6dcdf475cd04b4a1ecd5909a4e37821d-17-06-2025-14-26-37.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. República, 129 – Cascata – Marília SP – (14) 3413 2411",
+      "phone": "1434132411",
+      "opening_hours": "De quarta à sexta das 17:00h às 23:00h Sábados, domingos das 11:00h às 23:00h.",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cafe-do-lado-bar--bistro/872",
+      "source_id": "872",
+      "name": "Café do Lado Bar & Bistro",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1112f48cf0cc2724482317d3561be272-15-08-2025-11-34-18.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. das Esmeraldas, 11 - Jardim Tangara, Marília - SP, 17516-000 014 3414-1779 Reservas: (14) 981232185",
+      "phone": "1434141779",
+      "opening_hours": "De segunda e terça feira das 18:30 às 23:00 De quarta feira a sexta feira das 11:00 às 14:00 / 18:30 às 23:00",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/cafedolado/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/casa-da-sogra---petiscaria/842",
+      "source_id": "842",
+      "name": "Casa da Sogra - Petiscaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2e7c0c97e2f0e253214810eedecfaffc-11-08-2025-08-08-07.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "R. São Paulo, 128 - Marília, SP, 17509-190 – 014 99743-5176.",
+      "phone": "14997435176",
+      "opening_hours": "De segunda a sábado das 17:00 à 00:00.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/casadasograpetiscaria/",
+        "https://www.facebook.com/p/Casa-da-Sogra-Petiscaria-100087765877340/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/lounge-277/837",
+      "source_id": "837",
+      "name": "Lounge 277",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2c750161d3e7cdfffb9c52b09fbace8e-08-08-2025-13-51-23.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Rua Rio Grande do Sul, 278 - Marília SP - (14) 99704-0277",
+      "phone": "14997040277",
+      "opening_hours": "Domingos a quinta das 18:00h às 00:00h. Sexta a sábado das 18:00 às 01:30h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/lounge277/",
+        "https://www.facebook.com/facelounge277/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/lupuleira-cervejaria/838",
+      "source_id": "838",
+      "name": "Lupuleira Cervejaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/ceb06ea3c72dad933ebf6b233dbc6b77-08-08-2025-14-05-03.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 71a - Centro, Marília - SP, 17501-441 – 014 99787-9513.",
+      "phone": "14997879513",
+      "opening_hours": "Quarta feira a Sábado das 18:00h às 00:00h.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/lupuleiracervejaria/",
+        "https://www.facebook.com/lupuleiracervejaria/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/paiol-cervejaria-e-petiscaria/839",
+      "source_id": "839",
+      "name": "Paiol Cervejaria e Petiscaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1f34e573b0b3078b39e72efa14cb7e4e-08-08-2025-14-24-57.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Rua. Bahia, 682 - Cascata, Marília - SP, 17509-150 – 014 3367-4044",
+      "phone": "1433674044",
+      "opening_hours": "Terça a Quinta feira das 17:00 à 00:00. Sexta feira e Sábado das 17:00 à 01:00.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/paiol_marilia/",
+        "https://www.facebook.com/paiolcervejariaepetiscaria/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/xeque-mate/840",
+      "source_id": "840",
+      "name": "Xeque-Mate",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f2c5bf83e712ab11aa6fea190eb0f8e2-08-08-2025-14-50-36.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. da Saudade, 1374 - Mirante, Marília - SP, 17521-460 – 14 9867-3473",
+      "phone": "1498673473",
+      "opening_hours": "Terça a Quinta feira das 19:00 à 00:00. Sexta feira e Sábado das 19:00 às 02:00.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/xeque_mate_retro_bar/",
+        "https://www.facebook.com/XequeMateRetroBar/?ref=_xav_ig_profile_page_web#"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bar-santa-madalena/841",
+      "source_id": "841",
+      "name": "Bar Santa Madalena",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7e2a2defa416d72f506453b5a1e7aa0e-08-08-2025-15-11-57.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. das Esmeraldas, 127 - Jardim Tangara, Marília - SP, 17516-000 – 014 3434-0316.",
+      "phone": "1434340316",
+      "opening_hours": "Quarta a Sexta feira das 19:00 à 01:00. Aos Sábados das 19:00 às 03:00.",
+      "service_notes": "Opções de serviço: Refeição no local · Para viagem.",
+      "links": [
+        "https://www.instagram.com/barsantamadalena/",
+        "https://www.facebook.com/barsantamadalena/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/cupim-bar-e-restaurante/570",
+      "source_id": "570",
+      "name": "CUPIM BAR E RESTAURANTE",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b7b6890c643d728a5c40b43d67fdbec3-17-06-2025-14-38-15.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. Presidente Roosevelt, 4 – Boa Vista – Marília SP – (14) 3454 2361",
+      "phone": "1434542361",
+      "opening_hours": "De segunda a sábado das 10:00h às 00:00h Domingos das 10:00h às 23:00h.",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/agua-doce-cachacaria/571",
+      "source_id": "571",
+      "name": "ÁGUA DOCE CACHAÇARIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/463b7c1e475f6534c12e7c207912c222-17-06-2025-14-53-20.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 115 A – Barbosa – Marília SP – (14) 3301 2587",
+      "phone": "1433012587",
+      "opening_hours": "De terça à sexta das 18:00h às 23:00h, sábados das 12:00h às 23:00h, e nos domingos das 11:30h às 15:00h. www.aguadoce.com.br",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/esquina-do-portuga/572",
+      "source_id": "572",
+      "name": "ESQUINA DO PORTUGA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2d109645a2dd6a348e772afa3d28566f-17-06-2025-15-08-15.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Rua 7 de Setembro, 387 – Boa Vista – Marília SP – (14) 3433-4159",
+      "phone": "1434334159",
+      "opening_hours": "De segunda à sexta das 18:00h às 00:00h aos Sábados das 12:00h às 00:00h e nos Domingos das 16:00 às 23:00h. www.bardoportugues.com.br",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bar-do-amorim/573",
+      "source_id": "573",
+      "name": "Bar do Amorim",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1fe4f0a116c7bf2885ac6d91cd8e8dd9-17-06-2025-15-32-55.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "R. Júlio de Mesquita, 582 - Jardim Maria Izabel, Marília - SP, 17515-230 - 14 99694-3024",
+      "phone": "14996943024",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/doctor-beer/574",
+      "source_id": "574",
+      "name": "DOCTOR BEER",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/cf87686679354b2eb7c82c86c1365838-17-06-2025-15-43-47.jpg",
+      "categories": [
+        "Gastronomia e entretenimento"
+      ],
+      "address_raw": "Av. Rio Branco, 1331 – Alto Cafezal – Marília SP – (14) 3422 5078-",
+      "phone": "1434225078",
+      "opening_hours": "Quarta, quinta, sexta e sábado das 18:00h à 01:00h. www.doctorbeerstore.com.br",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/restaurante-recanto-da-roca/583",
+      "source_id": "583",
+      "name": "Restaurante Recanto da Roça",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1fe5bb92a174050eea069b1bfbccb1db-23-06-2025-10-57-40.jpg",
+      "categories": [
+        "Restaurantes rurais"
+      ],
+      "address_raw": "Endereço: Rodovia Rachide Raies, SP 333, km 350 (14) 99620-2345",
+      "phone": "14996202345",
+      "opening_hours": "Aberto de segunda à sexta-feira, das 11h30m às 15h e aos domingos das 12h às 15h30 Instagram: @comidamineira_recantodaroca",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/aeros-bar-pizzaria-e-videoke/947",
+      "source_id": "947",
+      "name": "Aeros Bar Pizzaria e Vídeokê",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e9ee1754f8c45599a45490c9a9364f76-05-09-2025-16-32-09.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Nelson Spielmann, 17 - Marília, SP, 17509-150 – 014 99779-9321",
+      "phone": "14997799321",
+      "opening_hours": "De Domingo à quinta feira das 17:30 às 23:00 Sexta feira e sábado das 17:30 à 01:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/aerospizzaria/",
+        "https://www.facebook.com/AerosBar/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-do-ito/830",
+      "source_id": "830",
+      "name": "Pizzaria do Ito",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/27348e1594c8368c27d9918122f25b5d-06-08-2025-08-24-16.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "R. Jácomo Zanga, 173 - Jardim Parati, Marília - SP, 17519-510 – 014 3417-5050 14 3417-3656",
+      "phone": "1434175050",
+      "opening_hours": "Terça a domingo das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-do-ze/831",
+      "source_id": "831",
+      "name": "Pizzaria do Zé",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d356c33d801aa2e48f9ceb133b34dd21-06-08-2025-08-43-25.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Castro Alves, 601 - São Miguel, Marília - SP, 17506-000 – 014 99717-0564.",
+      "phone": "14997170564",
+      "opening_hours": "Terça a domingo das 18:00 às 01:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/pizzariadozemarilia/",
+        "https://www.facebook.com/p/Pizzaria-do-Z%C3%A9-100063996374462/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-casa-da-pizza-cascata/832",
+      "source_id": "832",
+      "name": "Pizzaria Casa da Pizza Cascata",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/376b337529d7857c2c1a14500cdf7f38-06-08-2025-09-14-33.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. República, 2859 - Palmital, Marília - SP, 17510-402 – 014 3454-5802.",
+      "phone": "1434545802",
+      "opening_hours": "Terça a quinta feira das 17:45 às 23:45 Sexta e sábado das 17:45 às 00:30",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/pizzariacascata.marilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/beliscao-lanches-e-pizzas/833",
+      "source_id": "833",
+      "name": "Beliscão Lanches e Pizzas",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/52cb50f6d41b6ddc7f9017e26ac9556b-06-08-2025-09-30-56.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Pedro de Toledo, 2632 - Palmital, Marília - SP, 17510-170 – 014 3413-2743.",
+      "phone": "1434132743",
+      "opening_hours": "Terça a quinta feira das 18:00 às 02:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/beliscao.lanches.e.pizzas/",
+        "https://www.facebook.com/Beliscaomariliaoficial/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/rei-dos-mares-pizzaria-e-hamburgueria/834",
+      "source_id": "834",
+      "name": "Rei dos Mares Pizzaria e Hamburgueria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/675ad56e58973150c4c44ef809060cfd-06-08-2025-10-03-02.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Rua. Antônio Galina, 250 - Jardim Portal do Sol, Marília - SP, 17519-320 - (14) 99658-5578 14 3333-0099",
+      "phone": "14996585578",
+      "opening_hours": "Terça a domingo das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/reidosmarespizzaria/",
+        "https://www.facebook.com/reidosmarespizzaria/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/o-forno-restaurante-e-pizzaria/819",
+      "source_id": "819",
+      "name": "O FORNO RESTAURANTE E PIZZARIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/59da591d3a017790556f4d80c988651f-05-08-2025-11-52-16.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Rua. Álvares Cabral, 191 - Centro, Marília - SP, 17501-100 – 014 3433-0001",
+      "phone": "1434330001",
+      "opening_hours": "Todos os dias das 17:00 às 00:00",
+      "service_notes": "Opções de serviço: Self-service de opções caseiras com circulação de espetos de carnes variadas em espaço informal com sacada.",
+      "links": [
+        "https://www.instagram.com/oforno.marilia/",
+        "https://www.facebook.com/Ofornopizzariabar/photos/a.3746914235343717/4157468550954948/?type=3&source=48&_rdr"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/porto-pizzaria/820",
+      "source_id": "820",
+      "name": "Porto Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/7e7511844d6a14e8b570bf9059cda1e2-05-08-2025-12-09-44.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "",
+      "phone": "1433673065",
+      "opening_hours": "Todos os dias das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/porto.pizzaria/",
+        "https://www.https:/www.instagram.com/porto.pizzaria/instagram.com/portoaquarius/",
+        "https://www.facebook.com/portopizzariamarilia/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/fast-telepizza/822",
+      "source_id": "822",
+      "name": "Fast Telepizza",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/bcf788905e434380fdefe810ba547411-05-08-2025-14-07-25.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "",
+      "phone": "1434177353",
+      "opening_hours": "Todos os dias das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://fasttelepizza.wabiz.delivery/",
+        "https://fasttelepizza.wabiz.delivery/",
+        "https://www.instagram.com/fasttelepizza/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/casa-nossa-pizza-lanche--chinelao/823",
+      "source_id": "823",
+      "name": "Casa Nossa Pizza, Lanche & Chinelão",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/775f1676a43ae4206d0a3daa02211197-05-08-2025-15-09-49.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Rua Thomaz Alcalde, 759 - Prolongamento Palmital, Marília - SP, 17511-342 – 014 99745-3823.",
+      "phone": "14997453823",
+      "opening_hours": "Todos os dias das 17:30 às 00:00",
+      "service_notes": "Opções de serviço: Cardápio de pizzas caseiras e sanduíches, refrigerantes e cervejas, espaço simples e familiar.",
+      "links": [
+        "https://www.instagram.com/casanossamarilia/",
+        "https://www.facebook.com/casanossamarilia/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/castelli-pizzas-e-lanches/824",
+      "source_id": "824",
+      "name": "Castelli Pizzas E Lanches",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2c3efa4e70a93026b9700a12370ce112-05-08-2025-15-26-09.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. João Martins Coelho, 1984 - Jardim Santa Antonieta, Marília - SP, 17512-310 – 014 3481-8339 014 99681-8339.",
+      "phone": "1434818339",
+      "opening_hours": "Todos os dias das 17:30 às 01:00",
+      "service_notes": "Opções de serviço: Cardápio de pizzas caseiras e sanduíches, além de cervejas, em espaço com decoração simples e delivery.",
+      "links": [
+        "https://www.instagram.com/castellipizzaselanches/",
+        "https://www.facebook.com/castellipizzaselanches/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/jp-pizzaria/825",
+      "source_id": "825",
+      "name": "JP Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/25586d3eb55248ea0db798b19e03fdef-05-08-2025-15-45-03.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Rua. Benedito Alves Delfino, 432 - Distrito Industrial, Marília - SP, 17512-043 – 014 99824-1002 014 3367-4867 - 014 3417-5831.",
+      "phone": "14998241002",
+      "opening_hours": "De terça a domingo das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/jppizzaria/",
+        "https://pt-br.facebook.com/JpPizzaria/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-piscuila/826",
+      "source_id": "826",
+      "name": "PIZZARIA PISCUILA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/690a305d3666c0af8c42993a16a14a32-05-08-2025-15-55-08.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Santo Antônio, 2260 - Boa Vista, Marília - SP, 17506-240 – 014 3433-6151 014 99906-6151.",
+      "phone": "1434336151",
+      "opening_hours": "Todos os dias das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/pizzariapiscuila/",
+        "https://www.facebook.com/piscuilapizzaria/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-dom-dinho/827",
+      "source_id": "827",
+      "name": "Pizzaria Dom Dinho",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d375e7ea0dba154f6546e22c4e55c647-05-08-2025-16-06-45.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. República, 2694 - Palmital, Marília - SP, 17510-402 – 014 3433-2909 014 99800-2909.",
+      "phone": "1434332909",
+      "opening_hours": "Terça a domingo das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/domdinhopizzaria/",
+        "https://www.facebook.com/p/Dom-Dinho-Mar%C3%ADlia-100063593229661/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-tradicao-paulista/828",
+      "source_id": "828",
+      "name": "Pizzaria Tradição Paulista",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e0a8f8d9c92cd16933261881a6552068-05-08-2025-16-21-47.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "R. Maj. Eliziário de Camargo Barbosa, 215 - Hipica Paulista, Marília - SP, 17520-510 – 014 3417-7276 014 99853-9655.",
+      "phone": "1434177276",
+      "opening_hours": "Terça a domingo das 18:00 às 00:00",
+      "service_notes": "Opções de serviço: Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/tradicao.paulista/",
+        "https://www.facebook.com/tradicaopta/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sos-pizzas/816",
+      "source_id": "816",
+      "name": "SOS Pizzas",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1818e47ad6cc4bd90793009f66d44c1a-04-08-2025-16-20-40.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. José Carlos Sanches Cibantos, 450 - 4 - Jardim Aquarius, Marília - SP, 17507-395 –",
+      "phone": "1434222300",
+      "opening_hours": "Segunda a sábado 18:00 às 00:30.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/buga-pizzaria/817",
+      "source_id": "817",
+      "name": "Buga Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/84b4f114b08545c48300f6d5c77f6d57-04-08-2025-16-29-20.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Rio Branco, 585 - Centro, Marília - SP, 17500-090 – 14 99772-7333.",
+      "phone": "14997727333",
+      "opening_hours": "Terça a domingo das 18:00 às 23:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.facebook.com/bugapizzaria/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizza-canoa/818",
+      "source_id": "818",
+      "name": "Pizza Canoa",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b9797d086fadbdbe9f22c1e583b59475-04-08-2025-16-46-22.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Pedro de Toledo, 2700 - Palmital, Marília - SP, 17510-170 – 014 99822-5636.",
+      "phone": "14998225636",
+      "opening_hours": "Terça a domingo das 19:00 às 00:00. http://www.facebook.com/pizzariacanoa2015",
+      "service_notes": "Opções de serviço: Rodízio de pizzas e à la carte com variedade de sabores, opções doces, amplo ambiente e delivery.",
+      "links": [
+        "https://www.facebook.com/pizzariacanoa2015",
+        "https://www.instagram.com/pizzacanoamarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/fene-pizza/724",
+      "source_id": "724",
+      "name": "Fene Pizza",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/afe7f95ca3196eae3df713761f888c7a-07-07-2025-16-01-29.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Pedro de Toledo, 1844 - Palmital, Marília - SP, 17509-021. 014 99874-4404 14 3417-8777",
+      "phone": "14998744404",
+      "opening_hours": "Segunda a Sábado das 18:00h às 23:30h.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://pedrotoledo.fenepizzaria.com.br/",
+        "https://www.instagram.com/fenepizza/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/saldoce-pizzaria/725",
+      "source_id": "725",
+      "name": "SalDoce Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/fb480fe6e4d810e419cadee37f7561e2-07-07-2025-16-03-07.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Nicola Ricci, 297 - Santa Tereza, Marília - SP, 17507-210. 014 3432-1239.",
+      "phone": "1434321239",
+      "opening_hours": "Segunda a domingo das 19:00 às 23:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/saldocepizzaria/",
+        "https://www.facebook.com/pizzariasaldoce/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-tarantella/726",
+      "source_id": "726",
+      "name": "Pizzaria Tarantella",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/a115207319ddbc81888054a80d75c62b-07-07-2025-16-04-17.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Santo Antônio, 350 - Centro, Marília - SP, 17500-070. 014 3453-5500 99868-7779 whats 99645 4410",
+      "phone": "1434535500",
+      "opening_hours": "Segunda a domingo das 18:30 às 23:30.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/tarantellapizzaria.marilia/?hl=pt-br",
+        "https://www.facebook.com/tarantella.pizzaria?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pizzaria-101-sabores/727",
+      "source_id": "727",
+      "name": "Pizzaria 101 Sabores",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f4d9bc8e095823309c726f5dcaaa941a-07-07-2025-16-05-39.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "R. Cel. Galdino de Almeida, 449 - Centro, Marília - SP, 17500-100. 014 3413-7284 14 99776-8613.",
+      "phone": "1434137284",
+      "opening_hours": "Terça a domingo das 18:00 às 23:00. http://www.101saboresmarilia.com.br/",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://www.facebook.com/marilia101sabores/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/queijo-quente-restaurante--pizzaria/728",
+      "source_id": "728",
+      "name": "Queijo Quente Restaurante & Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/0662b69b34e3cd05dfa618465da9fc09-07-07-2025-16-07-00.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "R. São Luiz, 63 - Saliola, Marília - SP, 17501-410. 14 99886-6688. 14 3422-6688",
+      "phone": "14998866688",
+      "opening_hours": "Segunda à sábado 18:00 às 22:30.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/queijo_quente_restaurante/",
+        "https://www.facebook.com/nossaqueijoquente/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/fartitos-pizza-marilia/729",
+      "source_id": "729",
+      "name": "Fartito´s Pizza Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/813dfcad0695251d4b538daee8fd3961-07-07-2025-16-20-03.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Rio Branco, 733 - Alto Cafezal, Marília - SP, 17502-570. 14 3316-7056. 14 98810-3773.",
+      "phone": "1433167056",
+      "opening_hours": "Terça a domingo das 19:00 às 23:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://fartitospizza.com.br/",
+        "https://www.instagram.com/fartitospizzamarilia/?hl=pt",
+        "https://www.facebook.com/fartitospizzamarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/mister-pepperoni-pizzaria/730",
+      "source_id": "730",
+      "name": "Mister Pepperoni Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/041b679c15587aeba135094392469db0-07-07-2025-16-21-41.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 218-A - Centro, Marília - SP, 17500-020. 014 99745-7900.",
+      "phone": "14997457900",
+      "opening_hours": "Terça a domingo das 19:00 às 23:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://misterpepperoni.byfood.com.br/",
+        "https://www.instagram.com/misterpepperonipizzaria/",
+        "https://www.facebook.com/people/Mister-Pepperoni/61567769533109/#"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pasttini---restaurante-e-pizzaria/731",
+      "source_id": "731",
+      "name": "Pasttini - Restaurante e Pizzaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/91e19c4c7d34729161cbe7372553f709-07-07-2025-16-23-27.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Rua. Da Liberdade, 349 - Jardim Maria Izabel, Marília - SP, 17515-250. 14 99744-9547.",
+      "phone": "14997449547",
+      "opening_hours": "Segunda a domingo das 11:00 às 22:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/pasttinimarilia/",
+        "https://www.facebook.com/pasttini.massas/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/bem-me-quer-pizzaria-e-lanchonete/732",
+      "source_id": "732",
+      "name": "Bem me Quer Pizzaria e Lanchonete",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/a32f8ff29ec813f30b877a5b90f1627e-07-07-2025-16-24-33.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "R. Dr. Joaquim de Abreu Sampaio Vidal, 491 - Alto Cafezal, Marília - SP, 17506-130.",
+      "phone": "1434330788",
+      "opening_hours": "Segunda a sábado 11:00 às 14:00. Segunda a domingo das 18:00 às 00:00.",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/pizzariabemmequer/",
+        "https://www.facebook.com/pizzariabemmequer/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/donna-oliva-pizzaria/584",
+      "source_id": "584",
+      "name": "DONNA OLIVA PIZZARIA",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/907d42c87ccd8fc7b695349ab06b08fd-23-06-2025-16-35-42.jpg",
+      "categories": [
+        "Pizzarias"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 160 – Centro – Marília SP – (14) 3432 4789",
+      "phone": "1434324789",
+      "opening_hours": "De segunda a domingo das 18:00h a 00:00h www.donnaoliva.com.br –",
+      "service_notes": "Opções de serviço:",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-9-de-julho/700",
+      "source_id": "700",
+      "name": "Pastelaria 9 de Julho",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/25309d93c439061b6ec031c7f6a597d9-03-07-2025-14-02-41.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. Nove de Julho, 1076 - Centro, Marília - SP, 17500-120 – 014 3454-2201.",
+      "phone": "1434542201",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/pastelaria9dejulho/",
+        "https://www.facebook.com/pastelarianovedejulho/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-vitoria/701",
+      "source_id": "701",
+      "name": "Pastelaria Vitória",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/8d4f05a5a90458ff94ad53bee3045f0d-03-07-2025-14-05-45.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. Nove de Julho, 1322 - Centro, Marília - SP, 17500-120.",
+      "phone": "",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/nosso-pastel/702",
+      "source_id": "702",
+      "name": "Nosso Pastel",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/8c44fab8bc6212c6464e1267b537cc27-03-07-2025-14-07-34.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. São Luiz, 746 - Centro, Marília - SP, 17500-001 – 014 3454-8440.",
+      "phone": "1434548440",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/reel/C_lLA1yxfRl/",
+        "https://www.facebook.com/p/Nosso-Pastel-100054422982193/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/taroco-pasteis/703",
+      "source_id": "703",
+      "name": "Taroco Pastéis",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/e843eb76c1318577aacc723d0d4e1312-03-07-2025-14-09-32.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. Cel. Galdino de Almeida, 130 - Centro, Marília - SP, 17500-100 – 014 3454-7752",
+      "phone": "1434547752",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.facebook.com/tarocopasteis/?locale=pt_BR",
+        "https://www.instagram.com/tarocopasteis/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/caicara-pastelaria/704",
+      "source_id": "704",
+      "name": "Caiçara Pastelaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2aaf2ba7bf171d279a007d51bf7b9b02-03-07-2025-14-11-53.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. São Luiz, 622 - Centro, Marília - SP, 17501-410 – 014 3433-8255.",
+      "phone": "1434338255",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/punta-cana-pastel-e-garapa/705",
+      "source_id": "705",
+      "name": "Punta Cana Pastel e Garapa",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/b8f5d26ac497eb90eadb4c61f7745d82-03-07-2025-14-14-05.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. Pres. Roosevelt, 151 - Boa Vista, Marília - SP, 17501-480 – 014 3413-9524.",
+      "phone": "1434139524",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/puntacanapastelaria/",
+        "https://www.facebook.com/puntacanapastelegarapa/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-da-lu/706",
+      "source_id": "706",
+      "name": "Pastelaria Da Lu",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/6532eec3001bd137394602eea5de2a78-03-07-2025-14-15-45.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. Santo Antônio, 1460 - Alto Cafezal, Marília - SP, 17504-020 – 014 3367-1707.",
+      "phone": "1433671707",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/pastelarialu/?hl=pt"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/da-1-pastel/707",
+      "source_id": "707",
+      "name": "Dá 1 Pastel",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/1f73108f65d078447b185e14a9eff081-03-07-2025-14-18-24.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. República, 39 - Palmital, Marília - SP, 17510-418",
+      "phone": "14996749138",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/daumpastel/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-alice/708",
+      "source_id": "708",
+      "name": "Pastelaria Alice",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/abc263d33defaa7505385b54e0ad8b02-03-07-2025-14-19-56.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. São Luiz, 1010 - Centro, Marília - SP, 17500-002 – 014 3316-9381.",
+      "phone": "1433169381",
+      "service_notes": "Opções de serviço: Refeição no local.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-gourmet-tiradentes/709",
+      "source_id": "709",
+      "name": "PASTELARIA GOURMET TIRADENTES",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/fd0ec4499f294ae1cd7e601c7efac368-03-07-2025-14-21-51.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. Vicente Ferreira, 845 - Cascata, Marília - SP, 17515-000 – 014 99737-2200.",
+      "phone": "14997372200",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.facebook.com/lanchonetetiradentes/",
+        "https://www.instagram.com/lanchonetetiradentes/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/puro-sabor-pastelaria/710",
+      "source_id": "710",
+      "name": "Puro Sabor Pastelaria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/25267c547aa96e0242dfe54114ebfc3a-03-07-2025-14-24-31.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. João Martins Coelho, 1933 - Jardim Santa Antonieta, Marília - SP, 17512-310 –",
+      "phone": "14996825076",
+      "service_notes": "Opções de serviço: Refeição no local. Para viagem e Delivery.",
+      "links": [
+        "https://www.instagram.com/purosaborpastelaria/",
+        "https://www.facebook.com/PastelariaPuroSabor/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-ki-mania/711",
+      "source_id": "711",
+      "name": "PASTELARIA Ki Mania",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f8b53980a8e61bc4d5b92cf1df7e4f1c-03-07-2025-14-26-38.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. São Luiz, 789 - Centro, Marília - SP, 17500-001",
+      "phone": "",
+      "service_notes": "Opções de serviço: Refeição no local.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-salgados-saude/712",
+      "source_id": "712",
+      "name": "Pastelaria Salgados Saúde",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/9d27837335dd888366ef090842999403-03-07-2025-14-28-33.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Rua. Quatro de Abril, 280 - Centro, Marília - SP, 17500-010",
+      "phone": "",
+      "service_notes": "Opções de serviço: Refeição no local.",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-miyabara--ishiyama/694",
+      "source_id": "694",
+      "name": "Pastelaria Miyabara & Ishiyama",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/62b26e699e047132a0e876447c2a5c65-02-07-2025-16-34-35.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "Av. República, 2060 - Palmital, Marília - SP, 17509-022 – 014 3413-3679.",
+      "phone": "1434133679",
+      "service_notes": "",
+      "links": [
+        "https://www.instagram.com/p/CY9CHwfs1k0/",
+        "https://www.facebook.com/miyabararepublica/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pastelaria-hirata/585",
+      "source_id": "585",
+      "name": "Pastelaria Hirata",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/3ae2565eb934fbb15df60af9bbb29dcc-23-06-2025-16-59-52.jpg",
+      "categories": [
+        "Pastelarias"
+      ],
+      "address_raw": "R. Nove de Julho, 1458 - Centro, Marília - SP, 17500-060 - 014 3433-3119",
+      "phone": "1434333119",
+      "opening_hours": "De segunda à sexta feira das 09:30 às 17:30 Sábado das sábado, 09:30 às 15:30",
+      "service_notes": "",
+      "links": []
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/pecado-do-acai/866",
+      "source_id": "866",
+      "name": "Pecado do Açaí",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/c5065ee490e0e08951e1c5125a7136c8-15-08-2025-08-17-42.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Rinópolis, 160 - Nucleo Hab. Castelo Branco, Marília - SP, 17511-180 – 014 99690-7473",
+      "phone": "14996907473",
+      "opening_hours": "De terça a domingo das 13:30 às 23:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.pecadodoacai.com.br/",
+        "https://www.pecadodoacai.com.br/",
+        "https://pt-br.facebook.com/pecadodoacai/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/chiquinho-sorvetes-marilia/867",
+      "source_id": "867",
+      "name": "Chiquinho Sorvetes Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f720f263b83dee4f10f842ce8553b705-15-08-2025-08-19-37.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 694 - Centro, Marília - SP, 17500-021 – 014 98227-0294",
+      "phone": "14982270294",
+      "opening_hours": "De segunda a sábado das 12:00 às 22:30 Domingo das 14:00 às 23:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/chiquinhosorvetes/",
+        "https://www.facebook.com/chiquinhomarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/atacadao-de-sorvetes/868",
+      "source_id": "868",
+      "name": "Atacadão de Sorvetes",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/209f7b9b83bbe6aa767506e481e96f9d-15-08-2025-08-21-29.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. República, 2828 - Palmital, Marília - SP, 17510-402 – 014 99812-7662",
+      "phone": "14998127662",
+      "opening_hours": "De segunda a sexta feira das 12:00 às 22:00 Sábado e domingo das 10:00 às 22:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://www.instagram.com/atacadao.sorvete.marilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/natuice-sorveteria-e-distribuidora-marilia/869",
+      "source_id": "869",
+      "name": "Natuice Sorveteria e Distribuidora Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/bf6c2a8e99d1bcba90c4a47e9df896f9-15-08-2025-08-26-00.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. República, 3205 - Palmital, Marília - SP, 17510-402 – 014 99900-9910",
+      "phone": "14999009910",
+      "opening_hours": "De segunda e terça das 12:00 às 19:00 De quarta a domingo das 10:00 às 21:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://www.instagram.com/sorvetesnatuiceoficial/",
+        "https://www.facebook.com/natuice.marilia/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/vellutine-gelato-artesanal/878",
+      "source_id": "878",
+      "name": "Vellutine Gelato Artesanal",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/0a671688139f800270e8ef33dfc58b9f-15-08-2025-15-31-14.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Bahia, 639 - Centro, Marília - SP, 17509-150 014 99687-8724",
+      "phone": "14996878724",
+      "opening_hours": "Terça a domingo das 15:00 às 22:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://www.instagram.com/vellutinegelatoartesanal/",
+        "https://www.facebook.com/lumnigelatosartesanais/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/gelateria-lunata/845",
+      "source_id": "845",
+      "name": "Gelateria Lunata",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/44c786295aa0c574f36daa15dbdf768d-11-08-2025-11-06-41.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Sete de Setembro, 155 - Boa Vista, Marília - SP, 17501-560 014 3413-2580",
+      "phone": "1434323306",
+      "opening_hours": "Consultar nas Redes Sociais.",
+      "service_notes": "Opções de serviço: Refeição no local.",
+      "links": [
+        "https://www.instagram.com/gelaterialunata/",
+        "https://www.facebook.com/gelaterialunata/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sorveteria-iglu/846",
+      "source_id": "846",
+      "name": "Sorveteria Iglu",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/aaa2b5dc3a33aeaf99a3dc88dd84f087-11-08-2025-11-12-26.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Joaquim Ferreira Évora, 309 - Jardim Eldorado, Marília - SP, 17505-020 – 01 43453-5763 (14) 98811-8023",
+      "phone": "14988118023",
+      "opening_hours": "De Segunda a Domingo das 9h às 22h",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://sorvetesiglu.com.br/",
+        "https://www.facebook.com/sorvetesiglumarilia/?locale=pt_BR",
+        "https://www.instagram.com/sorvetesiglumarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sorveteria-sonho-de-verao/847",
+      "source_id": "847",
+      "name": "Sorveteria Sonho de Verão",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/cdb70378763a26f207f6d62575f26102-11-08-2025-11-13-58.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. Sampaio Vidal, 733 - Centro, Marília - SP, 17500-021 – 014 3454-8131 014 99634-3856",
+      "phone": "1434548131",
+      "opening_hours": "De segunda a quarta feira das 12h às 22h De quinta a domingo das 10h às 22h",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/sorveteriasonhodeverao/",
+        "https://www.facebook.com/sorveteriasonhodeveraomarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sonata-gelateria/848",
+      "source_id": "848",
+      "name": "So´Nata Gelateria",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/d3e30838885ebdd54f14b7b70ced8945-11-08-2025-15-13-10.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Joaquim Nabuco, 159 - Bassan, Marília - SP, 17506-200 014 3433-1306",
+      "phone": "1434331306",
+      "opening_hours": "De segunda a sexta a feira das 11h às 20h De sábado e domingo das 11h às 19h",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://so-nata-gelateria.ueniweb.com/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/madale-gelato-artesanal/849",
+      "source_id": "849",
+      "name": "Madalê Gelato Artesanal",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/2ecef7d7d74bcef50503065b11996c8d-11-08-2025-15-14-40.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Antônio Barbosa Júnior, 30 - Jardim Tangara, Marília - SP, 17516-024 014 99806-8843",
+      "phone": "14998068843",
+      "opening_hours": "De segunda e terça feira das 13h às 22h De quarta a domingo das 12h às 23h",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/madalegelato.marilia/",
+        "https://www.facebook.com/madalegelato.marilia/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/oggi-sorvetes/850",
+      "source_id": "850",
+      "name": "Oggi Sorvetes",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/9e5b28d9dcd8572bf841a6870f497939-11-08-2025-15-16-24.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Cel. José Brás, 378 - Boa Vista, Marília - SP, 17501-570 014 3316-4755",
+      "phone": "1433164755",
+      "opening_hours": "De segunda a sábado das 11h às 20h Domingo das 10h às 18h",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato.",
+      "links": [
+        "https://www.facebook.com/oggisorvetesmarilia/",
+        "https://www.instagram.com/oggisorvetesmarilia/"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/the-best-acai---marilia/851",
+      "source_id": "851",
+      "name": "The Best Açaí - Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/814d309fcf827d973d339ff5ffc54799-11-08-2025-15-17-40.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. República, 3243 - Palmital, Marília - SP, 17510-402 014 99803-1236",
+      "phone": "14998031236",
+      "opening_hours": "Consultar pelo Site",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/thebestacaiofficial/",
+        "https://www.facebook.com/thebestacaiofficial"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/gygabon-marilia/852",
+      "source_id": "852",
+      "name": "Gygabon Marília",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/4d0cd16c01d0f19ea6b231b78cc0ae1b-11-08-2025-15-19-53.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "Av. Castro Alves, 1007 - Somenzari, Marília - SP, 17506-000 014 3306-1133.",
+      "phone": "1433061133",
+      "opening_hours": "Consultar pelo Site",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/gygabon/",
+        "https://www.facebook.com/sorvetesgygabon/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/kanabara-acai/853",
+      "source_id": "853",
+      "name": "Kanabara Açaí",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/f00f2d1d75ef3ba2af9baab4524104e6-11-08-2025-15-21-28.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. Álvares Cabral, 523 - Centro, Marília - SP, 17501-020 014 99636-2267",
+      "phone": "14996362267",
+      "opening_hours": "Consultar pelo Site",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/kanabaramarilia/",
+        "https://www.facebook.com/KanabaraAcai/about?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sorveteria-itapolitana/854",
+      "source_id": "854",
+      "name": "Sorveteria Itapolitana",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/815336c28c729b0b23a356e75323b9ed-11-08-2025-16-26-32.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "R. São Luiz, 1135 - Centro, Marília - SP, 17500-002 014 3316-3841",
+      "phone": "1433163841",
+      "opening_hours": "De segunda a domingo das 10:30 às 22:30",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/sorveteriaitapolitana_marilia/",
+        "https://www.facebook.com/sorveteriaitapolitanaa/?locale=pt_BR"
+      ]
+    },
+    {
+      "source_url": "https://turismo.marilia.sp.gov.br/turismo/sorvetes-matheusinho/855",
+      "source_id": "855",
+      "name": "Sorvetes Matheusinho",
+      "image_url": "https://turismo.marilia.sp.gov.br/fotos/be760a08bb994944aaa76c38fad411a4-11-08-2025-16-27-55.jpg",
+      "categories": [
+        "Gelateria e açaí"
+      ],
+      "address_raw": "",
+      "phone": "14997642776",
+      "opening_hours": "De segunda a domingo das 08:00 às 22:00",
+      "service_notes": "Opções de serviço: Retirada na porta. Entrega sem contato. Refeição no local.",
+      "links": [
+        "https://www.instagram.com/matheusinhosorvetes/",
+        "https://www.facebook.com/matheusinhosorvetes/"
+      ]
+    }
+  ]
+}

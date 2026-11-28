@@ -115,7 +115,7 @@ class RestaurantReadTest(APITestCase):
             "id", "owner", "name", "slug", "description", "cnpj", "phone",
             "email", "website", "average_rating", "total_reviews",
             "cover_image", "menu_url", "created_at", "updated_at",
-            "images", "has_reviewed", "business_hours", "items",
+            "images", "has_reviewed", "business_hours", "items", "source_details",
             "cuisines", "ambients", "service_models", "target_audiences",
             "price_ranges", "business_models", "physical_formats",
             "has_dine_in", "has_delivery", "has_take_out", "has_drive_thru",

@@ -54,8 +54,8 @@ class RestaurantFavoriteSerializer(serializers.ModelSerializer):
 class RestaurantImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = RestaurantImage
-        fields = ["id", "url", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = ["id", "url", "source_url", "attribution", "license", "created_at"]
+        read_only_fields = ["id", "source_url", "attribution", "license", "created_at"]
 
 
 class RestaurantReviewSerializer(serializers.ModelSerializer):
@@ -157,11 +157,17 @@ class RestaurantSourceSerializer(serializers.ModelSerializer):
 
 
 class _RestaurantComputedMixin(serializers.Serializer):
+    cover_image = serializers.SerializerMethodField()
     distance_km = serializers.FloatField(read_only=True, allow_null=True, default=None)
     sources = RestaurantSourceSerializer(many=True, read_only=True)
     address = serializers.SerializerMethodField()
     is_open_now = serializers.SerializerMethodField()
     is_favorited = serializers.SerializerMethodField()
+
+    def get_cover_image(self, obj) -> str:
+        # Uma foto cadastrada já é uma capa válida, mesmo sem preencher o
+        # campo separado. Usar o prefetch evita uma query extra por card.
+        return obj.cover_image or next((image.url for image in obj.images.all() if image.url), '')
 
     @extend_schema_field(RestaurantAddressSerializer(allow_null=True))
     def get_address(self, obj):
@@ -199,10 +205,11 @@ class RestaurantCardSerializer(_RestaurantComputedMixin, serializers.ModelSerial
         read_only_fields = fields
 
 
-CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours", "sources"]
+CARD_PREFETCH = ["cuisines", "ambients", "price_ranges", "addresses", "business_hours", "sources", "images"]
 
 
 class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerializer):
+    source_details = serializers.SerializerMethodField()
     images = RestaurantImageSerializer(many=True, read_only=True)
     # avaliações não vêm embutidas (lista sem limite): GET .../reviews/ paginado
     has_reviewed = serializers.SerializerMethodField()
@@ -223,10 +230,24 @@ class RestaurantReadSerializer(_RestaurantComputedMixin, serializers.ModelSerial
             "id", "owner", "name", "slug", "description", "cnpj", "phone",
             "email", "website", "average_rating", "total_reviews", "whatsapp_number",
             "cover_image", "menu_url", "created_at", "updated_at",
-            "images", "has_reviewed", "business_hours", "items",
+            "images", "has_reviewed", "business_hours", "items", "source_details",
             *TAXONOMY_FIELDS, *SALES_CHANNEL_FIELDS,
             "address", "is_open_now", "is_favorited", "is_demo", "sources", "distance_km",
         ]
+
+    @extend_schema_field(serializers.DictField(child=serializers.CharField()))
+    def get_source_details(self, obj):
+        details = {}
+        for source in obj.sources.all():
+            data = source.data if isinstance(source.data, dict) else {}
+            tags = data.get('tags', data)
+            if not isinstance(tags, dict):
+                continue
+            for key in ('opening_hours', 'cuisine', 'service_notes'):
+                value = tags.get(key)
+                if isinstance(value, str) and value.strip():
+                    details[key] = value[:500]
+        return details
 
     def get_has_reviewed(self, obj) -> bool:
         request = self.context.get("request")
@@ -262,6 +283,12 @@ class RestaurantWriteSerializer(serializers.ModelSerializer):
                 )],
             },
         }
+
+    def validate(self, attrs):
+        for key, limit in (('cuisines', 3), ('ambients', 2), ('price_ranges', 1)):
+            if key in attrs and len(attrs[key]) > limit:
+                raise serializers.ValidationError({key: f'Selecione até {limit} opções para manter o cadastro objetivo.'})
+        return super().validate(attrs)
 
     def validate_whatsapp_number(self, value):
         import re

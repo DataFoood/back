@@ -51,6 +51,7 @@ class Restaurant(AbstractAudit):
         MANUAL = "manual", "Manual (site)"
         GOOGLE = "google", "Google Places"
         OSM = "osm", "OpenStreetMap"
+        TOURISM = "tourism", "Turismo de Marília"
 
     # owner: adicionado (não estava na lista). Nullable pra não travar criação.
     owner = models.ForeignKey(
@@ -157,6 +158,9 @@ class RestaurantImage(AbstractAudit):
         Restaurant, on_delete=models.CASCADE, related_name="images"
     )
     url = models.URLField()
+    source_url = models.URLField(blank=True)
+    attribution = models.CharField(max_length=255, blank=True)
+    license = models.CharField(max_length=80, blank=True)
 
     def __str__(self):
         return self.url
@@ -169,7 +173,7 @@ class RestaurantReview(AbstractAudit):
     # author: adicionado (não estava na lista). Nullable.
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
         null=True,
         blank=True,
         related_name="reviews",

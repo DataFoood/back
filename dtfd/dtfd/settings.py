@@ -221,6 +221,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- Embeddings / Ollama ---------------------------------------------------
 SEMANTIC_SEARCH_ENABLED = os.environ.get("SEMANTIC_SEARCH_ENABLED", "True") == "True"
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
+# Rollout da conversa ancorada no catálogo; vazio preserva o fluxo existente.
+CHAT_CATALOG_MODE = os.environ.get("CHAT_CATALOG_MODE", "False") == "True"
+CONVERSATION_MODEL = os.environ.get("CONVERSATION_MODEL", "")
 CHAT_GENERATION_ENABLED = os.environ.get("CHAT_GENERATION_ENABLED", "False") == "True"
 CHAT_MODEL = os.environ.get("CHAT_MODEL", "qwen3:0.6b")
 PREMIUM_TEST_COUPON_SHA256 = os.environ.get("PREMIUM_TEST_COUPON_SHA256", "").strip().lower()

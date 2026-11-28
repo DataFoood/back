@@ -2,7 +2,7 @@
 import hashlib
 import math
 from decimal import Decimal
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 
 import httpx
 from django.contrib.contenttypes.models import ContentType
@@ -10,7 +10,8 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from address.models import Address
-from restaurants.models import Ambient, Cuisine, Restaurant, RestaurantSource
+from restaurants.models import Restaurant, RestaurantSource, RestaurantImage, Cuisine, Ambient, BusinessHour
+
 
 ENDPOINT = 'https://overpass-api.de/api/interpreter'
 ATTRIBUTION = '© OpenStreetMap contributors'
@@ -19,14 +20,13 @@ REGION_CODE = '3529005'
 # A consulta usa o município, não um retângulo que inclui cidades vizinhas.
 QUERY = '''[out:json][timeout:60];
 area["boundary"="administrative"]["admin_level"="8"]["IBGE:GEOCODIGO"="3529005"]->.city;
-nwr["amenity"~"^(restaurant|cafe|fast_food|food_court)$"](area.city);
+nwr["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|ice_cream)$"](area.city);
 out center tags;'''
 TAGS = {'name', 'amenity', 'cuisine', 'phone', 'contact:phone', 'website', 'contact:website',
-        'opening_hours', 'outdoor_seating', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode'}
-# Só correspondências explícitas; nomes de locais não comprovam cozinha/ambiente.
-CUISINES = {'italian': 'Italiana', 'pizza': 'Pizza & Massas', 'japanese': 'Japonesa',
-            'sushi': 'Japonesa', 'chinese': 'Chinesa', 'mexican': 'Mexicana',
-            'middle_eastern': 'Árabe', 'seafood': 'Frutos do Mar', 'steak_house': 'Churrasco/Grelhados'}
+        'opening_hours', 'outdoor_seating', 'addr:street', 'addr:housenumber', 'addr:suburb', 'addr:city', 'addr:postcode',
+        'description', 'description:pt', 'email', 'contact:email', 'image', 'wikimedia_commons',
+        'delivery', 'takeaway', 'drive_through', 'reservation', 'website:menu', 'contact:menu'}
+
 
 
 def fetch():
@@ -48,7 +48,7 @@ def normalize(element):
     tags = element.get('tags') or {}
     if not isinstance(tags, dict) or not isinstance(tags.get('name'), str) or not tags['name'].strip():
         return None
-    if tags.get('amenity') not in ('restaurant', 'cafe', 'fast_food', 'food_court'):
+    if tags.get('amenity') not in ('restaurant', 'cafe', 'fast_food', 'food_court', 'bar', 'pub', 'ice_cream'):
         return None
     center = element.get('center') or element
     try:
@@ -63,11 +63,55 @@ def normalize(element):
 
 
 def safe_website(raw):
-    return raw if urlparse(raw).scheme in ('https', 'http') and urlparse(raw).hostname and len(raw) <= 200 else ''
+    try:
+        parsed = urlparse(raw)
+        return raw if parsed.scheme in ('https', 'http') and parsed.hostname and not parsed.username and not parsed.password and len(raw) <= 200 else ''
+    except ValueError:
+        return ''
+
+
+def enrich_tags(restaurant, tags, source):
+    """Apenas atributos publicados pela fonte, sem inventar avaliações/preços."""
+    from .hours import parse_hours
+    cuisine_map = {
+        'brazilian': 'Brasileira', 'regional': 'Regional (ex: Nordestina, Mineira)',
+        'italian': 'Italiana', 'pizza': 'Pizza & Massas', 'japanese': 'Japonesa', 'sushi': 'Japonesa',
+        'chinese': 'Chinesa', 'burger': 'Americana', 'barbecue': 'Churrasco/Grelhados',
+        'mexican': 'Mexicana', 'arab': 'Árabe', 'middle_eastern': 'Árabe', 'steak_house': 'Churrasco/Grelhados', 'seafood': 'Frutos do Mar',
+        'vegetarian': 'Vegana/Vegetariana', 'vegan': 'Vegana/Vegetariana',
+    }
+    cuisine_names = list(dict.fromkeys(cuisine_map[value.strip()] for value in tags.get('cuisine', '').split(';') if value.strip() in cuisine_map))[:3]
+    restaurant.cuisines.set(Cuisine.objects.filter(name__in=cuisine_names))
+    ambient = {'cafe': 'Cafeteria', 'bar': 'Bar/Pub', 'pub': 'Bar/Pub', 'fast_food': 'Fast Food'}.get(tags.get('amenity'))
+    ambient_names = [ambient] if ambient else []
+    if tags.get('outdoor_seating') == 'yes':
+        ambient_names.append('Ao Ar Livre')
+    restaurant.ambients.set(Ambient.objects.filter(name__in=ambient_names))
+    kind = {'cafe': 'Cafeteria', 'bar': 'Bar', 'pub': 'Pub', 'fast_food': 'Lanchonete', 'ice_cream': 'Sorveteria', 'food_court': 'Praça de alimentação'}.get(tags.get('amenity'), 'Restaurante')
+    place = ', no bairro ' + tags['addr:suburb'] if tags.get('addr:suburb') else ''
+    restaurant.description = tags.get('description:pt', tags.get('description', ''))[:2000] or f'{kind} em Marília{place}.' + (' Cozinha: ' + ', '.join(cuisine_names) + '.' if cuisine_names else '')
+    restaurant.email = tags.get('contact:email', tags.get('email', ''))[:254]
+    restaurant.menu_url = safe_website(tags.get('website:menu', tags.get('contact:menu', '')))
+    for tag, field in (('delivery', 'has_delivery'), ('takeaway', 'has_take_out'), ('drive_through', 'has_drive_thru'), ('reservation', 'has_reservation')):
+        if tags.get(tag) in ('yes', 'no'):
+            setattr(restaurant, field, tags[tag] == 'yes')
+    for day, intervals in parse_hours(tags.get('opening_hours', '')).items():
+        BusinessHour.all_objects.update_or_create(restaurant=restaurant, day_week=day,
+            defaults={'meta_interval': intervals, 'is_closed': not bool(intervals), 'deleted_at': None})
+    image = safe_website(tags.get('image', ''))
+    commons = tags.get('wikimedia_commons', '')
+    if not image and commons.startswith('File:'):
+        image = safe_website('https://commons.wikimedia.org/wiki/Special:FilePath/' + quote(commons[5:]))
+    if image:
+        RestaurantImage.objects.get_or_create(restaurant=restaurant, url=image,
+            defaults={'source_url': source.url, 'attribution': 'Imagem vinculada no OpenStreetMap; consulte a fonte para autoria e licença.'})
+        if not restaurant.cover_image:
+            restaurant.cover_image = image
+    restaurant.save()
 
 
 @transaction.atomic
-def upsert(record):
+def upsert(record, fetched_at=None):
     external = record['external_id']
     # O lock também protege a primeira importação do mesmo objeto concorrente.
     key = int.from_bytes(hashlib.sha256(('osm:' + external).encode()).digest()[:8], 'big', signed=True)
@@ -87,7 +131,7 @@ def upsert(record):
         restaurant = source.restaurant
     source.data = record
     source.url = 'https://www.openstreetmap.org/' + external
-    source.attribution, source.license, source.fetched_at = ATTRIBUTION, LICENSE, timezone.now()
+    source.attribution, source.license, source.fetched_at = ATTRIBUTION, LICENSE, fetched_at or timezone.now()
     # Similaridade nominal pede revisão; nunca fundir estabelecimentos/filiais.
     source.needs_review = Restaurant.objects.filter(name__iexact=tags['name'].strip(), is_demo=False).exclude(pk=restaurant.pk).exists()
     source.save()
@@ -97,12 +141,6 @@ def upsert(record):
         restaurant.phone = tags.get('contact:phone', tags.get('phone', ''))[:20]
         restaurant.website = safe_website(tags.get('contact:website', tags.get('website', '')))
         restaurant.save(update_fields=['name', 'phone', 'website', 'updated_at'])
-        names = {CUISINES[value.strip()] for value in tags.get('cuisine', '').split(';') if value.strip() in CUISINES}
-        restaurant.cuisines.set(Cuisine.objects.filter(name__in=names))
-        ambients = {'fast_food': ['Fast Food'], 'cafe': ['Cafeteria']}.get(tags.get('amenity'), []).copy()
-        if tags.get('outdoor_seating') == 'yes':
-            ambients.append('Ao Ar Livre')
-        restaurant.ambients.set(Ambient.objects.filter(name__in=ambients))
         ct = ContentType.objects.get_for_model(Restaurant)
         Address.objects.update_or_create(
             content_type=ct, object_id=restaurant.pk, label='OpenStreetMap',
@@ -111,4 +149,5 @@ def upsert(record):
                           zipcode=tags.get('addr:postcode', '')[:20], is_default=True,
                           latitude=Decimal(str(record['latitude'])), longitude=Decimal(str(record['longitude']))),
         )
+        enrich_tags(restaurant, tags, source)
     return 'created' if created else 'updated'
